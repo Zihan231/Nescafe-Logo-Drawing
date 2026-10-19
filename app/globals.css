@@ -126,10 +126,9 @@
 @keyframes ufo-blink{0%,100%{opacity:.35}50%{opacity:1}}
 @media(prefers-reduced-motion:reduce){.ufo-track{display:none}}
 
-.color-panel{position:absolute;bottom:calc(100% + 12px);width:224px;display:flex;flex-direction:column;gap:10px;padding:12px;background:rgba(26,5,8,.82);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border:1px solid rgba(255,255,255,.18);border-radius:20px;box-shadow:0 14px 34px rgba(18,2,5,.45),inset 0 1px 0 rgba(255,255,255,.12)}
-.ink-stroke-dock .color-panel{left:0}
-.logo-dock .color-panel{right:0}
-.color-panel-area{position:relative;height:110px;border-radius:12px;cursor:crosshair;touch-action:none;background-image:linear-gradient(to top,#000,rgba(0,0,0,0)),linear-gradient(to right,#fff,rgba(255,255,255,0))}
+.control-dock{flex-wrap:wrap;justify-content:center;row-gap:10px}
+.color-panel{flex:0 0 100%;display:flex;flex-direction:column;gap:10px;padding:2px 0 4px}
+.color-panel-area{position:relative;height:clamp(64px,11vh,110px);border-radius:12px;cursor:crosshair;touch-action:none;background-image:linear-gradient(to top,#000,rgba(0,0,0,0)),linear-gradient(to right,#fff,rgba(255,255,255,0))}
 .color-panel-handle{position:absolute;width:16px;height:16px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1px rgba(0,0,0,.5),0 2px 6px rgba(0,0,0,.45);transform:translate(-50%,-50%);pointer-events:none}
 .color-panel-hue{-webkit-appearance:none;appearance:none;width:100%;height:12px;border-radius:999px;outline:none;cursor:pointer;margin:0;background:linear-gradient(to right,#f00,#ff0 17%,#0f0 33%,#0ff 50%,#00f 67%,#f0f 83%,#f00)}
 .color-panel-hue::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:#fff;border:2px solid #fff;box-shadow:0 0 0 1px rgba(0,0,0,.5),0 2px 6px rgba(0,0,0,.45)}
@@ -138,4 +137,4 @@
 .color-panel-preview{flex:none;width:26px;height:26px;border-radius:8px;border:2px solid #fff;box-shadow:0 0 0 1px rgba(0,0,0,.4)}
 .color-panel-hex input{flex:1;min-width:0;height:28px;padding:0 10px;border-radius:8px;border:1px solid rgba(255,255,255,.28);background:rgba(255,255,255,.1);color:#fff;font:700 12px 'DM Sans',Arial,sans-serif;letter-spacing:.08em;text-transform:uppercase;outline:none}
 .color-panel-hex input:focus{border-color:#fff}
-@media(max-width:1050px){.control-dock{flex-wrap:wrap;justify-content:center}.color-panel{position:static;flex:0 0 100%;width:auto}}
+@media(min-width:601px){.editor-grid .toolbox{align-self:start;margin-top:clamp(0px,3vh,28px)}}
