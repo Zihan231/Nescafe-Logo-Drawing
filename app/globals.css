@@ -247,3 +247,14 @@
 .doodle-tile img{transition:transform .18s ease}
 .doodle-tile:hover img{transform:scale(1.1) rotate(-3deg)}
 .doodle-tile:active img{transform:scale(1.02)}
+.card-collapse-btn,.editor .toolbox .card-collapse-btn{position:absolute;top:8px;right:8px;z-index:3;width:22px;height:22px;display:grid;place-items:center;padding:0;border:1px solid rgba(255,255,255,.28);border-radius:7px;background:rgba(255,255,255,.1);color:#fff;cursor:pointer;transition:background .15s ease,border-color .15s ease}
+.card-collapse-btn:hover,.editor .toolbox .card-collapse-btn:hover{background:rgba(255,255,255,.28);border-color:#fff}
+.control-dock .card-collapse-btn{top:-28px;right:16px;width:26px;height:22px;border-radius:8px 8px 4px 4px;background:rgba(26,5,8,.92);border-color:rgba(255,255,255,.28)}
+.editor .toolbox.is-collapsed>*:not(.card-collapse-btn):not(.tool-card-title){display:none}
+.doodle-card.is-collapsed>*:not(.card-collapse-btn):not(.doodle-card-title){display:none}
+.control-dock.is-collapsed .color-panel{display:none}
+.editor .toolbox.is-collapsed,.doodle-card.is-collapsed{padding-bottom:12px}
+@media(max-width:1100px){.editor .toolbox.is-collapsed>*:not(.card-collapse-btn){display:none}}
+.dock-head{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:22px}
+.dock-head span{flex:1;text-align:center;padding-left:22px;font:800 8px 'DM Sans',Arial,sans-serif;letter-spacing:.22em;color:rgba(255,255,255,.7)}
+.control-dock .dock-head .card-collapse-btn{position:static;top:auto;right:auto;width:22px;height:22px;border-radius:7px;flex:none;background:rgba(255,255,255,.1)}

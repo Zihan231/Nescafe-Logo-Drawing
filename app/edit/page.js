@@ -5,6 +5,8 @@ import {
   ArrowCounterClockwise,
   ArrowLeft,
   ArrowClockwise,
+  CaretDown,
+  CaretUp,
   CheckCircle,
   Eraser,
   FlipHorizontal,
@@ -494,6 +496,21 @@ function BrushSample({ id }) {
   );
 }
 
+function CollapseButton({ collapsed, onClick, label }) {
+  return (
+    <button
+      type="button"
+      className="card-collapse-btn"
+      onClick={onClick}
+      aria-expanded={!collapsed}
+      aria-label={`${collapsed ? "Expand" : "Minimize"} ${label}`}
+      title={collapsed ? `Expand ${label}` : `Minimize ${label}`}
+    >
+      {collapsed ? <CaretDown weight="bold" size={12} /> : <CaretUp weight="bold" size={12} />}
+    </button>
+  );
+}
+
 function hexToHsv(hex) {
   const value = parseInt(hex.slice(1), 16);
   const r = ((value >> 16) & 255) / 255;
@@ -633,6 +650,8 @@ export default function EditPage() {
   const trayDragRef = useRef(null);
   const trayStartRef = useRef({ x: 0, y: 0 });
   const [doodleCategory, setDoodleCategory] = useState("classic");
+  const [collapsed, setCollapsed] = useState({ tools: false, doodles: false, ink: false, logo: false });
+  const toggleCard = (key) => setCollapsed((current) => ({ ...current, [key]: !current[key] }));
   const stickerGestureRef = useRef({ id: null, pointers: new Map(), lastX: 0, lastY: 0, startDistance: 0, start: { w: 112, fontSize: 30 } });
   const transformHandleRef = useRef(null);
   const textInputRef = useRef(null);
@@ -1232,7 +1251,8 @@ export default function EditPage() {
       )}
 
       {/* Tools + brushes: pinned to the left edge, aligned with the INK card below */}
-      <aside className={`toolbox${selectedSticker?.kind === "text" ? " text-editing" : ""}`}>
+      <aside className={`toolbox${selectedSticker?.kind === "text" ? " text-editing" : ""}${collapsed.tools && selectedSticker?.kind !== "text" ? " is-collapsed" : ""}`}>
+        <CollapseButton collapsed={collapsed.tools} onClick={() => toggleCard("tools")} label="drawing tools" />
         <span className="tool-card-title">DRAW TOOLS</span>
         <div className="tool-row">
         <button className={tool === "pen" ? "active" : ""} onClick={() => setTool("pen")} aria-label="Pen">
@@ -1422,7 +1442,8 @@ export default function EditPage() {
       </aside>
 
       {/* Doodles by category: pinned to the right edge, aligned with the LOGO card below */}
-      <aside className="doodle-card">
+      <aside className={collapsed.doodles ? "doodle-card is-collapsed" : "doodle-card"}>
+        <CollapseButton collapsed={collapsed.doodles} onClick={() => toggleCard("doodles")} label="doodles" />
         <span className="doodle-card-title">DROP A DOODLE</span>
         <div className="doodle-cats" role="tablist" aria-label="Doodle categories">
           {DOODLE_CATEGORIES.map((cat) => (
@@ -1461,7 +1482,11 @@ export default function EditPage() {
       {/* Bottom Controls Bar with Both Color Sections */}
       <div className="editor-controls-bar">
         {/* Left Section: Pen Ink Color Palette & Stroke */}
-        <div className="control-dock ink-stroke-dock">
+        <div className={collapsed.ink ? "control-dock ink-stroke-dock is-collapsed" : "control-dock ink-stroke-dock"}>
+          <div className="dock-head">
+            <span>INK COLOR</span>
+            <CollapseButton collapsed={collapsed.ink} onClick={() => toggleCard("ink")} label="ink color plate" />
+          </div>
           <ColorPanel
             value={color}
             onChange={(next) => {
@@ -1536,7 +1561,11 @@ export default function EditPage() {
         </div>
 
         {/* Right Section: Logo Background Color */}
-        <div className="control-dock logo-dock">
+        <div className={collapsed.logo ? "control-dock logo-dock is-collapsed" : "control-dock logo-dock"}>
+          <div className="dock-head">
+            <span>LOGO COLOR</span>
+            <CollapseButton collapsed={collapsed.logo} onClick={() => toggleCard("logo")} label="logo color plate" />
+          </div>
           <ColorPanel value={leafColor} onChange={setLeafColor} label="Logo color" />
 
           <div className="dock-row">
