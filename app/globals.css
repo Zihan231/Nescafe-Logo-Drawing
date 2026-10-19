@@ -179,3 +179,38 @@
 .editor .toolbox .tool-row{gap:6px}
 .editor .toolbox .tool-row button{width:36px;height:36px;border-radius:11px;font-size:17px}
 .editor .toolbox .tool-row button:disabled{opacity:.35;cursor:not-allowed}
+.editor .toolbox.text-editing .tool-panel{display:none}
+.tool-panel{display:flex;flex-direction:column;gap:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,.14)}
+.tool-panel .brush-card{border-top:0;padding-top:0}
+.tool-tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;padding:3px;border-radius:12px;background:rgba(255,255,255,.07)}
+.editor .toolbox .tool-tab{position:relative;width:100%;height:auto;display:flex;align-items:center;justify-content:center;gap:5px;padding:7px 2px;border:0;border-radius:9px;background:transparent;color:rgba(255,255,255,.75);font:800 8px 'DM Sans',Arial,sans-serif;letter-spacing:.08em;text-transform:uppercase;cursor:pointer}
+.editor .toolbox .tool-tab:hover{color:#fff;background:rgba(255,255,255,.1)}
+.editor .toolbox .tool-tab.selected{background:#fff;color:#a21f25}
+.tab-dot{position:absolute;top:3px;right:4px;width:6px;height:6px;border-radius:50%;background:#52d19b;box-shadow:0 0 0 1.5px rgba(26,5,8,.9)}
+.shape-card,.symmetry-card{display:flex;flex-direction:column;gap:9px}
+.shape-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}
+.editor .toolbox .shape-tile{width:100%;height:46px;display:grid;place-items:center;border:1px solid rgba(255,255,255,.14);border-radius:13px;background:rgba(255,255,255,.06);color:#fff;cursor:pointer;transition:background .15s ease,transform .15s ease,border-color .15s ease}
+.editor .toolbox .shape-tile:hover{background:rgba(255,255,255,.16);border-color:rgba(255,255,255,.4);transform:translateY(-1px)}
+.editor .toolbox .shape-tile.selected{background:#fff;color:#a21f25;border-color:#fff;box-shadow:0 6px 14px rgba(80,0,10,.3)}
+.shape-icon{width:26px;height:26px}
+.shape-fill{display:grid;grid-template-columns:1fr 1fr;gap:4px;padding:3px;border-radius:11px;background:rgba(255,255,255,.07)}
+.editor .toolbox .shape-fill button{width:100%;height:auto;padding:7px 2px;border:0;border-radius:8px;background:transparent;color:rgba(255,255,255,.75);font:800 8px 'DM Sans',Arial,sans-serif;letter-spacing:.12em;cursor:pointer}
+.editor .toolbox .shape-fill button.selected{background:#fff;color:#a21f25}
+.symmetry-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.editor .toolbox .symmetry-tile{width:100%;height:auto;display:flex;align-items:center;justify-content:flex-start;gap:8px;padding:7px 8px;border:1px solid rgba(255,255,255,.14);border-radius:13px;background:rgba(255,255,255,.06);color:#fff;cursor:pointer;transition:background .15s ease,border-color .15s ease}
+.editor .toolbox .symmetry-tile:hover{background:rgba(255,255,255,.16);border-color:rgba(255,255,255,.4)}
+.editor .toolbox .symmetry-tile.selected{background:#fff;color:#a21f25;border-color:#fff;box-shadow:0 6px 14px rgba(80,0,10,.3)}
+.symmetry-tile span{font:800 8px 'DM Sans',Arial,sans-serif;letter-spacing:.06em;text-transform:uppercase;line-height:1.1;text-align:left}
+.symmetry-icon{width:24px;height:24px;flex:none}
+.symmetry-count{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:5px 8px;border-radius:11px;background:rgba(255,255,255,.07);color:#fff}
+.symmetry-count span{font:800 8px 'DM Sans',Arial,sans-serif;letter-spacing:.14em;color:rgba(255,255,255,.75)}
+.symmetry-count b{min-width:20px;text-align:center;font:800 13px 'DM Sans',Arial,sans-serif}
+.editor .toolbox .symmetry-count button{width:26px;height:26px;border-radius:8px;border:1px solid rgba(255,255,255,.28);background:rgba(255,255,255,.1);color:#fff;font:800 15px/1 'DM Sans',Arial,sans-serif;cursor:pointer}
+.editor .toolbox .symmetry-count button:hover{background:rgba(255,255,255,.25)}
+.tool-hint{margin:0;font:500 9px/1.45 'DM Sans',Arial,sans-serif;color:rgba(255,255,255,.62);text-align:center}
+.symmetry-guides{position:absolute;inset:0;z-index:5;width:100%;height:100%;pointer-events:none;overflow:hidden}
+.symmetry-guides line{stroke:rgba(255,255,255,.75);stroke-width:1.6;stroke-dasharray:7 7;vector-effect:non-scaling-stroke}
+.symmetry-guides circle{fill:rgba(255,255,255,.85)}
+.symmetry-guides g{filter:drop-shadow(0 0 1.5px rgba(0,0,0,.6))}
+@media(max-width:1100px){.tool-tabs{grid-template-columns:1fr}.editor .toolbox .tool-tab span,.tool-hint,.symmetry-tile span,.symmetry-count span,.shape-fill{display:none}.shape-grid,.symmetry-grid{grid-template-columns:1fr}.editor .toolbox .shape-tile{height:36px}.shape-icon{width:22px;height:22px}.editor .toolbox .symmetry-tile{justify-content:center;padding:6px 2px}.editor .toolbox.text-editing .tool-panel{display:none}}
+@media(max-width:600px){.tool-panel{position:absolute;left:50%;transform:translateX(-50%);top:calc(100% + 6px);width:min(94vw,420px);padding:8px;background:rgba(26,5,8,.92);border:1px solid rgba(255,255,255,.18);border-radius:16px;z-index:12}.tool-tabs{grid-template-columns:repeat(3,1fr)}.editor .toolbox .tool-tab span{display:inline}.tool-panel .brush-card{position:static;transform:none;width:auto;background:none;border:0;padding:0}.shape-grid{display:flex;overflow-x:auto}.editor .toolbox .shape-tile{width:46px;flex:none}.symmetry-grid{display:flex;overflow-x:auto}.editor .toolbox .symmetry-tile{width:auto;flex:none}.symmetry-tile span{display:inline}.text-section{top:calc(100% + 6px)}}

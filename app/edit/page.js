@@ -7,11 +7,13 @@ import {
   ArrowClockwise,
   CheckCircle,
   Eraser,
+  FlipHorizontal,
   PaintBucket,
   PaintBrush,
   PaperPlaneTilt,
   PenNib,
   PencilSimple,
+  Shapes,
   TextT,
   Trash,
   X
@@ -94,11 +96,117 @@ const WHOLE_PATH_BRUSHES = {
 };
 const NIB_ANGLE = -Math.PI / 4;
 
-function DrawingCanvas({ canvasRef, color, tool, brush, size, onHistory }) {
+// ---- predefined shapes (unit polygons in [-1, 1], scaled to the dragged box) ----
+const regularPolygon = (n, rotation = -Math.PI / 2) =>
+  Array.from({ length: n }, (_, k) => [Math.cos(rotation + (2 * Math.PI * k) / n), Math.sin(rotation + (2 * Math.PI * k) / n)]);
+
+const normalizeShape = (points) => {
+  const xs = points.map((pt) => pt[0]);
+  const ys = points.map((pt) => pt[1]);
+  const [minX, maxX, minY, maxY] = [Math.min(...xs), Math.max(...xs), Math.min(...ys), Math.max(...ys)];
+  return points.map(([x, y]) => [((x - minX) / (maxX - minX)) * 2 - 1, ((y - minY) / (maxY - minY)) * 2 - 1]);
+};
+
+const SHAPE_UNIT = {
+  circle: regularPolygon(72),
+  square: [[-1, -1], [1, -1], [1, 1], [-1, 1]],
+  triangle: [[0, -1], [1, 1], [-1, 1]],
+  diamond: [[0, -1], [1, 0], [0, 1], [-1, 0]],
+  hexagon: regularPolygon(6, 0),
+  star: Array.from({ length: 10 }, (_, k) => {
+    const radius = k % 2 === 0 ? 1 : 0.42;
+    const angle = -Math.PI / 2 + (Math.PI * k) / 5;
+    return [Math.cos(angle) * radius, Math.sin(angle) * radius];
+  }),
+  heart: normalizeShape(Array.from({ length: 120 }, (_, k) => {
+    const t = (2 * Math.PI * k) / 120;
+    return [16 * Math.sin(t) ** 3, -(13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t))];
+  })),
+  flower: Array.from({ length: 160 }, (_, k) => {
+    const t = (2 * Math.PI * k) / 160;
+    const radius = 0.3 + 0.7 * Math.abs(Math.cos(2.5 * t));
+    return [Math.cos(t - Math.PI / 2) * radius, Math.sin(t - Math.PI / 2) * radius];
+  })
+};
+
+const SHAPES = [
+  { id: "line", label: "Line" },
+  { id: "circle", label: "Circle" },
+  { id: "square", label: "Square" },
+  { id: "triangle", label: "Triangle" },
+  { id: "diamond", label: "Diamond" },
+  { id: "hexagon", label: "Hexagon" },
+  { id: "star", label: "Star" },
+  { id: "heart", label: "Heart" },
+  { id: "flower", label: "Flower" }
+];
+
+// ---- mirror / symmetry ----
+const SYMMETRIES = [
+  { id: "off", label: "Off" },
+  { id: "vertical", label: "Vertical" },
+  { id: "horizontal", label: "Horizontal" },
+  { id: "diagonal", label: "Leaf axis" },
+  { id: "both", label: "4-way" },
+  { id: "radial", label: "Radial" },
+  { id: "kaleido", label: "Kaleido" }
+];
+const FALLBACK_GEO = { cx: W / 2, cy: H / 2, theta: -Math.PI / 4 };
+
+// Centre and long axis (the midrib) of the leaf, from its mask.
+function computeLeafGeometry(mask) {
+  const probe = document.createElement("canvas");
+  probe.width = W;
+  probe.height = H;
+  const ctx = probe.getContext("2d", { willReadFrequently: true });
+  ctx.drawImage(mask, LEAF_X, 0, LEAF_SIZE, LEAF_SIZE);
+  const data = ctx.getImageData(0, 0, W, H).data;
+  let n = 0, sx = 0, sy = 0, sxx = 0, syy = 0, sxy = 0;
+  for (let y = 0; y < H; y++) {
+    for (let x = 0; x < W; x++) {
+      if (data[(y * W + x) * 4 + 3] > 128) {
+        n++; sx += x; sy += y; sxx += x * x; syy += y * y; sxy += x * y;
+      }
+    }
+  }
+  if (!n) return FALLBACK_GEO;
+  const cx = sx / n;
+  const cy = sy / n;
+  const theta = 0.5 * Math.atan2(2 * (sxy / n - cx * cy), sxx / n - cx * cx - (syy / n - cy * cy));
+  return { cx, cy, theta };
+}
+
+// Each copy is p' = centre + M (p - centre); M is a rotation or a reflection.
+const matrixAt = (geo, a, b, c, d) => ({ cx: geo.cx, cy: geo.cy, a, b, c, d });
+const reflectionAbout = (geo, angle) => matrixAt(geo, Math.cos(2 * angle), Math.sin(2 * angle), Math.sin(2 * angle), -Math.cos(2 * angle));
+const rotationBy = (geo, angle) => matrixAt(geo, Math.cos(angle), -Math.sin(angle), Math.sin(angle), Math.cos(angle));
+const IDENTITY = { cx: 0, cy: 0, a: 1, b: 0, c: 0, d: 1 };
+
+function buildSymmetry(mode, count, geo) {
+  const identity = matrixAt(geo, 1, 0, 0, 1);
+  if (mode === "vertical") return [identity, reflectionAbout(geo, Math.PI / 2)];
+  if (mode === "horizontal") return [identity, reflectionAbout(geo, 0)];
+  if (mode === "diagonal") return [identity, reflectionAbout(geo, geo.theta)];
+  if (mode === "both") return [identity, reflectionAbout(geo, Math.PI / 2), reflectionAbout(geo, 0), rotationBy(geo, Math.PI)];
+  if (mode === "radial") return Array.from({ length: count }, (_, k) => rotationBy(geo, (2 * Math.PI * k) / count));
+  if (mode === "kaleido") {
+    return Array.from({ length: count }, (_, k) => [rotationBy(geo, (2 * Math.PI * k) / count), reflectionAbout(geo, Math.PI / 2 + (Math.PI * k) / count)]).flat();
+  }
+  return [identity];
+}
+
+const applyPoint = (m, pt) => ({
+  x: m.cx + m.a * (pt.x - m.cx) + m.b * (pt.y - m.cy),
+  y: m.cy + m.c * (pt.x - m.cx) + m.d * (pt.y - m.cy)
+});
+
+function DrawingCanvas({ canvasRef, color, tool, brush, size, shape, shapeFill, getCopies, onHistory }) {
   const drawing = useRef(false);
   const last = useRef(null);
+  const origin = useRef(null);
   const path = useRef([]);
   const base = useRef(null);
+  const copies = useRef([IDENTITY]);
 
   const point = (event) => {
     const rect = canvasRef.current.getBoundingClientRect();
@@ -109,6 +217,7 @@ function DrawingCanvas({ canvasRef, color, tool, brush, size, onHistory }) {
   };
 
   const activeBrush = tool === "eraser" ? "pen" : brush;
+  const usesWholePath = tool === "pen" && Boolean(WHOLE_PATH_BRUSHES[activeBrush]);
 
   const drawWholePath = (ctx, settings) => {
     ctx.putImageData(base.current, 0, 0);
@@ -118,10 +227,13 @@ function DrawingCanvas({ canvasRef, color, tool, brush, size, onHistory }) {
     ctx.lineJoin = settings.cap === "round" ? "round" : "miter";
     ctx.lineWidth = size * settings.width;
     ctx.strokeStyle = color;
-    ctx.beginPath();
-    ctx.moveTo(path.current[0].x, path.current[0].y);
-    path.current.forEach((pt) => ctx.lineTo(pt.x, pt.y));
-    if (path.current.length === 1) ctx.lineTo(path.current[0].x + 0.01, path.current[0].y);
+    ctx.beginPath(); // one path for every mirrored copy, so overlaps do not stack up opacity
+    copies.current.forEach((m) => {
+      const points = path.current.map((pt) => applyPoint(m, pt));
+      ctx.moveTo(points[0].x, points[0].y);
+      points.forEach((pt) => ctx.lineTo(pt.x, pt.y));
+      if (points.length === 1) ctx.lineTo(points[0].x + 0.01, points[0].y);
+    });
     ctx.stroke();
     ctx.restore();
   };
@@ -136,14 +248,7 @@ function DrawingCanvas({ canvasRef, color, tool, brush, size, onHistory }) {
     }
   };
 
-  const drawSegment = (from, to) => {
-    const ctx = canvasRef.current.getContext("2d");
-
-    if (tool !== "eraser" && WHOLE_PATH_BRUSHES[activeBrush]) {
-      drawWholePath(ctx, WHOLE_PATH_BRUSHES[activeBrush]);
-      return;
-    }
-
+  const drawSegmentOnce = (ctx, from, to, m) => {
     ctx.save();
     ctx.lineCap = "round";
     ctx.lineJoin = "round";
@@ -178,8 +283,11 @@ function DrawingCanvas({ canvasRef, color, tool, brush, size, onHistory }) {
       });
     } else if (activeBrush === "calligraphy") {
       const nib = (size * 1.5) / 2;
-      const dx = Math.cos(NIB_ANGLE) * nib;
-      const dy = Math.sin(NIB_ANGLE) * nib;
+      const nx = Math.cos(NIB_ANGLE) * nib;
+      const ny = Math.sin(NIB_ANGLE) * nib;
+      // The nib is mirrored/rotated along with the stroke.
+      const dx = m.a * nx + m.b * ny;
+      const dy = m.c * nx + m.d * ny;
       ctx.lineWidth = 1;
       ctx.beginPath();
       ctx.moveTo(from.x + dx, from.y + dy);
@@ -213,9 +321,62 @@ function DrawingCanvas({ canvasRef, color, tool, brush, size, onHistory }) {
     ctx.restore();
   };
 
+  const drawSegment = (from, to) => {
+    const ctx = canvasRef.current.getContext("2d");
+    if (usesWholePath) {
+      drawWholePath(ctx, WHOLE_PATH_BRUSHES[activeBrush]);
+      return;
+    }
+    copies.current.forEach((m) => drawSegmentOnce(ctx, applyPoint(m, from), applyPoint(m, to), m));
+  };
+
+  // Shapes are previewed live: restore the canvas, then draw the shape (and its mirrors).
+  const drawShape = () => {
+    const ctx = canvasRef.current.getContext("2d");
+    ctx.putImageData(base.current, 0, 0);
+    const a = origin.current;
+    const b = last.current;
+    let points;
+    let closed = true;
+    if (shape === "line") {
+      points = [a, b];
+      closed = false;
+    } else {
+      const cx = (a.x + b.x) / 2;
+      const cy = (a.y + b.y) / 2;
+      let hx = Math.abs(b.x - a.x) / 2;
+      let hy = Math.abs(b.y - a.y) / 2;
+      if (hx < 4 && hy < 4) hx = hy = 40; // a plain tap stamps a default-size shape
+      points = SHAPE_UNIT[shape].map(([ux, uy]) => ({ x: cx + ux * hx, y: cy + uy * hy }));
+    }
+    ctx.save();
+    ctx.lineJoin = "round";
+    ctx.lineCap = "round";
+    ctx.lineWidth = Math.max(2, size * 0.6);
+    ctx.strokeStyle = color;
+    ctx.fillStyle = color;
+    copies.current.forEach((m) => {
+      ctx.beginPath();
+      points.forEach((pt, i) => {
+        const q = applyPoint(m, pt);
+        if (i === 0) ctx.moveTo(q.x, q.y);
+        else ctx.lineTo(q.x, q.y);
+      });
+      if (closed) ctx.closePath();
+      if (shapeFill && closed) ctx.fill();
+      ctx.stroke();
+    });
+    ctx.restore();
+  };
+
   const draw = (event) => {
     if (!drawing.current) return;
     const p = point(event);
+    if (tool === "shape") {
+      last.current = p;
+      drawShape();
+      return;
+    }
     path.current.push(p);
     drawSegment(last.current, p);
     last.current = p;
@@ -230,13 +391,15 @@ function DrawingCanvas({ canvasRef, color, tool, brush, size, onHistory }) {
       onPointerDown={(e) => {
         e.currentTarget.setPointerCapture(e.pointerId);
         drawing.current = true;
+        copies.current = getCopies();
         const p = point(e);
         last.current = p;
+        origin.current = p;
         path.current = [p];
-        base.current = tool !== "eraser" && WHOLE_PATH_BRUSHES[activeBrush]
-          ? canvasRef.current.getContext("2d").getImageData(0, 0, W, H)
-          : null;
-        drawSegment(p, p); // a single tap leaves a mark
+        const needsBase = tool === "shape" || usesWholePath;
+        base.current = needsBase ? canvasRef.current.getContext("2d").getImageData(0, 0, W, H) : null;
+        if (tool === "shape") drawShape();
+        else drawSegment(p, p); // a single tap leaves a mark
       }}
       onPointerMove={draw}
       onPointerUp={() => {
@@ -251,6 +414,66 @@ function DrawingCanvas({ canvasRef, color, tool, brush, size, onHistory }) {
         base.current = null;
       }}
     />
+  );
+}
+
+function ShapeIcon({ id }) {
+  const points = id === "line" ? [[-0.85, 0.85], [0.85, -0.85]] : SHAPE_UNIT[id];
+  return (
+    <svg className="shape-icon" viewBox="-1.25 -1.25 2.5 2.5" aria-hidden="true">
+      <polyline
+        points={[...points, ...(id === "line" ? [] : [points[0]])].map(([x, y]) => `${x},${y}`).join(" ")}
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="0.14"
+        strokeLinejoin="round"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
+function SymmetryIcon({ id }) {
+  const line = (angle, key) => (
+    <line key={key} x1={14 - Math.cos(angle) * 12} y1={14 - Math.sin(angle) * 12} x2={14 + Math.cos(angle) * 12} y2={14 + Math.sin(angle) * 12} />
+  );
+  const axes = {
+    off: [],
+    vertical: [Math.PI / 2],
+    horizontal: [0],
+    diagonal: [-Math.PI / 4],
+    both: [0, Math.PI / 2],
+    radial: [0, Math.PI / 3, (2 * Math.PI) / 3],
+    kaleido: [0, Math.PI / 4, Math.PI / 2, (3 * Math.PI) / 4]
+  }[id];
+  return (
+    <svg className="symmetry-icon" viewBox="0 0 28 28" aria-hidden="true">
+      <rect x="2" y="2" width="24" height="24" rx="5" fill="none" stroke="currentColor" strokeOpacity=".35" strokeWidth="1.2" strokeDasharray={id === "off" ? "3 3" : undefined} />
+      <g stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeDasharray="2.5 2.5">{axes.map((angle, i) => line(angle, i))}</g>
+      {id !== "off" && <circle cx="14" cy="14" r="1.8" fill="currentColor" />}
+    </svg>
+  );
+}
+
+function SymmetryGuides({ mode, count, geo }) {
+  const reach = 1200;
+  const line = (angle, key, ray = false) => {
+    const dx = Math.cos(angle) * reach;
+    const dy = Math.sin(angle) * reach;
+    return <line key={key} x1={ray ? geo.cx : geo.cx - dx} y1={ray ? geo.cy : geo.cy - dy} x2={geo.cx + dx} y2={geo.cy + dy} />;
+  };
+  let lines = [];
+  if (mode === "vertical") lines = [line(Math.PI / 2, "v")];
+  else if (mode === "horizontal") lines = [line(0, "h")];
+  else if (mode === "diagonal") lines = [line(geo.theta, "d")];
+  else if (mode === "both") lines = [line(Math.PI / 2, "v"), line(0, "h")];
+  else if (mode === "radial") lines = Array.from({ length: count }, (_, k) => line(-Math.PI / 2 + (2 * Math.PI * k) / count, k, true));
+  else if (mode === "kaleido") lines = Array.from({ length: count }, (_, k) => line(Math.PI / 2 + (Math.PI * k) / count, k));
+  return (
+    <svg className="symmetry-guides" viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" aria-hidden="true">
+      <g>{lines}</g>
+      <circle cx={geo.cx} cy={geo.cy} r="4" />
+    </svg>
   );
 }
 
@@ -397,6 +620,12 @@ export default function EditPage() {
   const [leafColor, setLeafColor] = useState("#ffffff");
   const [tool, setTool] = useState("pen");
   const [brush, setBrush] = useState("pen");
+  const [toolTab, setToolTab] = useState("brushes");
+  const [shape, setShape] = useState("circle");
+  const [shapeFill, setShapeFill] = useState(false);
+  const [symmetry, setSymmetry] = useState("off");
+  const [symmetryCount, setSymmetryCount] = useState(6);
+  const [leafGeo, setLeafGeo] = useState(null);
   const [size, setSize] = useState(18);
   const [sending, setSending] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
@@ -412,6 +641,19 @@ export default function EditPage() {
   const textInputRef = useRef(null);
   const justAddedTextRef = useRef(null);
   const previousSelectionRef = useRef(null);
+
+  useEffect(() => {
+    const mask = leafRef.current;
+    if (!mask) return undefined;
+    const compute = () => setLeafGeo(computeLeafGeometry(mask));
+    if (mask.complete && mask.naturalWidth) compute();
+    else mask.addEventListener("load", compute, { once: true });
+    return () => mask.removeEventListener("load", compute);
+  }, []);
+
+  const symmetryRef = useRef({});
+  symmetryRef.current = { mode: symmetry, count: symmetryCount, geo: leafGeo || FALLBACK_GEO };
+  const getCopies = () => buildSymmetry(symmetryRef.current.mode, symmetryRef.current.count, symmetryRef.current.geo);
 
   // Mirrors of state so history commits always see the latest values.
   const stickersRef = useRef(placedStickers);
@@ -910,7 +1152,7 @@ export default function EditPage() {
           <div ref={canvasShellRef} className="canvas-shell" onPointerDownCapture={(event) => {if(event.target.tagName === "CANVAS") setSelectedStickerId(null)}}>
             <img ref={leafRef} className="leaf-mask-source" src="/assets/nescafe-leaf.png" alt="" />
             <div className="leaf-image" style={{ backgroundColor: leafColor }} role="img" aria-label="NESCAFÉ leaf drawing canvas" />
-            <DrawingCanvas canvasRef={canvasRef} color={color} tool={tool} brush={brush} size={size} onHistory={() => commit(true)} />
+            <DrawingCanvas canvasRef={canvasRef} color={color} tool={tool} brush={brush} size={size} shape={shape} shapeFill={shapeFill} getCopies={getCopies} onHistory={() => commit(true)} />
             <div className="placed-stickers" style={{ "--selection-color": transformColors.outline, "--selection-ink": transformColors.ink }}>
               {placedStickers.map((sticker) => (
                 <div
@@ -968,6 +1210,7 @@ export default function EditPage() {
               ))}
             </div>
             <img ref={outlineRef} className="leaf-dotted-outline" src="/assets/leaf-outline.svg" alt="" aria-hidden="true" />
+            {symmetry !== "off" && <SymmetryGuides mode={symmetry} count={symmetryCount} geo={leafGeo || FALLBACK_GEO} />}
             <span className="canvas-hint">YOUR WORLD STARTS HERE</span>
           </div>
         </div>
@@ -1072,27 +1315,106 @@ export default function EditPage() {
             </div>
           )}
 
-          <div className="brush-card" role="radiogroup" aria-label="Brush style">
-          <span className="brush-card-title">BRUSHES</span>
-          <div className="brush-grid">
-            {BRUSHES.map((b) => (
+          <div className="tool-panel">
+          <div className="tool-tabs" role="tablist" aria-label="Drawing options">
+            {[["brushes", "Brush", PaintBrush], ["shapes", "Shapes", Shapes], ["symmetry", "Mirror", FlipHorizontal]].map(([id, label, Icon]) => (
               <button
-                key={b.id}
+                key={id}
                 type="button"
-                role="radio"
-                aria-checked={brush === b.id}
-                title={b.label}
-                className={`brush-tile${brush === b.id ? (tool === "pen" ? " selected" : " current") : ""}`}
-                onClick={() => {
-                  setBrush(b.id);
-                  setTool("pen");
-                }}
+                role="tab"
+                aria-selected={toolTab === id}
+                title={label}
+                className={toolTab === id ? "tool-tab selected" : "tool-tab"}
+                onClick={() => setToolTab(id)}
               >
-                <BrushSample id={b.id} />
-                <span>{b.label}</span>
+                <Icon weight="bold" size={14} />
+                <span>{label}</span>
+                {id === "symmetry" && symmetry !== "off" && <i className="tab-dot" />}
               </button>
             ))}
           </div>
+
+          {toolTab === "brushes" && (
+            <div className="brush-card" role="radiogroup" aria-label="Brush style">
+              <div className="brush-grid">
+                {BRUSHES.map((b) => (
+                  <button
+                    key={b.id}
+                    type="button"
+                    role="radio"
+                    aria-checked={brush === b.id}
+                    title={b.label}
+                    className={`brush-tile${brush === b.id ? (tool === "pen" ? " selected" : " current") : ""}`}
+                    onClick={() => {
+                      setBrush(b.id);
+                      setTool("pen");
+                    }}
+                  >
+                    <BrushSample id={b.id} />
+                    <span>{b.label}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {toolTab === "shapes" && (
+            <div className="shape-card">
+              <div className="shape-grid" role="radiogroup" aria-label="Shape">
+                {SHAPES.map((sh) => (
+                  <button
+                    key={sh.id}
+                    type="button"
+                    role="radio"
+                    aria-checked={tool === "shape" && shape === sh.id}
+                    title={sh.label}
+                    className={`shape-tile${tool === "shape" && shape === sh.id ? " selected" : ""}`}
+                    onClick={() => {
+                      setShape(sh.id);
+                      setTool("shape");
+                    }}
+                  >
+                    <ShapeIcon id={sh.id} />
+                  </button>
+                ))}
+              </div>
+              <div className="shape-fill" role="radiogroup" aria-label="Shape style">
+                <button type="button" role="radio" aria-checked={!shapeFill} className={!shapeFill ? "selected" : ""} onClick={() => setShapeFill(false)}>OUTLINE</button>
+                <button type="button" role="radio" aria-checked={shapeFill} className={shapeFill ? "selected" : ""} onClick={() => setShapeFill(true)}>FILLED</button>
+              </div>
+              <p className="tool-hint">Pick a shape, then drag on the leaf. It follows the Mirror setting.</p>
+            </div>
+          )}
+
+          {toolTab === "symmetry" && (
+            <div className="symmetry-card">
+              <div className="symmetry-grid" role="radiogroup" aria-label="Mirror mode">
+                {SYMMETRIES.map((m) => (
+                  <button
+                    key={m.id}
+                    type="button"
+                    role="radio"
+                    aria-checked={symmetry === m.id}
+                    title={m.label}
+                    className={symmetry === m.id ? "symmetry-tile selected" : "symmetry-tile"}
+                    onClick={() => setSymmetry(m.id)}
+                  >
+                    <SymmetryIcon id={m.id} />
+                    <span>{m.label}</span>
+                  </button>
+                ))}
+              </div>
+              {(symmetry === "radial" || symmetry === "kaleido") && (
+                <div className="symmetry-count">
+                  <span>SECTIONS</span>
+                  <button type="button" onClick={() => setSymmetryCount((n) => Math.max(2, n - 1))} aria-label="Fewer sections">-</button>
+                  <b>{symmetryCount}</b>
+                  <button type="button" onClick={() => setSymmetryCount((n) => Math.min(12, n + 1))} aria-label="More sections">+</button>
+                </div>
+              )}
+              <p className="tool-hint">Draw once, and every stroke is copied around the leaf.</p>
+            </div>
+          )}
         </div>
       </aside>
 
