@@ -48,9 +48,28 @@ const controlColors = (leafColor) => {
   return { outline, ink: contrast(outline, "#111111") > contrast(outline, "#ffffff") ? "#111111" : "#ffffff" };
 };
 
-function DrawingCanvas({ canvasRef, color, tool, size, onHistory }) {
+const BRUSHES = [
+  { id: "pen", label: "Pen" },
+  { id: "marker", label: "Marker" },
+  { id: "highlighter", label: "Highlighter" },
+  { id: "spray", label: "Spray" },
+  { id: "crayon", label: "Crayon" },
+  { id: "calligraphy", label: "Calligraphy" },
+  { id: "neon", label: "Neon" }
+];
+
+// Translucent brushes look wrong when segments overlap, so they are redrawn as one whole path.
+const WHOLE_PATH_BRUSHES = {
+  marker: { width: 1.15, alpha: 0.85, cap: "square" },
+  highlighter: { width: 2.4, alpha: 0.35, cap: "butt" }
+};
+const NIB_ANGLE = -Math.PI / 4;
+
+function DrawingCanvas({ canvasRef, color, tool, brush, size, onHistory }) {
   const drawing = useRef(false);
   const last = useRef(null);
+  const path = useRef([]);
+  const base = useRef(null);
 
   const point = (event) => {
     const rect = canvasRef.current.getBoundingClientRect();
@@ -60,21 +79,116 @@ function DrawingCanvas({ canvasRef, color, tool, size, onHistory }) {
     };
   };
 
-  const draw = (event) => {
-    if (!drawing.current) return;
+  const activeBrush = tool === "eraser" ? "pen" : brush;
+
+  const drawWholePath = (ctx, settings) => {
+    ctx.putImageData(base.current, 0, 0);
+    ctx.save();
+    ctx.globalAlpha = settings.alpha;
+    ctx.lineCap = settings.cap;
+    ctx.lineJoin = settings.cap === "round" ? "round" : "miter";
+    ctx.lineWidth = size * settings.width;
+    ctx.strokeStyle = color;
+    ctx.beginPath();
+    ctx.moveTo(path.current[0].x, path.current[0].y);
+    path.current.forEach((pt) => ctx.lineTo(pt.x, pt.y));
+    if (path.current.length === 1) ctx.lineTo(path.current[0].x + 0.01, path.current[0].y);
+    ctx.stroke();
+    ctx.restore();
+  };
+
+  // Walks the segment in small steps and stamps once per step.
+  const stamps = (from, to, spacing, stamp) => {
+    const distance = Math.hypot(to.x - from.x, to.y - from.y);
+    const steps = Math.max(1, Math.ceil(distance / spacing));
+    for (let i = 1; i <= steps; i++) {
+      const t = i / steps;
+      stamp(from.x + (to.x - from.x) * t, from.y + (to.y - from.y) * t);
+    }
+  };
+
+  const drawSegment = (from, to) => {
     const ctx = canvasRef.current.getContext("2d");
-    const p = point(event);
+
+    if (tool !== "eraser" && WHOLE_PATH_BRUSHES[activeBrush]) {
+      drawWholePath(ctx, WHOLE_PATH_BRUSHES[activeBrush]);
+      return;
+    }
+
     ctx.save();
     ctx.lineCap = "round";
     ctx.lineJoin = "round";
     ctx.lineWidth = size;
     ctx.globalCompositeOperation = tool === "eraser" ? "destination-out" : "source-over";
     ctx.strokeStyle = color;
-    ctx.beginPath();
-    ctx.moveTo(last.current.x, last.current.y);
-    ctx.lineTo(p.x, p.y);
-    ctx.stroke();
+    ctx.fillStyle = color;
+
+    if (activeBrush === "spray") {
+      const radius = size * 0.9;
+      stamps(from, to, Math.max(2, size / 5), (x, y) => {
+        for (let i = 0; i < Math.round(size * 0.9) + 3; i++) {
+          const angle = Math.random() * Math.PI * 2;
+          const dist = radius * Math.sqrt(Math.random());
+          ctx.globalAlpha = 0.35 + Math.random() * 0.65;
+          ctx.beginPath();
+          ctx.arc(x + Math.cos(angle) * dist, y + Math.sin(angle) * dist, 0.5 + Math.random() * 0.9, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      });
+    } else if (activeBrush === "crayon") {
+      const radius = size * 0.55;
+      stamps(from, to, 2, (x, y) => {
+        for (let i = 0; i < Math.round(size * 0.7) + 2; i++) {
+          if (Math.random() < 0.28) continue; // gaps give the waxy grain
+          const angle = Math.random() * Math.PI * 2;
+          const dist = radius * Math.sqrt(Math.random());
+          const grain = 1.2 + Math.random() * 2;
+          ctx.globalAlpha = 0.45 + Math.random() * 0.5;
+          ctx.fillRect(x + Math.cos(angle) * dist, y + Math.sin(angle) * dist, grain, grain);
+        }
+      });
+    } else if (activeBrush === "calligraphy") {
+      const nib = (size * 1.5) / 2;
+      const dx = Math.cos(NIB_ANGLE) * nib;
+      const dy = Math.sin(NIB_ANGLE) * nib;
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(from.x + dx, from.y + dy);
+      ctx.lineTo(from.x - dx, from.y - dy);
+      ctx.lineTo(to.x - dx, to.y - dy);
+      ctx.lineTo(to.x + dx, to.y + dy);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+    } else if (activeBrush === "neon") {
+      ctx.shadowColor = color;
+      ctx.shadowBlur = size * 1.4;
+      ctx.lineWidth = Math.max(2, size * 0.55);
+      ctx.beginPath();
+      ctx.moveTo(from.x, from.y);
+      ctx.lineTo(to.x, to.y);
+      ctx.stroke();
+      ctx.shadowBlur = 0;
+      ctx.strokeStyle = "rgba(255,255,255,.9)";
+      ctx.lineWidth = Math.max(1, size * 0.2);
+      ctx.beginPath();
+      ctx.moveTo(from.x, from.y);
+      ctx.lineTo(to.x, to.y);
+      ctx.stroke();
+    } else {
+      ctx.beginPath();
+      ctx.moveTo(from.x, from.y);
+      ctx.lineTo(to.x, to.y);
+      ctx.stroke();
+    }
     ctx.restore();
+  };
+
+  const draw = (event) => {
+    if (!drawing.current) return;
+    const p = point(event);
+    path.current.push(p);
+    drawSegment(last.current, p);
     last.current = p;
   };
 
@@ -87,19 +201,49 @@ function DrawingCanvas({ canvasRef, color, tool, size, onHistory }) {
       onPointerDown={(e) => {
         e.currentTarget.setPointerCapture(e.pointerId);
         drawing.current = true;
-        last.current = point(e);
+        const p = point(e);
+        last.current = p;
+        path.current = [p];
+        base.current = tool !== "eraser" && WHOLE_PATH_BRUSHES[activeBrush]
+          ? canvasRef.current.getContext("2d").getImageData(0, 0, W, H)
+          : null;
+        drawSegment(p, p); // a single tap leaves a mark
       }}
       onPointerMove={draw}
       onPointerUp={() => {
         if (drawing.current) {
           drawing.current = false;
+          base.current = null;
           onHistory();
         }
       }}
       onPointerCancel={() => {
         drawing.current = false;
+        base.current = null;
       }}
     />
+  );
+}
+
+function BrushSample({ id }) {
+  const wave = "M6 16 C 18 2, 30 2, 40 12 S 62 22, 74 8";
+  const common = { fill: "none", stroke: "currentColor", strokeLinecap: "round", strokeLinejoin: "round" };
+  return (
+    <svg className="brush-sample" viewBox="0 0 80 24" aria-hidden="true">
+      {id === "pen" && <path d={wave} {...common} strokeWidth="3" />}
+      {id === "marker" && <path d={wave} {...common} strokeWidth="5" strokeLinecap="square" opacity=".85" />}
+      {id === "highlighter" && <path d={wave} {...common} strokeWidth="10" strokeLinecap="butt" opacity=".4" />}
+      {id === "spray" && <path d={wave} {...common} strokeWidth="7" strokeDasharray="0.1 3.4" />}
+      {id === "crayon" && <path d={wave} {...common} strokeWidth="6" strokeDasharray="2 1.5 0.5 2" opacity=".85" />}
+      {id === "calligraphy" && <path d={wave} {...common} strokeWidth="5" strokeLinecap="butt" />}
+      {id === "neon" && (
+        <>
+          <path d={wave} {...common} strokeWidth="7" opacity=".35" />
+          <path d={wave} {...common} strokeWidth="3.5" opacity=".7" />
+          <path d={wave} fill="none" stroke="#fff" strokeWidth="1.5" strokeLinecap="round" />
+        </>
+      )}
+    </svg>
   );
 }
 
@@ -220,6 +364,8 @@ export default function EditPage() {
   const [color, setColor] = useState(INK_COLORS[0]);
   const [leafColor, setLeafColor] = useState("#ffffff");
   const [tool, setTool] = useState("pen");
+  const [brush, setBrush] = useState("pen");
+  const [brushMenuOpen, setBrushMenuOpen] = useState(false);
   const [size, setSize] = useState(18);
   const [sending, setSending] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
@@ -242,6 +388,21 @@ export default function EditPage() {
   useEffect(() => {
     snapshot();
   }, [snapshot]);
+
+  useEffect(() => {
+    if (!brushMenuOpen) return;
+    const close = (event) => {
+      if (event.type === "keydown" && event.key !== "Escape") return;
+      if (event.type === "pointerdown" && event.target.closest(".tool-pen-wrap")) return;
+      setBrushMenuOpen(false);
+    };
+    window.addEventListener("pointerdown", close);
+    window.addEventListener("keydown", close);
+    return () => {
+      window.removeEventListener("pointerdown", close);
+      window.removeEventListener("keydown", close);
+    };
+  }, [brushMenuOpen]);
 
   useEffect(() => {
     return () => {
@@ -577,10 +738,43 @@ export default function EditPage() {
       <section className="editor-grid">
         <aside className="toolbox">
           <span className="vertical-label">DRAW TOOLS</span>
-          <button className={tool === "pen" ? "active" : ""} onClick={() => setTool("pen")} aria-label="Pen">
-            <PencilSimple />
-          </button>
-          <button className={tool === "eraser" ? "active" : ""} onClick={() => setTool("eraser")} aria-label="Eraser">
+          <div className="tool-pen-wrap">
+            <button
+              className={tool === "pen" ? "active" : ""}
+              onClick={() => {
+                if (tool === "pen") setBrushMenuOpen((open) => !open);
+                else setTool("pen");
+              }}
+              aria-label={`Brush: ${BRUSHES.find((b) => b.id === brush).label}`}
+              aria-haspopup="menu"
+              aria-expanded={brushMenuOpen}
+              title="Click again to change brush"
+            >
+              <PencilSimple />
+            </button>
+            {brushMenuOpen && (
+              <div className="brush-menu" role="menu">
+                {BRUSHES.map((b) => (
+                  <button
+                    key={b.id}
+                    type="button"
+                    role="menuitemradio"
+                    aria-checked={brush === b.id}
+                    className={brush === b.id ? "brush-option selected" : "brush-option"}
+                    onClick={() => {
+                      setBrush(b.id);
+                      setTool("pen");
+                      setBrushMenuOpen(false);
+                    }}
+                  >
+                    <BrushSample id={b.id} />
+                    <span>{b.label}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+          <button className={tool === "eraser" ? "active" : ""} onClick={() => { setTool("eraser"); setBrushMenuOpen(false); }} aria-label="Eraser">
             <Eraser />
           </button>
           <button onClick={undo} aria-label="Undo">
@@ -595,7 +789,7 @@ export default function EditPage() {
           <div ref={canvasShellRef} className="canvas-shell" onPointerDownCapture={(event) => {if(event.target.tagName === "CANVAS") setSelectedStickerId(null)}}>
             <img ref={leafRef} className="leaf-mask-source" src="/assets/nescafe-leaf.png" alt="" />
             <div className="leaf-image" style={{ backgroundColor: leafColor }} role="img" aria-label="NESCAFÉ leaf drawing canvas" />
-            <DrawingCanvas canvasRef={canvasRef} color={color} tool={tool} size={size} onHistory={snapshot} />
+            <DrawingCanvas canvasRef={canvasRef} color={color} tool={tool} brush={brush} size={size} onHistory={snapshot} />
             <div className="placed-stickers" style={{ "--selection-color": transformColors.outline, "--selection-ink": transformColors.ink }}>
               {placedStickers.map((sticker) => (
                 <div
