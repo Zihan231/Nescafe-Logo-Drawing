@@ -365,7 +365,6 @@ export default function EditPage() {
   const [leafColor, setLeafColor] = useState("#ffffff");
   const [tool, setTool] = useState("pen");
   const [brush, setBrush] = useState("pen");
-  const [brushMenuOpen, setBrushMenuOpen] = useState(false);
   const [size, setSize] = useState(18);
   const [sending, setSending] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
@@ -388,27 +387,6 @@ export default function EditPage() {
   useEffect(() => {
     snapshot();
   }, [snapshot]);
-
-  useEffect(() => {
-    if (!brushMenuOpen) return;
-    const close = (event) => {
-      if (event.type === "keydown" && event.key !== "Escape") return;
-      if (event.type === "pointerdown" && event.target.closest(".tool-pen-wrap")) return;
-      setBrushMenuOpen(false);
-    };
-    window.addEventListener("pointerdown", close);
-    window.addEventListener("keydown", close);
-    return () => {
-      window.removeEventListener("pointerdown", close);
-      window.removeEventListener("keydown", close);
-    };
-  }, [brushMenuOpen]);
-
-  useEffect(() => {
-    return () => {
-      if (successTimerRef.current) clearTimeout(successTimerRef.current);
-    };
-  }, []);
 
   const restore = (url) => {
     const img = new Image();
@@ -737,44 +715,12 @@ export default function EditPage() {
 
       <section className="editor-grid">
         <aside className="toolbox">
-          <span className="vertical-label">DRAW TOOLS</span>
-          <div className="tool-pen-wrap">
-            <button
-              className={tool === "pen" ? "active" : ""}
-              onClick={() => {
-                if (tool === "pen") setBrushMenuOpen((open) => !open);
-                else setTool("pen");
-              }}
-              aria-label={`Brush: ${BRUSHES.find((b) => b.id === brush).label}`}
-              aria-haspopup="menu"
-              aria-expanded={brushMenuOpen}
-              title="Click again to change brush"
-            >
-              <PencilSimple />
-            </button>
-            {brushMenuOpen && (
-              <div className="brush-menu" role="menu">
-                {BRUSHES.map((b) => (
-                  <button
-                    key={b.id}
-                    type="button"
-                    role="menuitemradio"
-                    aria-checked={brush === b.id}
-                    className={brush === b.id ? "brush-option selected" : "brush-option"}
-                    onClick={() => {
-                      setBrush(b.id);
-                      setTool("pen");
-                      setBrushMenuOpen(false);
-                    }}
-                  >
-                    <BrushSample id={b.id} />
-                    <span>{b.label}</span>
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-          <button className={tool === "eraser" ? "active" : ""} onClick={() => { setTool("eraser"); setBrushMenuOpen(false); }} aria-label="Eraser">
+          <span className="tool-card-title">DRAW TOOLS</span>
+          <div className="tool-row">
+          <button className={tool === "pen" ? "active" : ""} onClick={() => setTool("pen")} aria-label="Pen">
+            <PencilSimple />
+          </button>
+          <button className={tool === "eraser" ? "active" : ""} onClick={() => setTool("eraser")} aria-label="Eraser">
             <Eraser />
           </button>
           <button onClick={undo} aria-label="Undo">
@@ -783,6 +729,30 @@ export default function EditPage() {
           <button onClick={() => setPendingDelete({ type: "clear" })} aria-label="Clear">
             <Trash />
           </button>
+          </div>
+
+          <div className="brush-card" role="radiogroup" aria-label="Brush style">
+            <span className="brush-card-title">BRUSHES</span>
+            <div className="brush-grid">
+              {BRUSHES.map((b) => (
+                <button
+                  key={b.id}
+                  type="button"
+                  role="radio"
+                  aria-checked={brush === b.id}
+                  title={b.label}
+                  className={`brush-tile${brush === b.id ? (tool === "pen" ? " selected" : " current") : ""}`}
+                  onClick={() => {
+                    setBrush(b.id);
+                    setTool("pen");
+                  }}
+                >
+                  <BrushSample id={b.id} />
+                  <span>{b.label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
         </aside>
 
         <div className="studio">

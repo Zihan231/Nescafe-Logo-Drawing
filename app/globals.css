@@ -141,10 +141,17 @@
 .color-panel-hex input:focus{border-color:#fff}
 @media(min-width:601px){.editor-grid .toolbox{align-self:start;margin-top:clamp(0px,3vh,28px)}}
 
-.tool-pen-wrap{position:relative}
-.toolbox .brush-menu{position:absolute;left:calc(100% + 12px);top:0;z-index:30;display:flex;flex-direction:column;gap:4px;min-width:176px;padding:8px;background:rgba(26,5,8,.92);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border:1px solid rgba(255,255,255,.2);border-radius:18px;box-shadow:0 14px 34px rgba(18,2,5,.5)}
-.toolbox .brush-menu .brush-option{width:100%;height:auto;display:flex;align-items:center;justify-content:flex-start;gap:12px;padding:7px 10px;border:1px solid transparent;border-radius:12px;background:transparent;color:#fff;font:700 11px 'DM Sans',Arial,sans-serif;letter-spacing:.12em;text-transform:uppercase;cursor:pointer}
-.toolbox .brush-menu .brush-option:hover{background:rgba(255,255,255,.12)}
-.toolbox .brush-menu .brush-option.selected{background:#fff;color:#a21f25;box-shadow:none}
-.brush-sample{width:56px;height:20px;flex:none}
-@media(max-width:600px){.toolbox .brush-menu{left:0;top:calc(100% + 8px)}}
+.editor-grid .toolbox{position:relative;justify-self:start;align-self:start;width:212px;flex-direction:column;align-items:stretch;gap:10px;padding:12px 12px 12px;background:rgba(26,5,8,.82);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border:1px solid rgba(255,255,255,.18);border-radius:22px;box-shadow:0 14px 34px rgba(18,2,5,.45),inset 0 1px 0 rgba(255,255,255,.12)}
+.tool-card-title,.brush-card-title{font:800 9px 'DM Sans',Arial,sans-serif;letter-spacing:.22em;color:rgba(255,255,255,.7);text-align:center}
+.tool-row{display:flex;justify-content:center;gap:8px}
+.editor-grid .toolbox .tool-row button{width:40px;height:40px;border-radius:12px;font-size:18px}
+.brush-card{display:flex;flex-direction:column;gap:9px;padding-top:10px;border-top:1px solid rgba(255,255,255,.14)}
+.brush-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.toolbox .brush-card .brush-tile{width:100%;height:auto;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;padding:9px 2px 7px;border:1px solid rgba(255,255,255,.14);border-radius:13px;background:rgba(255,255,255,.06);color:#fff;font-size:inherit;cursor:pointer;transition:background .15s ease,transform .15s ease,border-color .15s ease}
+.toolbox .brush-card .brush-tile:hover{background:rgba(255,255,255,.16);border-color:rgba(255,255,255,.4);transform:translateY(-1px)}
+.toolbox .brush-card .brush-tile.selected{background:#fff;color:#a21f25;border-color:#fff;box-shadow:0 8px 18px rgba(80,0,10,.3)}
+.toolbox .brush-card .brush-tile.current{border-color:rgba(255,255,255,.6)}
+.brush-tile span{font:800 8px 'DM Sans',Arial,sans-serif;letter-spacing:.06em;text-transform:uppercase;line-height:1;white-space:nowrap}
+.brush-sample{width:52px;height:18px;flex:none}
+@media(max-width:1100px){.editor-grid .toolbox{width:68px;padding:10px 8px}.tool-card-title,.brush-card-title,.brush-tile span{display:none}.tool-row{flex-direction:column;align-items:center}.brush-grid{grid-template-columns:1fr}.toolbox .brush-card .brush-tile{padding:7px 2px}.brush-sample{width:44px}}
+@media(max-width:600px){.editor-grid .toolbox{width:auto;flex-direction:row;align-self:center;justify-self:center;padding:6px 10px;border-radius:18px}.tool-row{flex-direction:row}.editor-grid .toolbox .tool-row button{width:38px;height:38px}.brush-card{position:absolute;left:0;top:calc(100% + 6px);width:min(94vw,420px);padding:7px 8px;background:rgba(26,5,8,.9);border:1px solid rgba(255,255,255,.18);border-radius:16px;z-index:12}.brush-grid{display:flex;overflow-x:auto;gap:6px}.toolbox .brush-card .brush-tile{width:56px;flex:none}}
