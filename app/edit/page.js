@@ -20,17 +20,12 @@ import {
 } from "@phosphor-icons/react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { DOODLE_CATEGORIES } from "@/lib/doodles";
 
 const W = 760;
 const H = 560;
 const LEAF_SIZE = 560;
 const LEAF_X = (W - LEAF_SIZE) / 2;
-const STICKERS = [
-  { src: "/assets/sticker-love.png", label: "Love" },
-  { src: "/assets/sticker-secret.png", label: "Secret" },
-  { src: "/assets/sticker-dance.png", label: "Dance" },
-  { src: "/assets/sticker-snack.png", label: "Snack" }
-];
 const INK_COLORS = ["#ed1c2e", "#ffca28", "#52d19b", "#72b7ff", "#ffffff", "#140508"];
 const LEAF_COLORS = ["#ffffff", "#f5ebdf", "#ebd5bf", "#fce2db", "#e2ece9", "#dae8f5", "#a21f25", "#5b1317", "#241215", "#1e3a5f"];
 const EDITOR_COLOR = "#a21f25";
@@ -60,7 +55,7 @@ function resizedItem(item, ratio, start) {
     return { ...item, fontSize, ...measureText(item.text, item.font, fontSize) };
   }
   const w = Math.max(55, Math.min(230, start.w * ratio));
-  return { ...item, w, h: w * STICKER_ASPECT };
+  return { ...item, w, h: w * (item.aspect || STICKER_ASPECT) };
 }
 
 const luminance = (hex) => {
@@ -636,6 +631,8 @@ export default function EditPage() {
   const [pendingDelete, setPendingDelete] = useState(null); // { type: "clear" } | { type: "sticker", id }
   const [dragPreview, setDragPreview] = useState(null);
   const trayDragRef = useRef(null);
+  const trayStartRef = useRef({ x: 0, y: 0 });
+  const [doodleCategory, setDoodleCategory] = useState("classic");
   const stickerGestureRef = useRef({ id: null, pointers: new Map(), lastX: 0, lastY: 0, startDistance: 0, start: { w: 112, fontSize: 30 } });
   const transformHandleRef = useRef(null);
   const textInputRef = useRef(null);
@@ -805,8 +802,8 @@ export default function EditPage() {
   const addSticker = (sticker, x, y) => {
     const id = crypto.randomUUID();
     setPlacedStickers((items) => [...items, {
-      id, src: sticker.src, label: sticker.label,
-      x, y, w: 112, h: 138, rotation: 0
+      id, src: sticker.src, label: sticker.label, aspect: sticker.aspect || STICKER_ASPECT, alpha: Boolean(sticker.alpha),
+      x, y, w: 112, h: 112 * (sticker.aspect || STICKER_ASPECT), rotation: 0
     }]);
     setSelectedStickerId(id);
   };
@@ -891,6 +888,7 @@ export default function EditPage() {
     event.preventDefault();
     event.currentTarget.setPointerCapture(event.pointerId);
     trayDragRef.current = sticker;
+    trayStartRef.current = { x: event.clientX, y: event.clientY };
     setDragPreview({ sticker, x: event.clientX, y: event.clientY });
   };
 
@@ -901,7 +899,14 @@ export default function EditPage() {
 
   const endTrayDrag = (event) => {
     if (!trayDragRef.current) return;
-    dropSticker(trayDragRef.current, { x: event.clientX, y: event.clientY });
+    const moved = Math.hypot(event.clientX - trayStartRef.current.x, event.clientY - trayStartRef.current.y);
+    if (moved < 6 && event.type === "pointerup") {
+      // A plain click adds the doodle in the middle of the leaf.
+      const spot = leafCenterSpot();
+      addSticker(trayDragRef.current, spot.x, spot.y);
+    } else {
+      dropSticker(trayDragRef.current, { x: event.clientX, y: event.clientY });
+    }
     trayDragRef.current = null;
     setDragPreview(null);
   };
@@ -1001,7 +1006,7 @@ export default function EditPage() {
     transformHandleRef.current = null;
   };
 
-  const loadStickerImage = (src) => new Promise((resolve) => {
+  const loadStickerImage = (src, keepWhite = false) => new Promise((resolve) => {
     const img = new Image();
     img.onload = () => {
       const clean = document.createElement("canvas");
@@ -1009,11 +1014,13 @@ export default function EditPage() {
       clean.height = img.height;
       const ctx = clean.getContext("2d", { willReadFrequently: true });
       ctx.drawImage(img, 0, 0);
-      const pixels = ctx.getImageData(0, 0, clean.width, clean.height);
-      for (let i = 0; i < pixels.data.length; i += 4) {
-        if (pixels.data[i] > 245 && pixels.data[i + 1] > 245 && pixels.data[i + 2] > 245) pixels.data[i + 3] = 0;
+      if (!keepWhite) {
+        const pixels = ctx.getImageData(0, 0, clean.width, clean.height);
+        for (let i = 0; i < pixels.data.length; i += 4) {
+          if (pixels.data[i] > 245 && pixels.data[i + 1] > 245 && pixels.data[i + 2] > 245) pixels.data[i + 3] = 0;
+        }
+        ctx.putImageData(pixels, 0, 0);
       }
-      ctx.putImageData(pixels, 0, 0);
       resolve(clean);
     };
     img.src = src;
@@ -1040,7 +1047,7 @@ export default function EditPage() {
     outputCtx.globalCompositeOperation = "source-over";
     outputCtx.drawImage(strokes, 0, 0);
     const stickerImages = await Promise.all(placedStickers.map((item) => (
-      item.kind === "text" ? document.fonts.load(fontSpec(item.font, item.fontSize), item.text) : loadStickerImage(item.src)
+      item.kind === "text" ? document.fonts.load(fontSpec(item.font, item.fontSize), item.text) : loadStickerImage(item.src, item.alpha)
     )));
     placedStickers.forEach((item, index) => {
       outputCtx.save();
@@ -1172,7 +1179,7 @@ export default function EditPage() {
                       {sticker.text}
                     </span>
                   ) : (
-                    <img src={sticker.src} alt={sticker.label} />
+                    <img className={sticker.alpha ? "alpha-art" : undefined} src={sticker.src} alt={sticker.label} />
                   )}
                   {selectedStickerId === sticker.id && (
                     <>
@@ -1215,24 +1222,7 @@ export default function EditPage() {
           </div>
         </div>
 
-        <aside className="stickers">
-          <span>DROP A DOODLE</span>
-          <div>
-            {STICKERS.map((s) => (
-              <motion.button
-                key={s.src}
-                onPointerDown={(event) => startTrayDrag(s, event)}
-                onPointerMove={moveTrayDrag}
-                onPointerUp={endTrayDrag}
-                onPointerCancel={endTrayDrag}
-                whileHover={{ scale: 1.06, rotate: -2 }}
-                aria-label={`Drag ${s.label} onto the leaf`}
-              >
-                <img src={s.src} alt={s.label} />
-              </motion.button>
-            ))}
-          </div>
-        </aside>
+        <div className="doodle-spacer" aria-hidden="true" />
       </section>
 
       {dragPreview && (
@@ -1429,6 +1419,43 @@ export default function EditPage() {
             </div>
           )}
         </div>
+      </aside>
+
+      {/* Doodles by category: pinned to the right edge, aligned with the LOGO card below */}
+      <aside className="doodle-card">
+        <span className="doodle-card-title">DROP A DOODLE</span>
+        <div className="doodle-cats" role="tablist" aria-label="Doodle categories">
+          {DOODLE_CATEGORIES.map((cat) => (
+            <button
+              key={cat.id}
+              type="button"
+              role="tab"
+              aria-selected={doodleCategory === cat.id}
+              className={doodleCategory === cat.id ? "doodle-cat selected" : "doodle-cat"}
+              onClick={() => setDoodleCategory(cat.id)}
+            >
+              {cat.label}
+            </button>
+          ))}
+        </div>
+        <div className="doodle-grid">
+          {(DOODLE_CATEGORIES.find((cat) => cat.id === doodleCategory) || DOODLE_CATEGORIES[0]).items.map((item) => (
+            <motion.button
+              key={item.label + item.src.length}
+              className="doodle-tile"
+              onPointerDown={(event) => startTrayDrag(item, event)}
+              onPointerMove={moveTrayDrag}
+              onPointerUp={endTrayDrag}
+              onPointerCancel={endTrayDrag}
+              whileHover={{ scale: 1.08, rotate: -2 }}
+              title={item.label}
+              aria-label={`Click or drag ${item.label} onto the leaf`}
+            >
+              <img className={item.alpha ? "alpha-art" : undefined} src={item.src} alt={item.label} draggable={false} />
+            </motion.button>
+          ))}
+        </div>
+        <p className="tool-hint">Click a doodle to add it, or drag it onto the leaf.</p>
       </aside>
 
       {/* Bottom Controls Bar with Both Color Sections */}
