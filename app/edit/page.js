@@ -121,6 +121,7 @@ export default function EditPage() {
   const successTimerRef = useRef(null);
   const [placedStickers, setPlacedStickers] = useState([]);
   const [selectedStickerId, setSelectedStickerId] = useState(null);
+  const [pendingDelete, setPendingDelete] = useState(null); // { type: "clear" } | { type: "sticker", id }
   const [dragPreview, setDragPreview] = useState(null);
   const trayDragRef = useRef(null);
   const stickerGestureRef = useRef({ id: null, pointers: new Map(), lastX: 0, lastY: 0, startDistance: 0, startWidth: 0 });
@@ -205,18 +206,36 @@ export default function EditPage() {
     setSelectedStickerId(null);
   };
 
+  const requestDeleteSticker = (id, event) => {
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+    setPendingDelete({ type: "sticker", id });
+  };
+
+  const handleConfirmDelete = () => {
+    if (pendingDelete?.type === "clear") clear();
+    else if (pendingDelete?.type === "sticker") deleteSticker(pendingDelete.id);
+    setPendingDelete(null);
+  };
+
   useEffect(() => {
     const handleKeyDown = (e) => {
-      if ((e.key === "Delete" || e.key === "Backspace") && selectedStickerId) {
+      if (e.key === "Escape") {
+        setPendingDelete(null);
+        return;
+      }
+      if ((e.key === "Delete" || e.key === "Backspace") && selectedStickerId && !pendingDelete) {
         if (e.target.tagName !== "INPUT" && e.target.tagName !== "TEXTAREA") {
           e.preventDefault();
-          deleteSticker(selectedStickerId);
+          setPendingDelete({ type: "sticker", id: selectedStickerId });
         }
       }
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [selectedStickerId]);
+  }, [selectedStickerId, pendingDelete]);
 
   const addSticker = (sticker, x, y) => {
     const id = crypto.randomUUID();
@@ -492,7 +511,7 @@ export default function EditPage() {
           <button onClick={undo} aria-label="Undo">
             <ArrowCounterClockwise />
           </button>
-          <button onClick={clear} aria-label="Clear">
+          <button onClick={() => setPendingDelete({ type: "clear" })} aria-label="Clear">
             <Trash />
           </button>
         </aside>
@@ -537,13 +556,8 @@ export default function EditPage() {
                         onPointerDown={(event) => {
                           event.preventDefault();
                           event.stopPropagation();
-                          deleteSticker(sticker.id, event);
                         }}
-                        onClick={(event) => {
-                          event.preventDefault();
-                          event.stopPropagation();
-                          deleteSticker(sticker.id, event);
-                        }}
+                        onClick={(event) => requestDeleteSticker(sticker.id, event)}
                         aria-label="Delete doodle"
                         title="Delete doodle"
                       >
@@ -745,6 +759,66 @@ export default function EditPage() {
 
       {/* NESCAFÉ Themed Confirm & Success Modals */}
       <AnimatePresence>
+        {pendingDelete && (
+          <motion.div
+            className="modal-backdrop"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            onClick={() => setPendingDelete(null)}
+          >
+            <motion.div
+              className="nescafe-modal"
+              role="alertdialog"
+              aria-modal="true"
+              aria-labelledby="delete-dialog-title"
+              initial={{ scale: 0.9, opacity: 0, y: 16 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.92, opacity: 0, y: 12 }}
+              transition={{ type: "spring", stiffness: 340, damping: 25 }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <button
+                type="button"
+                className="modal-close-btn"
+                onClick={() => setPendingDelete(null)}
+                aria-label="Close dialog"
+              >
+                <X size={15} />
+              </button>
+
+              <h3 id="delete-dialog-title" className="modal-title-pacifico">
+                {pendingDelete.type === "clear" ? "Clear Everything?" : "Delete Doodle?"}
+              </h3>
+              <p className="modal-subtitle">
+                {pendingDelete.type === "clear"
+                  ? "This will erase your drawing and remove every doodle from the leaf."
+                  : "This doodle will be removed from your leaf."}
+              </p>
+
+              <div className="nescafe-modal-actions">
+                <button
+                  type="button"
+                  className="modal-btn-cancel"
+                  autoFocus
+                  onClick={() => setPendingDelete(null)}
+                >
+                  CANCEL
+                </button>
+                <button
+                  type="button"
+                  className="modal-btn-confirm"
+                  onClick={handleConfirmDelete}
+                >
+                  <span>{pendingDelete.type === "clear" ? "YES, CLEAR" : "YES, DELETE"}</span>
+                  <Trash weight="fill" size={15} />
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+
         {showConfirm && (
           <motion.div
             className="modal-backdrop"
