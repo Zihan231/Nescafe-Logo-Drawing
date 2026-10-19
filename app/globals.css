@@ -214,3 +214,12 @@
 .symmetry-guides g{filter:drop-shadow(0 0 1.5px rgba(0,0,0,.6))}
 @media(max-width:1100px){.tool-tabs{grid-template-columns:1fr}.editor .toolbox .tool-tab span,.tool-hint,.symmetry-tile span,.symmetry-count span,.shape-fill{display:none}.shape-grid,.symmetry-grid{grid-template-columns:1fr}.editor .toolbox .shape-tile{height:36px}.shape-icon{width:22px;height:22px}.editor .toolbox .symmetry-tile{justify-content:center;padding:6px 2px}.editor .toolbox.text-editing .tool-panel{display:none}}
 @media(max-width:600px){.tool-panel{position:absolute;left:50%;transform:translateX(-50%);top:calc(100% + 6px);width:min(94vw,420px);padding:8px;background:rgba(26,5,8,.92);border:1px solid rgba(255,255,255,.18);border-radius:16px;z-index:12}.tool-tabs{grid-template-columns:repeat(3,1fr)}.editor .toolbox .tool-tab span{display:inline}.tool-panel .brush-card{position:static;transform:none;width:auto;background:none;border:0;padding:0}.shape-grid{display:flex;overflow-x:auto}.editor .toolbox .shape-tile{width:46px;flex:none}.symmetry-grid{display:flex;overflow-x:auto}.editor .toolbox .symmetry-tile{width:auto;flex:none}.symmetry-tile span{display:inline}.text-section{top:calc(100% + 6px)}}
+:root{--left-card-width:376px}
+@media(min-width:1101px){
+.editor .toolbox{width:var(--left-card-width)}
+.control-dock.ink-stroke-dock{width:var(--left-card-width);box-sizing:border-box}
+.brush-grid{grid-template-columns:repeat(3,1fr)}
+.shape-grid{grid-template-columns:repeat(5,1fr)}
+.symmetry-grid{grid-template-columns:repeat(3,1fr)}
+.tool-hint{font-size:10px}
+}
