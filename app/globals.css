@@ -223,3 +223,12 @@
 .symmetry-grid{grid-template-columns:repeat(3,1fr)}
 .tool-hint{font-size:10px}
 }
+.mirror-applies{display:flex;flex-wrap:wrap;align-items:center;gap:6px;padding:7px 8px;border-radius:11px;background:rgba(255,255,255,.07)}
+.mirror-applies span{flex:0 0 100%;font:800 8px 'DM Sans',Arial,sans-serif;letter-spacing:.14em;color:rgba(255,255,255,.75)}
+.editor .toolbox .mirror-applies button{flex:1;width:auto;height:auto;display:flex;align-items:center;justify-content:center;gap:7px;padding:7px 6px;border:1px solid rgba(255,255,255,.2);border-radius:9px;background:rgba(255,255,255,.06);color:rgba(255,255,255,.8);font:800 8px 'DM Sans',Arial,sans-serif;letter-spacing:.1em;cursor:pointer}
+.mirror-applies button i{width:14px;height:8px;border-radius:999px;background:rgba(255,255,255,.3);position:relative;flex:none}
+.mirror-applies button i:after{content:"";position:absolute;top:1px;left:1px;width:6px;height:6px;border-radius:50%;background:#fff;transition:transform .15s ease}
+.editor .toolbox .mirror-applies button.selected{background:rgba(82,209,155,.18);border-color:#52d19b;color:#fff}
+.mirror-applies button.selected i{background:#52d19b}
+.mirror-applies button.selected i:after{transform:translateX(6px)}
+@media(max-width:1100px){.mirror-applies{display:none}}

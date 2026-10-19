@@ -200,7 +200,7 @@ const applyPoint = (m, pt) => ({
   y: m.cy + m.c * (pt.x - m.cx) + m.d * (pt.y - m.cy)
 });
 
-function DrawingCanvas({ canvasRef, color, tool, brush, size, shape, shapeFill, mirrorShapes, getCopies, onHistory }) {
+function DrawingCanvas({ canvasRef, color, tool, brush, size, shape, shapeFill, mirrorBrush, mirrorShapes, getCopies, onHistory }) {
   const drawing = useRef(false);
   const last = useRef(null);
   const origin = useRef(null);
@@ -391,7 +391,7 @@ function DrawingCanvas({ canvasRef, color, tool, brush, size, shape, shapeFill, 
       onPointerDown={(e) => {
         e.currentTarget.setPointerCapture(e.pointerId);
         drawing.current = true;
-        copies.current = tool === "shape" && !mirrorShapes ? [IDENTITY] : getCopies();
+        copies.current = (tool === "shape" ? mirrorShapes : mirrorBrush) ? getCopies() : [IDENTITY];
         const p = point(e);
         last.current = p;
         origin.current = p;
@@ -623,6 +623,7 @@ export default function EditPage() {
   const [toolTab, setToolTab] = useState("brushes");
   const [shape, setShape] = useState("circle");
   const [shapeFill, setShapeFill] = useState(false);
+  const [mirrorBrush, setMirrorBrush] = useState(true);
   const [mirrorShapes, setMirrorShapes] = useState(true);
   const [symmetry, setSymmetry] = useState("off");
   const [symmetryCount, setSymmetryCount] = useState(6);
@@ -1153,7 +1154,7 @@ export default function EditPage() {
           <div ref={canvasShellRef} className="canvas-shell" onPointerDownCapture={(event) => {if(event.target.tagName === "CANVAS") setSelectedStickerId(null)}}>
             <img ref={leafRef} className="leaf-mask-source" src="/assets/nescafe-leaf.png" alt="" />
             <div className="leaf-image" style={{ backgroundColor: leafColor }} role="img" aria-label="NESCAFÉ leaf drawing canvas" />
-            <DrawingCanvas canvasRef={canvasRef} color={color} tool={tool} brush={brush} size={size} shape={shape} shapeFill={shapeFill} mirrorShapes={mirrorShapes} getCopies={getCopies} onHistory={() => commit(true)} />
+            <DrawingCanvas canvasRef={canvasRef} color={color} tool={tool} brush={brush} size={size} shape={shape} shapeFill={shapeFill} mirrorBrush={mirrorBrush} mirrorShapes={mirrorShapes} getCopies={getCopies} onHistory={() => commit(true)} />
             <div className="placed-stickers" style={{ "--selection-color": transformColors.outline, "--selection-ink": transformColors.ink }}>
               {placedStickers.map((sticker) => (
                 <div
@@ -1383,11 +1384,7 @@ export default function EditPage() {
                 <button type="button" role="radio" aria-checked={!shapeFill} className={!shapeFill ? "selected" : ""} onClick={() => setShapeFill(false)}>OUTLINE</button>
                 <button type="button" role="radio" aria-checked={shapeFill} className={shapeFill ? "selected" : ""} onClick={() => setShapeFill(true)}>FILLED</button>
               </div>
-              <div className="shape-fill" role="radiogroup" aria-label="Shapes in mirror mode">
-                <button type="button" role="radio" aria-checked={mirrorShapes} className={mirrorShapes ? "selected" : ""} onClick={() => setMirrorShapes(true)}>MIRRORED</button>
-                <button type="button" role="radio" aria-checked={!mirrorShapes} className={!mirrorShapes ? "selected" : ""} onClick={() => setMirrorShapes(false)}>SINGLE</button>
-              </div>
-              <p className="tool-hint">Drag on the leaf to draw. With Mirror on, choose whether shapes are mirrored or drawn just once.</p>
+              <p className="tool-hint">Pick a shape, then drag on the leaf. Turn mirroring for shapes on or off in the Mirror tab.</p>
             </div>
           )}
 
@@ -1417,7 +1414,16 @@ export default function EditPage() {
                   <button type="button" onClick={() => setSymmetryCount((n) => Math.min(12, n + 1))} aria-label="More sections">+</button>
                 </div>
               )}
-              <p className="tool-hint">Draw once, and every stroke is copied around the leaf.</p>
+              <div className="mirror-applies" role="group" aria-label="Mirror applies to">
+                <span>MIRROR APPLIES TO</span>
+                <button type="button" role="switch" aria-checked={mirrorBrush} className={mirrorBrush ? "selected" : ""} onClick={() => setMirrorBrush((on) => !on)}>
+                  <i />PEN / BRUSH
+                </button>
+                <button type="button" role="switch" aria-checked={mirrorShapes} className={mirrorShapes ? "selected" : ""} onClick={() => setMirrorShapes((on) => !on)}>
+                  <i />SHAPES
+                </button>
+              </div>
+              <p className="tool-hint">Turn Pen / Brush off to draw freehand while the mirror guides stay on, then back on to mirror again.</p>
             </div>
           )}
         </div>
