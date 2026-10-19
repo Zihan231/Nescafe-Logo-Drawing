@@ -176,33 +176,35 @@ function ColorPanel({ value, onChange, label }) {
           style={{ left: `${hsv.s * 100}%`, top: `${(1 - hsv.v) * 100}%`, backgroundColor: value }}
         />
       </div>
-      <input
-        className="color-panel-hue"
-        type="range"
-        min="0"
-        max="359"
-        value={Math.round(hsv.h)}
-        onChange={(event) => update({ ...hsv, h: +event.target.value })}
-        aria-label={`${label} hue`}
-      />
-      <div className="color-panel-hex">
-        <span className="color-panel-preview" style={{ backgroundColor: value }} />
+      <div className="color-panel-side">
         <input
-          type="text"
-          value={hexText}
-          maxLength={7}
-          spellCheck={false}
-          onChange={(event) => {
-            const text = event.target.value;
-            setHexText(text);
-            if (/^#[0-9a-fA-F]{6}$/.test(text)) {
-              setHsv(hexToHsv(text));
-              onChange(text.toLowerCase());
-            }
-          }}
-          onBlur={() => setHexText(value)}
-          aria-label={`${label} hex code`}
+          className="color-panel-hue"
+          type="range"
+          min="0"
+          max="359"
+          value={Math.round(hsv.h)}
+          onChange={(event) => update({ ...hsv, h: +event.target.value })}
+          aria-label={`${label} hue`}
         />
+        <div className="color-panel-hex">
+          <span className="color-panel-preview" style={{ backgroundColor: value }} />
+          <input
+            type="text"
+            value={hexText}
+            maxLength={7}
+            spellCheck={false}
+            onChange={(event) => {
+              const text = event.target.value;
+              setHexText(text);
+              if (/^#[0-9a-fA-F]{6}$/.test(text)) {
+                setHsv(hexToHsv(text));
+                onChange(text.toLowerCase());
+              }
+            }}
+            onBlur={() => setHexText(value)}
+            aria-label={`${label} hex code`}
+          />
+        </div>
       </div>
     </div>
   );
@@ -685,6 +687,7 @@ export default function EditPage() {
             label="Ink color"
           />
 
+          <div className="dock-row">
           {/* Ink color section */}
           <div className="ink-side-column">
             <div className="dock-color-section">
@@ -745,12 +748,14 @@ export default function EditPage() {
               <span>STROKE</span>
             </div>
           </div>
+          </div>
         </div>
 
         {/* Right Section: Logo Background Color */}
         <div className="control-dock logo-dock">
           <ColorPanel value={leafColor} onChange={setLeafColor} label="Logo color" />
 
+          <div className="dock-row">
           <div className="logo-side-column">
             <div className="dock-color-section">
               {/* Logo Pill with same Palette Button and Current Logo Color dot */}
@@ -783,6 +788,7 @@ export default function EditPage() {
             <div className="dock-sub-label" title="Logo canvas background">
               <span>LOGO</span>
             </div>
+          </div>
           </div>
         </div>
       </div>
