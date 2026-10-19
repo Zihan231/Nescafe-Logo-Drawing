@@ -200,7 +200,7 @@ const applyPoint = (m, pt) => ({
   y: m.cy + m.c * (pt.x - m.cx) + m.d * (pt.y - m.cy)
 });
 
-function DrawingCanvas({ canvasRef, color, tool, brush, size, shape, shapeFill, getCopies, onHistory }) {
+function DrawingCanvas({ canvasRef, color, tool, brush, size, shape, shapeFill, mirrorShapes, getCopies, onHistory }) {
   const drawing = useRef(false);
   const last = useRef(null);
   const origin = useRef(null);
@@ -391,7 +391,7 @@ function DrawingCanvas({ canvasRef, color, tool, brush, size, shape, shapeFill, 
       onPointerDown={(e) => {
         e.currentTarget.setPointerCapture(e.pointerId);
         drawing.current = true;
-        copies.current = getCopies();
+        copies.current = tool === "shape" && !mirrorShapes ? [IDENTITY] : getCopies();
         const p = point(e);
         last.current = p;
         origin.current = p;
@@ -623,6 +623,7 @@ export default function EditPage() {
   const [toolTab, setToolTab] = useState("brushes");
   const [shape, setShape] = useState("circle");
   const [shapeFill, setShapeFill] = useState(false);
+  const [mirrorShapes, setMirrorShapes] = useState(true);
   const [symmetry, setSymmetry] = useState("off");
   const [symmetryCount, setSymmetryCount] = useState(6);
   const [leafGeo, setLeafGeo] = useState(null);
@@ -1152,7 +1153,7 @@ export default function EditPage() {
           <div ref={canvasShellRef} className="canvas-shell" onPointerDownCapture={(event) => {if(event.target.tagName === "CANVAS") setSelectedStickerId(null)}}>
             <img ref={leafRef} className="leaf-mask-source" src="/assets/nescafe-leaf.png" alt="" />
             <div className="leaf-image" style={{ backgroundColor: leafColor }} role="img" aria-label="NESCAFÉ leaf drawing canvas" />
-            <DrawingCanvas canvasRef={canvasRef} color={color} tool={tool} brush={brush} size={size} shape={shape} shapeFill={shapeFill} getCopies={getCopies} onHistory={() => commit(true)} />
+            <DrawingCanvas canvasRef={canvasRef} color={color} tool={tool} brush={brush} size={size} shape={shape} shapeFill={shapeFill} mirrorShapes={mirrorShapes} getCopies={getCopies} onHistory={() => commit(true)} />
             <div className="placed-stickers" style={{ "--selection-color": transformColors.outline, "--selection-ink": transformColors.ink }}>
               {placedStickers.map((sticker) => (
                 <div
@@ -1382,7 +1383,11 @@ export default function EditPage() {
                 <button type="button" role="radio" aria-checked={!shapeFill} className={!shapeFill ? "selected" : ""} onClick={() => setShapeFill(false)}>OUTLINE</button>
                 <button type="button" role="radio" aria-checked={shapeFill} className={shapeFill ? "selected" : ""} onClick={() => setShapeFill(true)}>FILLED</button>
               </div>
-              <p className="tool-hint">Pick a shape, then drag on the leaf. It follows the Mirror setting.</p>
+              <div className="shape-fill" role="radiogroup" aria-label="Shapes in mirror mode">
+                <button type="button" role="radio" aria-checked={mirrorShapes} className={mirrorShapes ? "selected" : ""} onClick={() => setMirrorShapes(true)}>MIRRORED</button>
+                <button type="button" role="radio" aria-checked={!mirrorShapes} className={!mirrorShapes ? "selected" : ""} onClick={() => setMirrorShapes(false)}>SINGLE</button>
+              </div>
+              <p className="tool-hint">Drag on the leaf to draw. With Mirror on, choose whether shapes are mirrored or drawn just once.</p>
             </div>
           )}
 
