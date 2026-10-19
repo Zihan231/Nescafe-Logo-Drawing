@@ -626,7 +626,7 @@ export default function EditPage() {
   const [symmetry, setSymmetry] = useState("off");
   const [symmetryCount, setSymmetryCount] = useState(6);
   const [leafGeo, setLeafGeo] = useState(null);
-  const [size, setSize] = useState(18);
+  const [size, setSize] = useState(4);
   const [sending, setSending] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [sentMessage, setSentMessage] = useState(false);
@@ -1073,7 +1073,7 @@ export default function EditPage() {
     setLeafColor("#ffffff");
     setColor(INK_COLORS[0]);
     setTool("pen");
-    setSize(18);
+    setSize(4);
     clearTimeout(commitTimerRef.current);
     commitTimerRef.current = null;
     stickersRef.current = [];
