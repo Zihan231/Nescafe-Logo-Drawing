@@ -15,7 +15,6 @@ import {
   Trash,
   X
 } from "@phosphor-icons/react";
-import { IoIosColorPalette } from "react-icons/io";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
@@ -104,6 +103,111 @@ function DrawingCanvas({ canvasRef, color, tool, size, onHistory }) {
   );
 }
 
+function hexToHsv(hex) {
+  const value = parseInt(hex.slice(1), 16);
+  const r = ((value >> 16) & 255) / 255;
+  const g = ((value >> 8) & 255) / 255;
+  const b = (value & 255) / 255;
+  const max = Math.max(r, g, b);
+  const min = Math.min(r, g, b);
+  const d = max - min;
+  let h = 0;
+  if (d) {
+    if (max === r) h = ((g - b) / d) % 6;
+    else if (max === g) h = (b - r) / d + 2;
+    else h = (r - g) / d + 4;
+    h = (h * 60 + 360) % 360;
+  }
+  return { h, s: max ? d / max : 0, v: max };
+}
+
+function hsvToHex({ h, s, v }) {
+  const f = (n) => {
+    const k = (n + h / 60) % 6;
+    return v - v * s * Math.max(0, Math.min(k, 4 - k, 1));
+  };
+  const to = (x) => Math.round(x * 255).toString(16).padStart(2, "0");
+  return `#${to(f(5))}${to(f(3))}${to(f(1))}`;
+}
+
+// Always-open custom color picker: saturation/value square, hue slider and hex field.
+function ColorPanel({ value, onChange, label }) {
+  const [hsv, setHsv] = useState(() => hexToHsv(value));
+  const [hexText, setHexText] = useState(value);
+  const areaRef = useRef(null);
+
+  // Follow outside changes (swatch clicks) without losing the hue of grey/black/white.
+  useEffect(() => {
+    if (hsvToHex(hsv).toLowerCase() !== value.toLowerCase()) {
+      setHsv(hexToHsv(value));
+    }
+    setHexText(value);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [value]);
+
+  const update = (next) => {
+    setHsv(next);
+    onChange(hsvToHex(next));
+  };
+
+  const pickFromPointer = (event) => {
+    const rect = areaRef.current.getBoundingClientRect();
+    const s = Math.min(1, Math.max(0, (event.clientX - rect.left) / rect.width));
+    const v = 1 - Math.min(1, Math.max(0, (event.clientY - rect.top) / rect.height));
+    update({ ...hsv, s, v });
+  };
+
+  return (
+    <div className="color-panel" role="group" aria-label={label}>
+      <div
+        ref={areaRef}
+        className="color-panel-area"
+        style={{ backgroundColor: `hsl(${hsv.h} 100% 50%)` }}
+        onPointerDown={(event) => {
+          event.currentTarget.setPointerCapture(event.pointerId);
+          pickFromPointer(event);
+        }}
+        onPointerMove={(event) => {
+          if (event.currentTarget.hasPointerCapture(event.pointerId)) pickFromPointer(event);
+        }}
+      >
+        <span
+          className="color-panel-handle"
+          style={{ left: `${hsv.s * 100}%`, top: `${(1 - hsv.v) * 100}%`, backgroundColor: value }}
+        />
+      </div>
+      <input
+        className="color-panel-hue"
+        type="range"
+        min="0"
+        max="359"
+        value={Math.round(hsv.h)}
+        onChange={(event) => update({ ...hsv, h: +event.target.value })}
+        aria-label={`${label} hue`}
+      />
+      <div className="color-panel-hex">
+        <span className="color-panel-preview" style={{ backgroundColor: value }} />
+        <input
+          type="text"
+          value={hexText}
+          maxLength={7}
+          spellCheck={false}
+          onChange={(event) => {
+            const text = event.target.value;
+            setHexText(text);
+            if (/^#[0-9a-fA-F]{6}$/.test(text)) {
+              setHsv(hexToHsv(text));
+              onChange(text.toLowerCase());
+            }
+          }}
+          onBlur={() => setHexText(value)}
+          aria-label={`${label} hex code`}
+        />
+      </div>
+    </div>
+  );
+}
+
 export default function EditPage() {
   const router = useRouter();
   const canvasRef = useRef(null);
@@ -126,37 +230,6 @@ export default function EditPage() {
   const trayDragRef = useRef(null);
   const stickerGestureRef = useRef({ id: null, pointers: new Map(), lastX: 0, lastY: 0, startDistance: 0, startWidth: 0 });
   const transformHandleRef = useRef(null);
-
-  const inkInputRef = useRef(null);
-  const leafInputRef = useRef(null);
-
-  const openInkPicker = () => {
-    if (inkInputRef.current) {
-      if (typeof inkInputRef.current.showPicker === "function") {
-        try {
-          inkInputRef.current.showPicker();
-        } catch {
-          inkInputRef.current.click();
-        }
-      } else {
-        inkInputRef.current.click();
-      }
-    }
-  };
-
-  const openLeafPicker = () => {
-    if (leafInputRef.current) {
-      if (typeof leafInputRef.current.showPicker === "function") {
-        try {
-          leafInputRef.current.showPicker();
-        } catch {
-          leafInputRef.current.click();
-        }
-      } else {
-        leafInputRef.current.click();
-      }
-    }
-  };
 
   const snapshot = useCallback(() => {
     const c = canvasRef.current;
@@ -603,34 +676,20 @@ export default function EditPage() {
       <div className="editor-controls-bar">
         {/* Left Section: Pen Ink Color Palette & Stroke */}
         <div className="control-dock ink-stroke-dock">
+          <ColorPanel
+            value={color}
+            onChange={(next) => {
+              setColor(next);
+              setTool("pen");
+            }}
+            label="Ink color"
+          />
+
           {/* Ink color section */}
           <div className="ink-side-column">
             <div className="dock-color-section">
               {/* Pill with Palette icon and Current Color dot */}
               <div className="color-plate-pill">
-                <button
-                  type="button"
-                  className="palette-btn-icon"
-                  onClick={openInkPicker}
-                  title="Choose custom ink color"
-                  aria-label="Open color plate to choose ink color"
-                >
-                  <IoIosColorPalette size={22} className="palette-logo-icon" />
-                </button>
-
-                {/* Hidden native color input */}
-                <input
-                  ref={inkInputRef}
-                  type="color"
-                  value={color}
-                  onChange={(e) => {
-                    setColor(e.target.value);
-                    setTool("pen");
-                  }}
-                  className="native-color-input-hidden"
-                  aria-hidden="true"
-                />
-
                 {/* Current color dot (Display only, not clickable) */}
                 <span
                   className="active-color-dot"
@@ -690,30 +749,12 @@ export default function EditPage() {
 
         {/* Right Section: Logo Background Color */}
         <div className="control-dock logo-dock">
+          <ColorPanel value={leafColor} onChange={setLeafColor} label="Logo color" />
+
           <div className="logo-side-column">
             <div className="dock-color-section">
               {/* Logo Pill with same Palette Button and Current Logo Color dot */}
               <div className="color-plate-pill">
-                <button
-                  type="button"
-                  className="palette-btn-icon"
-                  onClick={openLeafPicker}
-                  title="Choose custom logo color"
-                  aria-label="Open color plate to choose logo color"
-                >
-                  <IoIosColorPalette size={22} className="palette-logo-icon" />
-                </button>
-
-                {/* Hidden native color input */}
-                <input
-                  ref={leafInputRef}
-                  type="color"
-                  value={leafColor}
-                  onChange={(e) => setLeafColor(e.target.value)}
-                  className="native-color-input-hidden"
-                  aria-hidden="true"
-                />
-
                 {/* Current logo color dot (Display only, not clickable) */}
                 <span
                   className="active-color-dot"
