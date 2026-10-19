@@ -714,46 +714,7 @@ export default function EditPage() {
       </header>
 
       <section className="editor-grid">
-        <aside className="toolbox">
-          <span className="tool-card-title">DRAW TOOLS</span>
-          <div className="tool-row">
-          <button className={tool === "pen" ? "active" : ""} onClick={() => setTool("pen")} aria-label="Pen">
-            <PencilSimple />
-          </button>
-          <button className={tool === "eraser" ? "active" : ""} onClick={() => setTool("eraser")} aria-label="Eraser">
-            <Eraser />
-          </button>
-          <button onClick={undo} aria-label="Undo">
-            <ArrowCounterClockwise />
-          </button>
-          <button onClick={() => setPendingDelete({ type: "clear" })} aria-label="Clear">
-            <Trash />
-          </button>
-          </div>
-
-          <div className="brush-card" role="radiogroup" aria-label="Brush style">
-            <span className="brush-card-title">BRUSHES</span>
-            <div className="brush-grid">
-              {BRUSHES.map((b) => (
-                <button
-                  key={b.id}
-                  type="button"
-                  role="radio"
-                  aria-checked={brush === b.id}
-                  title={b.label}
-                  className={`brush-tile${brush === b.id ? (tool === "pen" ? " selected" : " current") : ""}`}
-                  onClick={() => {
-                    setBrush(b.id);
-                    setTool("pen");
-                  }}
-                >
-                  <BrushSample id={b.id} />
-                  <span>{b.label}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-        </aside>
+        <div className="toolbox-spacer" aria-hidden="true" />
 
         <div className="studio">
           <div ref={canvasShellRef} className="canvas-shell" onPointerDownCapture={(event) => {if(event.target.tagName === "CANVAS") setSelectedStickerId(null)}}>
@@ -837,6 +798,48 @@ export default function EditPage() {
           <img src={dragPreview.sticker.src} alt="" />
         </div>
       )}
+
+      {/* Tools + brushes: pinned to the left edge, aligned with the INK card below */}
+      <aside className="toolbox">
+        <span className="tool-card-title">DRAW TOOLS</span>
+        <div className="tool-row">
+        <button className={tool === "pen" ? "active" : ""} onClick={() => setTool("pen")} aria-label="Pen">
+          <PencilSimple />
+        </button>
+        <button className={tool === "eraser" ? "active" : ""} onClick={() => setTool("eraser")} aria-label="Eraser">
+          <Eraser />
+        </button>
+        <button onClick={undo} aria-label="Undo">
+          <ArrowCounterClockwise />
+        </button>
+        <button onClick={() => setPendingDelete({ type: "clear" })} aria-label="Clear">
+          <Trash />
+        </button>
+        </div>
+
+        <div className="brush-card" role="radiogroup" aria-label="Brush style">
+          <span className="brush-card-title">BRUSHES</span>
+          <div className="brush-grid">
+            {BRUSHES.map((b) => (
+              <button
+                key={b.id}
+                type="button"
+                role="radio"
+                aria-checked={brush === b.id}
+                title={b.label}
+                className={`brush-tile${brush === b.id ? (tool === "pen" ? " selected" : " current") : ""}`}
+                onClick={() => {
+                  setBrush(b.id);
+                  setTool("pen");
+                }}
+              >
+                <BrushSample id={b.id} />
+                <span>{b.label}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      </aside>
 
       {/* Bottom Controls Bar with Both Color Sections */}
       <div className="editor-controls-bar">
