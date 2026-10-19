@@ -389,7 +389,10 @@ export default function EditPage() {
   const canvasShellRef = useRef(null);
   const leafRef = useRef(null);
   const outlineRef = useRef(null);
-  const history = useRef([]);
+  const historyRef = useRef({ stack: [], index: -1 });
+  const commitTimerRef = useRef(null);
+  const restoreTokenRef = useRef(0);
+  const [historyTick, setHistoryTick] = useState(0);
   const [color, setColor] = useState(INK_COLORS[0]);
   const [leafColor, setLeafColor] = useState("#ffffff");
   const [tool, setTool] = useState("pen");
@@ -410,37 +413,84 @@ export default function EditPage() {
   const justAddedTextRef = useRef(null);
   const previousSelectionRef = useRef(null);
 
-  const snapshot = useCallback(() => {
-    const c = canvasRef.current;
-    if (!c) return;
-    history.current = [...history.current.slice(-19), c.toDataURL()];
+  // Mirrors of state so history commits always see the latest values.
+  const stickersRef = useRef(placedStickers);
+  const leafColorRef = useRef(leafColor);
+  stickersRef.current = placedStickers;
+  leafColorRef.current = leafColor;
+
+  // One history entry = drawing + doodles/text + leaf color. `canvasChanged` is true after a stroke or clear.
+  const commit = useCallback((canvasChanged = false) => {
+    clearTimeout(commitTimerRef.current);
+    commitTimerRef.current = null;
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const stickers = stickersRef.current;
+    const leaf = leafColorRef.current;
+    const key = JSON.stringify([stickers, leaf]);
+    const history = historyRef.current;
+    const current = history.stack[history.index];
+    if (current && current.key === key && !canvasChanged) return;
+    const entry = { canvas: canvas.toDataURL(), key, stickers, leafColor: leaf };
+    history.stack = [...history.stack.slice(0, history.index + 1), entry].slice(-40);
+    history.index = history.stack.length - 1;
+    setHistoryTick((tick) => tick + 1);
   }, []);
 
   useEffect(() => {
-    snapshot();
-  }, [snapshot]);
+    if (!historyRef.current.stack.length) commit(true); // first entry (guards against dev double-invoke)
+  }, [commit]);
 
-  const restore = (url) => {
+  // Doodle, text and leaf-color changes settle into one entry after a short pause.
+  useEffect(() => {
+    clearTimeout(commitTimerRef.current);
+    commitTimerRef.current = setTimeout(() => commit(false), 400);
+    return () => clearTimeout(commitTimerRef.current);
+  }, [placedStickers, leafColor, commit]);
+
+  const applySnapshot = (entry) => {
+    const token = ++restoreTokenRef.current;
     const img = new Image();
     img.onload = () => {
+      if (token !== restoreTokenRef.current || !canvasRef.current) return;
       const ctx = canvasRef.current.getContext("2d");
       ctx.clearRect(0, 0, W, H);
       ctx.drawImage(img, 0, 0);
     };
-    img.src = url;
+    img.src = entry.canvas;
+    stickersRef.current = entry.stickers;
+    leafColorRef.current = entry.leafColor;
+    setPlacedStickers(entry.stickers);
+    setLeafColor(entry.leafColor);
+    setSelectedStickerId((id) => (entry.stickers.some((item) => item.id === id) ? id : null));
   };
 
   const undo = () => {
-    if (history.current.length <= 1) return;
-    history.current.pop();
-    restore(history.current.at(-1));
+    if (commitTimerRef.current) commit(false); // include a change that is still settling
+    const history = historyRef.current;
+    if (history.index <= 0) return;
+    history.index -= 1;
+    applySnapshot(history.stack[history.index]);
+    setHistoryTick((tick) => tick + 1);
   };
+
+  const redo = () => {
+    const history = historyRef.current;
+    if (history.index >= history.stack.length - 1) return;
+    history.index += 1;
+    applySnapshot(history.stack[history.index]);
+    setHistoryTick((tick) => tick + 1);
+  };
+
+  const canUndo = historyRef.current.index > 0;
+  const canRedo = historyRef.current.index < historyRef.current.stack.length - 1;
 
   const clear = () => {
     canvasRef.current.getContext("2d").clearRect(0, 0, W, H);
+    stickersRef.current = [];
     setPlacedStickers([]);
     setSelectedStickerId(null);
-    snapshot();
+    commit(true);
   };
 
   const deleteSticker = (id, event) => {
@@ -471,6 +521,20 @@ export default function EditPage() {
       if (e.key === "Escape") {
         setPendingDelete(null);
         return;
+      }
+      if ((e.ctrlKey || e.metaKey) && !e.altKey && e.target.tagName !== "INPUT" && e.target.tagName !== "TEXTAREA") {
+        const key = e.key.toLowerCase();
+        if (key === "z") {
+          e.preventDefault();
+          if (e.shiftKey) redo();
+          else undo();
+          return;
+        }
+        if (key === "y") {
+          e.preventDefault();
+          redo();
+          return;
+        }
       }
       if ((e.key === "Delete" || e.key === "Backspace") && selectedStickerId && !pendingDelete) {
         if (e.target.tagName !== "INPUT" && e.target.tagName !== "TEXTAREA") {
@@ -768,10 +832,12 @@ export default function EditPage() {
     setColor(INK_COLORS[0]);
     setTool("pen");
     setSize(18);
-    history.current = [];
-    if (canvasRef.current) {
-      history.current = [canvasRef.current.toDataURL()];
-    }
+    clearTimeout(commitTimerRef.current);
+    commitTimerRef.current = null;
+    stickersRef.current = [];
+    leafColorRef.current = "#ffffff";
+    historyRef.current = { stack: [], index: -1 };
+    commit(true);
   };
 
   const handleDismissSuccess = () => {
@@ -844,7 +910,7 @@ export default function EditPage() {
           <div ref={canvasShellRef} className="canvas-shell" onPointerDownCapture={(event) => {if(event.target.tagName === "CANVAS") setSelectedStickerId(null)}}>
             <img ref={leafRef} className="leaf-mask-source" src="/assets/nescafe-leaf.png" alt="" />
             <div className="leaf-image" style={{ backgroundColor: leafColor }} role="img" aria-label="NESCAFÉ leaf drawing canvas" />
-            <DrawingCanvas canvasRef={canvasRef} color={color} tool={tool} brush={brush} size={size} onHistory={snapshot} />
+            <DrawingCanvas canvasRef={canvasRef} color={color} tool={tool} brush={brush} size={size} onHistory={() => commit(true)} />
             <div className="placed-stickers" style={{ "--selection-color": transformColors.outline, "--selection-ink": transformColors.ink }}>
               {placedStickers.map((sticker) => (
                 <div
@@ -942,8 +1008,11 @@ export default function EditPage() {
         <button className={tool === "eraser" ? "active" : ""} onClick={() => setTool("eraser")} aria-label="Eraser">
           <Eraser />
         </button>
-        <button onClick={undo} aria-label="Undo">
+        <button onClick={undo} disabled={!canUndo} aria-label="Undo" title="Undo (Ctrl+Z)">
           <ArrowCounterClockwise />
+        </button>
+        <button onClick={redo} disabled={!canRedo} aria-label="Redo" title="Redo (Ctrl+Y)">
+          <ArrowClockwise />
         </button>
         <button onClick={() => setPendingDelete({ type: "clear" })} aria-label="Clear">
           <Trash />

@@ -176,3 +176,6 @@
 .color-panel.compact .color-panel-area{width:100%;aspect-ratio:auto;height:84px}
 .color-panel.compact .color-panel-side{flex:none;gap:8px}
 .editor .toolbox.text-editing .brush-card{display:none}
+.editor .toolbox .tool-row{gap:6px}
+.editor .toolbox .tool-row button{width:36px;height:36px;border-radius:11px;font-size:17px}
+.editor .toolbox .tool-row button:disabled{opacity:.35;cursor:not-allowed}
