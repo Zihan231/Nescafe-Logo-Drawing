@@ -1440,19 +1440,19 @@ export default function EditPage() {
         </div>
         <div className="doodle-grid">
           {(DOODLE_CATEGORIES.find((cat) => cat.id === doodleCategory) || DOODLE_CATEGORIES[0]).items.map((item) => (
-            <motion.button
+            <button
               key={item.label + item.src.length}
+              type="button"
               className="doodle-tile"
               onPointerDown={(event) => startTrayDrag(item, event)}
               onPointerMove={moveTrayDrag}
               onPointerUp={endTrayDrag}
               onPointerCancel={endTrayDrag}
-              whileHover={{ scale: 1.08, rotate: -2 }}
               title={item.label}
               aria-label={`Click or drag ${item.label} onto the leaf`}
             >
               <img className={item.alpha ? "alpha-art" : undefined} src={item.src} alt={item.label} draggable={false} />
-            </motion.button>
+            </button>
           ))}
         </div>
         <p className="tool-hint">Click a doodle to add it, or drag it onto the leaf.</p>

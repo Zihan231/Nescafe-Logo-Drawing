@@ -241,6 +241,9 @@
 @media(max-width:600px){.doodle-card{right:auto;left:50%;transform:translateX(-50%);top:auto;bottom:150px;width:min(94vw,420px);max-height:200px}.doodle-grid{grid-template-columns:repeat(5,1fr)}}
 .placed-sticker img.alpha-art,.doodle-tile img.alpha-art{mix-blend-mode:normal}
 .doodle-card{--doodle-card-w:var(--left-card-width);--doodle-cols:4;--doodle-gap:8px;--doodle-pad:9px}
-.doodle-grid{grid-auto-rows:max-content;align-content:start;flex:none;max-height:calc(2 * ((var(--doodle-card-w) - 26px - 2 * var(--doodle-pad) - (var(--doodle-cols) - 1) * var(--doodle-gap)) / var(--doodle-cols)) + var(--doodle-gap) + 2 * var(--doodle-pad))}
+.doodle-grid{grid-auto-rows:max-content;align-content:start;flex:none;scrollbar-gutter:stable;max-height:calc(2 * ((var(--doodle-card-w) - 38px - 2 * var(--doodle-pad) - (var(--doodle-cols) - 1) * var(--doodle-gap)) / var(--doodle-cols)) + var(--doodle-gap) + 2 * var(--doodle-pad) + 6px)}
 @media(max-width:1100px){.doodle-card{--doodle-card-w:230px;--doodle-cols:3}}
 @media(max-width:600px){.doodle-card{--doodle-card-w:min(94vw,420px);--doodle-cols:5}}
+.doodle-tile img{transition:transform .18s ease}
+.doodle-tile:hover img{transform:scale(1.1) rotate(-3deg)}
+.doodle-tile:active img{transform:scale(1.02)}
