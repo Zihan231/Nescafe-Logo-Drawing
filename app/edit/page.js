@@ -514,9 +514,49 @@ export default function EditPage() {
     });
   };
 
+  // The leaf is slanted, so its middle is not the middle of the canvas: find it from the mask.
+  const leafCenterSpot = () => {
+    const fallback = { x: W / 2, y: H / 2, span: LEAF_SIZE * 0.5 };
+    const mask = leafRef.current;
+    if (!mask?.complete || !mask.naturalWidth) return fallback;
+    const probe = document.createElement("canvas");
+    probe.width = W;
+    probe.height = H;
+    const ctx = probe.getContext("2d", { willReadFrequently: true });
+    ctx.drawImage(mask, LEAF_X, 0, LEAF_SIZE, LEAF_SIZE);
+    const data = ctx.getImageData(0, 0, W, H).data;
+    let sumY = 0;
+    let count = 0;
+    for (let y = 0; y < H; y++) {
+      for (let x = 0; x < W; x++) {
+        if (data[(y * W + x) * 4 + 3] > 128) {
+          sumY += y;
+          count++;
+        }
+      }
+    }
+    if (!count) return fallback;
+    const cy = Math.round(sumY / count);
+    let first = -1;
+    let last = -1;
+    for (let x = 0; x < W; x++) {
+      if (data[(cy * W + x) * 4 + 3] > 128) {
+        if (first < 0) first = x;
+        last = x;
+      }
+    }
+    return first < 0 ? fallback : { x: (first + last) / 2, y: cy, span: last - first };
+  };
+
   const addText = () => {
     const id = crypto.randomUUID();
-    const item = { id, kind: "text", text: "Your text", font: "Pacifico", color, fontSize: 30, x: W / 2, y: H / 2, rotation: 0 };
+    const spot = leafCenterSpot();
+    const text = "Your text";
+    const font = "Pacifico";
+    // Start at 30, but shrink if the leaf is narrower than the text at this row.
+    const fit = (spot.span * 0.8) / measureText(text, font, 30).w;
+    const fontSize = Math.max(12, Math.min(30, 30 * fit));
+    const item = { id, kind: "text", text, font, color, fontSize, x: spot.x, y: spot.y, rotation: 0 };
     setPlacedStickers((items) => [...items, { ...item, ...measureText(item.text, item.font, item.fontSize) }]);
     justAddedTextRef.current = id;
     setSelectedStickerId(id);
