@@ -172,3 +172,7 @@
 .editor .toolbox .text-colors .swatch{width:19px;height:19px;min-width:0;border-radius:50%;flex:none}
 @media(max-width:1100px){.editor .toolbox .add-text-btn span{display:none}.editor .toolbox.text-editing{width:176px}}
 @media(max-width:600px){.editor .toolbox.text-editing{width:auto}.text-section{position:absolute;left:50%;transform:translateX(-50%);top:calc(100% + 62px);width:min(94vw,320px);background:rgba(26,5,8,.92)}}
+.color-panel.compact{flex-direction:column;gap:8px;padding:0}
+.color-panel.compact .color-panel-area{width:100%;aspect-ratio:auto;height:84px}
+.color-panel.compact .color-panel-side{flex:none;gap:8px}
+.editor .toolbox.text-editing .brush-card{display:none}

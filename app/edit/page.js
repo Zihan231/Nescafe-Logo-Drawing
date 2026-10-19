@@ -304,7 +304,7 @@ function hsvToHex({ h, s, v }) {
 }
 
 // Always-open custom color picker: saturation/value square, hue slider and hex field.
-function ColorPanel({ value, onChange, label }) {
+function ColorPanel({ value, onChange, label, compact = false }) {
   const [hsv, setHsv] = useState(() => hexToHsv(value));
   const [hexText, setHexText] = useState(value);
   const areaRef = useRef(null);
@@ -331,7 +331,7 @@ function ColorPanel({ value, onChange, label }) {
   };
 
   return (
-    <div className="color-panel" role="group" aria-label={label}>
+    <div className={compact ? "color-panel compact" : "color-panel"} role="group" aria-label={label}>
       <div
         ref={areaRef}
         className="color-panel-area"
@@ -959,6 +959,7 @@ export default function EditPage() {
                   />
                 ))}
               </div>
+              <ColorPanel compact value={selectedSticker.color} onChange={(next) => updateText({ color: next })} label="Text color" />
             </div>
           )}
 
