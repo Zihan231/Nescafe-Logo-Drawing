@@ -157,3 +157,18 @@
 @media(max-width:1300px){.editor .toolbox{left:2vw}}
 @media(max-width:1100px){.editor .toolbox{width:58px;padding:8px 6px}.tool-card-title,.brush-card-title,.brush-tile span{display:none}.tool-row{flex-direction:column;align-items:center}.brush-grid{grid-template-columns:1fr}.editor .toolbox .brush-card .brush-tile{padding:6px 2px}.brush-sample{width:38px}}
 @media(max-width:600px){.editor .toolbox{left:50%;top:74px;transform:translateX(-50%);width:auto;flex-direction:row;padding:5px 10px;border-radius:16px}.tool-row{flex-direction:row}.brush-card{position:absolute;left:50%;transform:translateX(-50%);top:calc(100% + 6px);width:min(94vw,420px);padding:7px 8px;background:rgba(26,5,8,.9);border:1px solid rgba(255,255,255,.18);border-radius:16px}.brush-grid{display:flex;overflow-x:auto;gap:6px}.editor .toolbox .brush-card .brush-tile{width:52px;flex:none}}
+
+.canvas-shell{container-type:inline-size}
+.placed-sticker .placed-text{display:flex;align-items:center;justify-content:center;width:100%;height:100%;white-space:nowrap;line-height:1;pointer-events:none}
+.editor .toolbox .add-text-btn{width:100%;height:auto;display:flex;align-items:center;justify-content:center;gap:6px;padding:8px 6px;border-radius:11px;border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.08);color:#fff;font:800 9px 'DM Sans',Arial,sans-serif;letter-spacing:.16em;cursor:pointer;transition:background .15s ease,border-color .15s ease}
+.editor .toolbox .add-text-btn:hover{background:rgba(255,255,255,.18);border-color:#fff}
+.text-section{display:flex;flex-direction:column;gap:7px;padding:8px;border-radius:12px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.16)}
+.text-input{width:100%;min-width:0;height:28px;padding:0 9px;border-radius:8px;border:1px solid rgba(255,255,255,.28);background:rgba(255,255,255,.1);color:#fff;font:600 12px 'DM Sans',Arial,sans-serif;outline:none}
+.text-input:focus{border-color:#fff}
+.text-fonts{display:grid;grid-template-columns:repeat(4,1fr);gap:4px}
+.editor .toolbox .text-font{width:100%;height:28px;border-radius:8px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.06);color:#fff;font-size:14px;line-height:1;cursor:pointer}
+.editor .toolbox .text-font.selected{background:#fff;color:#a21f25;border-color:#fff}
+.text-colors{display:flex;justify-content:space-between;gap:3px}
+.editor .toolbox .text-colors .swatch{width:19px;height:19px;min-width:0;border-radius:50%;flex:none}
+@media(max-width:1100px){.editor .toolbox .add-text-btn span{display:none}.editor .toolbox.text-editing{width:176px}}
+@media(max-width:600px){.editor .toolbox.text-editing{width:auto}.text-section{position:absolute;left:50%;transform:translateX(-50%);top:calc(100% + 62px);width:min(94vw,320px);background:rgba(26,5,8,.92)}}

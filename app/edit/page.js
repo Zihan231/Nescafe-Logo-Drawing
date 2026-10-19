@@ -12,6 +12,7 @@ import {
   PaperPlaneTilt,
   PenNib,
   PencilSimple,
+  TextT,
   Trash,
   X
 } from "@phosphor-icons/react";
@@ -31,6 +32,34 @@ const STICKERS = [
 const INK_COLORS = ["#ed1c2e", "#ffca28", "#52d19b", "#72b7ff", "#ffffff", "#140508"];
 const LEAF_COLORS = ["#ffffff", "#f5ebdf", "#ebd5bf", "#fce2db", "#e2ece9", "#dae8f5", "#a21f25", "#5b1317", "#241215", "#1e3a5f"];
 const EDITOR_COLOR = "#a21f25";
+const STICKER_ASPECT = 1.23;
+const MAX_TEXT_LENGTH = 20;
+const TEXT_FONTS = [
+  { id: "Pacifico", label: "Script", weight: 400 },
+  { id: "DM Sans", label: "Bold", weight: 800 },
+  { id: "Allura", label: "Elegant", weight: 400 },
+  { id: "Bangers", label: "Comic", weight: 400 }
+];
+
+const fontSpec = (font, size) => `${TEXT_FONTS.find((f) => f.id === font)?.weight ?? 400} ${size}px "${font}"`;
+
+let measureContext;
+function measureText(text, font, fontSize) {
+  measureContext = measureContext || document.createElement("canvas").getContext("2d");
+  measureContext.font = fontSpec(font, fontSize);
+  const width = measureContext.measureText(text || " ").width;
+  return { w: Math.max(40, width + fontSize * 0.5), h: fontSize * 1.5 };
+}
+
+// Sticker images keep their aspect ratio; text scales its font size and is re-measured.
+function resizedItem(item, ratio, start) {
+  if (item.kind === "text") {
+    const fontSize = Math.max(12, Math.min(200, start.fontSize * ratio));
+    return { ...item, fontSize, ...measureText(item.text, item.font, fontSize) };
+  }
+  const w = Math.max(55, Math.min(230, start.w * ratio));
+  return { ...item, w, h: w * STICKER_ASPECT };
+}
 
 const luminance = (hex) => {
   const rgb = hex.replace("#", "").match(/.{2}/g).map((value) => parseInt(value, 16) / 255).map((value) => value <= 0.03928 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4);
@@ -375,8 +404,11 @@ export default function EditPage() {
   const [pendingDelete, setPendingDelete] = useState(null); // { type: "clear" } | { type: "sticker", id }
   const [dragPreview, setDragPreview] = useState(null);
   const trayDragRef = useRef(null);
-  const stickerGestureRef = useRef({ id: null, pointers: new Map(), lastX: 0, lastY: 0, startDistance: 0, startWidth: 0 });
+  const stickerGestureRef = useRef({ id: null, pointers: new Map(), lastX: 0, lastY: 0, startDistance: 0, start: { w: 112, fontSize: 30 } });
   const transformHandleRef = useRef(null);
+  const textInputRef = useRef(null);
+  const justAddedTextRef = useRef(null);
+  const previousSelectionRef = useRef(null);
 
   const snapshot = useCallback(() => {
     const c = canvasRef.current;
@@ -451,6 +483,19 @@ export default function EditPage() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [selectedStickerId, pendingDelete]);
 
+  useEffect(() => {
+    const previous = previousSelectionRef.current;
+    previousSelectionRef.current = selectedStickerId;
+    if (previous && previous !== selectedStickerId) {
+      setPlacedStickers((items) => items.filter((item) => !(item.id === previous && item.kind === "text" && !item.text.trim())));
+    }
+    if (selectedStickerId && justAddedTextRef.current === selectedStickerId) {
+      justAddedTextRef.current = null;
+      textInputRef.current?.focus();
+      textInputRef.current?.select();
+    }
+  }, [selectedStickerId]);
+
   const addSticker = (sticker, x, y) => {
     const id = crypto.randomUUID();
     setPlacedStickers((items) => [...items, {
@@ -458,6 +503,34 @@ export default function EditPage() {
       x, y, w: 112, h: 138, rotation: 0
     }]);
     setSelectedStickerId(id);
+  };
+
+  const remeasureAfterFont = (id, font) => {
+    if (!document.fonts?.load) return;
+    document.fonts.load(fontSpec(font, 48)).then(() => {
+      setPlacedStickers((items) => items.map((item) => (
+        item.id === id && item.kind === "text" ? { ...item, ...measureText(item.text, item.font, item.fontSize) } : item
+      )));
+    });
+  };
+
+  const addText = () => {
+    const id = crypto.randomUUID();
+    const item = { id, kind: "text", text: "Your text", font: "Pacifico", color, fontSize: 30, x: W / 2, y: H / 2, rotation: 0 };
+    setPlacedStickers((items) => [...items, { ...item, ...measureText(item.text, item.font, item.fontSize) }]);
+    justAddedTextRef.current = id;
+    setSelectedStickerId(id);
+    remeasureAfterFont(id, item.font);
+  };
+
+  const updateText = (patch) => {
+    const id = selectedStickerId;
+    setPlacedStickers((items) => items.map((item) => {
+      if (item.id !== id || item.kind !== "text") return item;
+      const next = { ...item, ...patch };
+      return { ...next, ...measureText(next.text, next.font, next.fontSize) };
+    }));
+    if (patch.font) remeasureAfterFont(id, patch.font);
   };
 
   const dropSticker = (sticker, point) => {
@@ -502,7 +575,8 @@ export default function EditPage() {
     } else if (gesture.pointers.size === 2) {
       const [a, b] = [...gesture.pointers.values()];
       gesture.startDistance = Math.hypot(b.x - a.x, b.y - a.y);
-      gesture.startWidth = placedStickers.find((item) => item.id === id)?.w || 112;
+      const item = placedStickers.find((entry) => entry.id === id);
+      gesture.start = { w: item?.w || 112, fontSize: item?.fontSize || 30 };
     }
   };
 
@@ -515,8 +589,8 @@ export default function EditPage() {
     if (active.pointers.size >= 2) {
       const [a, b] = [...active.pointers.values()];
       const distance = Math.hypot(b.x - a.x, b.y - a.y);
-      const nextWidth = Math.max(55, Math.min(230, active.startWidth * (distance / Math.max(1, active.startDistance))));
-      setPlacedStickers((items) => items.map((item) => item.id === active.id ? { ...item, w: nextWidth, h: nextWidth * 1.23 } : item));
+      const ratio = distance / Math.max(1, active.startDistance);
+      setPlacedStickers((items) => items.map((item) => item.id === active.id ? resizedItem(item, ratio, active.start) : item));
     } else {
       const dx = ((event.clientX - active.lastX) * W) / rect.width;
       const dy = ((event.clientY - active.lastY) * H) / rect.height;
@@ -552,7 +626,7 @@ export default function EditPage() {
     event.stopPropagation();
     event.currentTarget.setPointerCapture(event.pointerId);
     const center = stickerCenterOnScreen(item);
-    transformHandleRef.current = { type: "resize", id: item.id, center, startWidth: item.w, startDistance: Math.max(1, Math.hypot(event.clientX - center.x, event.clientY - center.y)) };
+    transformHandleRef.current = { type: "resize", id: item.id, center, start: { w: item.w, fontSize: item.fontSize }, startDistance: Math.max(1, Math.hypot(event.clientX - center.x, event.clientY - center.y)) };
   };
 
   const startRotateHandle = (item, event) => {
@@ -568,8 +642,8 @@ export default function EditPage() {
     if (!active) return;
     if (active.type === "resize") {
       const distance = Math.hypot(event.clientX - active.center.x, event.clientY - active.center.y);
-      const width = Math.max(55, Math.min(230, active.startWidth * (distance / active.startDistance)));
-      setPlacedStickers((items) => items.map((item) => item.id === active.id ? { ...item, w: width, h: width * 1.23 } : item));
+      const ratio = distance / active.startDistance;
+      setPlacedStickers((items) => items.map((item) => item.id === active.id ? resizedItem(item, ratio, active.start) : item));
     } else {
       const angle = Math.atan2(event.clientY - active.center.y, event.clientX - active.center.x);
       const rotation = active.startRotation + ((angle - active.startAngle) * 180) / Math.PI;
@@ -619,12 +693,22 @@ export default function EditPage() {
     outputCtx.drawImage(mask, LEAF_X, 0, LEAF_SIZE, LEAF_SIZE);
     outputCtx.globalCompositeOperation = "source-over";
     outputCtx.drawImage(strokes, 0, 0);
-    const stickerImages = await Promise.all(placedStickers.map((item) => loadStickerImage(item.src)));
+    const stickerImages = await Promise.all(placedStickers.map((item) => (
+      item.kind === "text" ? document.fonts.load(fontSpec(item.font, item.fontSize), item.text) : loadStickerImage(item.src)
+    )));
     placedStickers.forEach((item, index) => {
       outputCtx.save();
       outputCtx.translate(item.x, item.y);
       outputCtx.rotate((item.rotation * Math.PI) / 180);
-      outputCtx.drawImage(stickerImages[index], -item.w / 2, -item.h / 2, item.w, item.h);
+      if (item.kind === "text") {
+        outputCtx.font = fontSpec(item.font, item.fontSize);
+        outputCtx.fillStyle = item.color;
+        outputCtx.textAlign = "center";
+        outputCtx.textBaseline = "middle";
+        outputCtx.fillText(item.text, 0, 0);
+      } else {
+        outputCtx.drawImage(stickerImages[index], -item.w / 2, -item.h / 2, item.w, item.h);
+      }
       outputCtx.restore();
     });
     outputCtx.globalCompositeOperation = "destination-in";
@@ -732,10 +816,19 @@ export default function EditPage() {
                   onPointerCancel={endPlacedDrag}
                   style={{ left: `${(sticker.x / W) * 100}%`, top: `${(sticker.y / H) * 100}%`, width: `${(sticker.w / W) * 100}%`, height: `${(sticker.h / H) * 100}%`, transform: `translate(-50%,-50%) rotate(${sticker.rotation}deg)` }}
                 >
-                  <img src={sticker.src} alt={sticker.label} />
+                  {sticker.kind === "text" ? (
+                    <span
+                      className="placed-text"
+                      style={{ fontFamily: `"${sticker.font}"`, fontWeight: TEXT_FONTS.find((f) => f.id === sticker.font)?.weight ?? 400, color: sticker.color, fontSize: `${(sticker.fontSize / W) * 100}cqw` }}
+                    >
+                      {sticker.text}
+                    </span>
+                  ) : (
+                    <img src={sticker.src} alt={sticker.label} />
+                  )}
                   {selectedStickerId === sticker.id && (
                     <>
-                      {['nw','ne','sw','se'].map((corner) => <button key={corner} className={`transform-handle resize-handle ${corner}`} onPointerDown={(event)=>startResizeHandle(sticker,event)} onPointerMove={moveTransformHandle} onPointerUp={endTransformHandle} onPointerCancel={endTransformHandle} aria-label="Resize doodle" />)}
+                      {['nw','ne','sw','se'].map((corner) => <button key={corner} className={`transform-handle resize-handle ${corner}`} onPointerDown={(event)=>startResizeHandle(sticker,event)} onPointerMove={moveTransformHandle} onPointerUp={endTransformHandle} onPointerCancel={endTransformHandle} aria-label="Resize" />)}
                       <span className="rotate-stem" />
                       <span className="rotate-bridge" />
                       <button
@@ -800,7 +893,7 @@ export default function EditPage() {
       )}
 
       {/* Tools + brushes: pinned to the left edge, aligned with the INK card below */}
-      <aside className="toolbox">
+      <aside className={`toolbox${selectedSticker?.kind === "text" ? " text-editing" : ""}`}>
         <span className="tool-card-title">DRAW TOOLS</span>
         <div className="tool-row">
         <button className={tool === "pen" ? "active" : ""} onClick={() => setTool("pen")} aria-label="Pen">
@@ -817,7 +910,59 @@ export default function EditPage() {
         </button>
         </div>
 
-        <div className="brush-card" role="radiogroup" aria-label="Brush style">
+          <button type="button" className="add-text-btn" onClick={addText}>
+            <TextT weight="bold" size={14} />
+            <span>ADD TEXT</span>
+          </button>
+
+          {selectedSticker?.kind === "text" && (
+            <div className="text-section">
+              <input
+                ref={textInputRef}
+                className="text-input"
+                type="text"
+                value={selectedSticker.text}
+                maxLength={MAX_TEXT_LENGTH}
+                placeholder="Type here"
+                spellCheck={false}
+                onChange={(event) => updateText({ text: event.target.value })}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") setSelectedStickerId(null);
+                }}
+                aria-label="Text on the leaf"
+              />
+              <div className="text-fonts" role="radiogroup" aria-label="Text font">
+                {TEXT_FONTS.map((f) => (
+                  <button
+                    key={f.id}
+                    type="button"
+                    role="radio"
+                    aria-checked={selectedSticker.font === f.id}
+                    title={f.label}
+                    className={selectedSticker.font === f.id ? "text-font selected" : "text-font"}
+                    style={{ fontFamily: `"${f.id}"`, fontWeight: f.weight }}
+                    onClick={() => updateText({ font: f.id })}
+                  >
+                    Aa
+                  </button>
+                ))}
+              </div>
+              <div className="text-colors">
+                {INK_COLORS.map((c) => (
+                  <button
+                    key={c}
+                    type="button"
+                    className={selectedSticker.color === c ? "swatch selected" : "swatch"}
+                    style={{ background: c }}
+                    aria-label={`Text color ${c}`}
+                    onClick={() => updateText({ color: c })}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+
+          <div className="brush-card" role="radiogroup" aria-label="Brush style">
           <span className="brush-card-title">BRUSHES</span>
           <div className="brush-grid">
             {BRUSHES.map((b) => (
