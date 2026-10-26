@@ -649,7 +649,18 @@ export default function EditPage() {
   const [dragPreview, setDragPreview] = useState(null);
   const trayDragRef = useRef(null);
   const trayStartRef = useRef({ x: 0, y: 0 });
+  const [sessionSelfie, setSessionSelfie] = useState(null);
   const [doodleCategory, setDoodleCategory] = useState("classic");
+  const activeDoodleCategories = sessionSelfie
+    ? [
+        {
+          id: "my-photo",
+          label: "My Photo",
+          items: [{ label: "My Selfie", src: sessionSelfie, aspect: 1, alpha: true }]
+        },
+        ...DOODLE_CATEGORIES
+      ]
+    : DOODLE_CATEGORIES;
   const [collapsed, setCollapsed] = useState({ tools: false, doodles: false, ink: false, logo: false });
   const toggleCard = (key) => setCollapsed((current) => ({ ...current, [key]: !current[key] }));
   const stickerGestureRef = useRef({ id: null, pointers: new Map(), lastX: 0, lastY: 0, startDistance: 0, start: { w: 112, fontSize: 30 } });
@@ -835,6 +846,56 @@ export default function EditPage() {
       )));
     });
   };
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const savedPhoto = sessionStorage.getItem("nescafe_user_photo");
+    const savedName = sessionStorage.getItem("nescafe_user_name");
+    if (savedPhoto) {
+      setSessionSelfie(savedPhoto);
+      setDoodleCategory("my-photo");
+    }
+
+    const initial = [];
+    if (savedPhoto) {
+      initial.push({
+        id: "selfie-dp",
+        src: savedPhoto,
+        label: "My Selfie",
+        aspect: 1,
+        alpha: true,
+        x: W / 2,
+        y: H / 2 - 45,
+        w: 120,
+        h: 120,
+        rotation: 0
+      });
+    }
+    if (savedName && savedName.trim()) {
+      const text = savedName.trim();
+      const font = "Pacifico";
+      const fontSize = 28;
+      const dims = measureText(text, font, fontSize);
+      initial.push({
+        id: "user-name-text",
+        kind: "text",
+        text,
+        font,
+        color: "#EB1C23",
+        fontSize,
+        x: W / 2,
+        y: H / 2 + 55,
+        rotation: 0,
+        ...dims
+      });
+    }
+    if (initial.length > 0) {
+      setPlacedStickers((existing) => (existing.length === 0 ? initial : existing));
+      if (savedName && savedName.trim()) {
+        remeasureAfterFont("user-name-text", "Pacifico");
+      }
+    }
+  }, []);
 
   // The leaf is slanted, so its middle is not the middle of the canvas: find it from the mask.
   const leafCenterSpot = () => {
@@ -1115,6 +1176,7 @@ export default function EditPage() {
     }
     setSentMessage(false);
     setSending(false);
+    router.push("/");
   };
 
   const handleOpenConfirm = () => {
@@ -1137,13 +1199,16 @@ export default function EditPage() {
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || "Unable to send your design");
 
-      // Clear canvas and reset editor state without refreshing the page
+      // Clear session storage and reset editor state
+      sessionStorage.removeItem("nescafe_user_name");
+      sessionStorage.removeItem("nescafe_user_photo");
+      setSessionSelfie(null);
       resetEditor();
       setSentMessage(true);
       if (successTimerRef.current) clearTimeout(successTimerRef.current);
       successTimerRef.current = setTimeout(() => {
         handleDismissSuccess();
-      }, 5000);
+      }, 2500);
     } catch (error) {
       window.alert(error.message || "Unable to send your design. Please try again.");
       setSending(false);
@@ -1446,7 +1511,7 @@ export default function EditPage() {
         <CollapseButton collapsed={collapsed.doodles} onClick={() => toggleCard("doodles")} label="doodles" />
         <span className="doodle-card-title">DROP A DOODLE</span>
         <div className="doodle-cats" role="tablist" aria-label="Doodle categories">
-          {DOODLE_CATEGORIES.map((cat) => (
+          {activeDoodleCategories.map((cat) => (
             <button
               key={cat.id}
               type="button"
@@ -1460,9 +1525,9 @@ export default function EditPage() {
           ))}
         </div>
         <div className="doodle-grid">
-          {(DOODLE_CATEGORIES.find((cat) => cat.id === doodleCategory) || DOODLE_CATEGORIES[0]).items.map((item) => (
+          {(activeDoodleCategories.find((cat) => cat.id === doodleCategory) || activeDoodleCategories[0]).items.map((item) => (
             <button
-              key={item.label + item.src.length}
+              key={item.label + (item.src.length > 50 ? item.src.slice(0, 50) : item.src)}
               type="button"
               className="doodle-tile"
               onPointerDown={(event) => startTrayDrag(item, event)}
