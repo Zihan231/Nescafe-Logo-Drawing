@@ -28,7 +28,7 @@
 .editor-head{background:#ed1c2e;height:104px}.editor-ribbon{left:0;right:0;height:98px;clip-path:none;border-radius:0 0 88px 88px}.editor-ribbon:after{content:"";position:absolute;inset:0;border-bottom:2px solid rgba(255,255,255,.06);border-radius:0 0 88px 88px;pointer-events:none}.editor-ribbon img{right:3.5%;width:110px;height:78px;object-fit:contain;filter:drop-shadow(0 4px 8px rgba(0,0,0,.32))}
 .editor-ribbon strong{font-family:'Nescafe Inspired Vector','Montserrat',Arial,sans-serif;font-size:clamp(20px,2.4vw,32px);font-weight:700;letter-spacing:.08em;text-transform:uppercase;display:inline-block;transform:none;transform-origin:center;text-shadow:0 2px 6px rgba(0,0,0,.35)}
 @media(max-width:600px){.editor-head{height:78px}.editor-ribbon{left:0;right:0;height:74px;clip-path:none;border-radius:0 0 44px 44px}.editor-ribbon:after{border-radius:0 0 44px 44px}.editor-ribbon strong{font-size:18px;letter-spacing:.05em}.editor-ribbon img{right:2.5%;width:74px;height:52px}}
-.editor{background:#a21f25}.editor:before{display:none}.editor-head{background:#a21f25}.editor-grid{background:transparent}.canvas-shell{background:transparent;border:0;box-shadow:none;border-radius:0}.stickers{background:transparent;border:0;border-radius:0;padding:0}.controls{background:transparent;border:0;padding-left:0;padding-right:0}.toolbox button:not(.active){background:transparent}
+.editor{background:#EB1C23}.editor:before{display:none}.editor-head{background:#EB1C23}.editor-grid{background:transparent}.canvas-shell{background:transparent;border:0;box-shadow:none;border-radius:0}.stickers{background:transparent;border:0;border-radius:0;padding:0}.controls{background:transparent;border:0;padding-left:0;padding-right:0}.toolbox button:not(.active){background:transparent}
 .editor-ribbon{background:#7c554f}
 .editor-ribbon{box-shadow:none;border:0}.editor-ribbon:before,.editor-ribbon:after{display:none}
 .leaf-mask-source{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}.leaf-image{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;filter:drop-shadow(0 16px 18px rgba(67,0,10,.22));-webkit-mask-image:url('/assets/nescafe-leaf.png');mask-image:url('/assets/nescafe-leaf.png');-webkit-mask-size:contain;mask-size:contain;-webkit-mask-position:center;mask-position:center;-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat}.canvas-shell canvas{z-index:2;-webkit-mask-image:url('/assets/nescafe-leaf.png');mask-image:url('/assets/nescafe-leaf.png');-webkit-mask-size:contain;mask-size:contain;-webkit-mask-position:center;mask-position:center;-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat}.canvas-hint{display:none}
@@ -107,12 +107,12 @@
 .modal-brand-wrap{display:flex;justify-content:center;align-items:center;margin-bottom:14px}
 .modal-brand-logo{width:145px;height:auto;object-fit:contain;filter:drop-shadow(0 4px 10px rgba(162,31,37,.25))}
 .modal-brand-leaf{width:52px;height:auto;object-fit:contain;filter:drop-shadow(0 4px 10px rgba(162,31,37,.3))}
-.modal-title-pacifico{font-family:'Nescafe Inspired Vector','Montserrat',Arial,sans-serif;font-size:clamp(22px,2.6vw,30px);font-weight:700;letter-spacing:.06em;text-transform:uppercase;margin:0 0 10px;color:#a21f25;text-shadow:0 1px 2px rgba(162,31,37,.15)}
+.modal-title-pacifico{font-family:'Nescafe Inspired Vector','Montserrat',Arial,sans-serif;font-size:clamp(22px,2.6vw,30px);font-weight:700;letter-spacing:.06em;text-transform:uppercase;margin:0 0 10px;color:#EB1C23;text-shadow:0 1px 2px rgba(235,28,35,.15)}
 .modal-subtitle{font-family:'DM Sans',Arial,sans-serif;font-size:14px;line-height:1.55;color:#5c1115;font-weight:500;margin:0 0 28px}
 .nescafe-modal-actions{display:flex;align-items:center;justify-content:center;gap:14px}
-.modal-btn-cancel{flex:1;padding:14px 22px;border-radius:24px 4px 18px 4px;border:1.5px solid rgba(162,31,37,.35);background:#faf0f1;color:#a21f25;font-family:'Nescafe Inspired Vector','DM Sans',Arial,sans-serif;font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;cursor:pointer;transition:all .2s ease}
-.modal-btn-cancel:hover{background:#f5e2e3;border-color:#a21f25;color:#85151b;transform:scale(1.02)}
-.modal-btn-confirm{flex:1.2;padding:14px 26px;border-radius:24px 4px 18px 4px;border:0;background:linear-gradient(135deg,#a21f25 0%,#85151b 100%);color:#ffffff;font-family:'Nescafe Inspired Vector','DM Sans',Arial,sans-serif;font-size:13px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:9px;box-shadow:0 10px 26px rgba(162,31,37,.42);transition:transform .2s ease,box-shadow .2s ease}
+.modal-btn-cancel{flex:1;padding:14px 22px;border-radius:24px 4px 18px 4px;border:1.5px solid rgba(235,28,35,.35);background:#faf0f1;color:#EB1C23;font-family:'Nescafe Inspired Vector','DM Sans',Arial,sans-serif;font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;cursor:pointer;transition:all .2s ease}
+.modal-btn-cancel:hover{background:#f5e2e3;border-color:#EB1C23;color:#85151b;transform:scale(1.02)}
+.modal-btn-confirm{flex:1.2;padding:14px 26px;border-radius:24px 4px 18px 4px;border:0;background:linear-gradient(135deg,#EB1C23 0%,#85151b 100%);color:#ffffff;font-family:'Nescafe Inspired Vector','DM Sans',Arial,sans-serif;font-size:13px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:9px;box-shadow:0 10px 26px rgba(235,28,35,.42);transition:transform .2s ease,box-shadow .2s ease}
 .modal-btn-confirm:hover{background:linear-gradient(135deg,#b8252c 0%,#8f171e 100%);transform:scale(1.03);box-shadow:0 14px 34px rgba(162,31,37,.55)}
 .modal-close-btn{position:absolute;right:16px;top:16px;width:32px;height:32px;border-radius:50%;border:1px solid rgba(162,31,37,.25);background:#faf0f1;color:#a21f25;display:grid;place-items:center;cursor:pointer;transition:all .2s ease}
 .modal-close-btn:hover{color:#85151b;background:#f4dedf;border-color:#a21f25}
@@ -166,7 +166,7 @@
 .brush-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px}
 .editor .toolbox .brush-card .brush-tile{width:100%;height:auto;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;padding:8px 2px 7px;border:1px solid rgba(255,255,255,.14);border-radius:13px;background:rgba(255,255,255,.06);color:#fff;font-size:inherit;cursor:pointer;transition:background .15s ease,transform .15s ease,border-color .15s ease}
 .editor .toolbox .brush-card .brush-tile:hover{background:rgba(255,255,255,.16);border-color:rgba(255,255,255,.4);transform:translateY(-1px)}
-.editor .toolbox .brush-card .brush-tile.selected{background:#fff;color:#a21f25;border-color:#fff;box-shadow:0 6px 14px rgba(80,0,10,.3)}
+.editor .toolbox .brush-card .brush-tile.selected{background:#fff;color:#EB1C23;border-color:#fff;box-shadow:0 6px 14px rgba(80,0,10,.3)}
 .editor .toolbox .brush-card .brush-tile.current{border-color:rgba(255,255,255,.6)}
 .brush-tile span{font:800 8px 'DM Sans',Arial,sans-serif;letter-spacing:.06em;text-transform:uppercase;line-height:1;white-space:nowrap}
 .brush-sample{width:50px;height:17px;flex:none}
@@ -183,7 +183,7 @@
 .text-input:focus{border-color:#fff}
 .text-fonts{display:grid;grid-template-columns:repeat(4,1fr);gap:4px}
 .editor .toolbox .text-font{width:100%;height:28px;border-radius:8px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.06);color:#fff;font-size:14px;line-height:1;cursor:pointer}
-.editor .toolbox .text-font.selected{background:#fff;color:#a21f25;border-color:#fff}
+.editor .toolbox .text-font.selected{background:#fff;color:#EB1C23;border-color:#fff}
 .text-colors{display:flex;justify-content:space-between;gap:3px}
 .editor .toolbox .text-colors .swatch{width:19px;height:19px;min-width:0;border-radius:50%;flex:none}
 @media(max-width:1100px){.editor .toolbox .add-text-btn span{display:none}.editor .toolbox.text-editing{width:236px}}
@@ -201,21 +201,21 @@
 .tool-tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;padding:3px;border-radius:12px;background:rgba(255,255,255,.07)}
 .editor .toolbox .tool-tab{position:relative;width:100%;height:auto;display:flex;align-items:center;justify-content:center;gap:5px;padding:7px 2px;border:0;border-radius:9px;background:transparent;color:rgba(255,255,255,.75);font:800 8px 'DM Sans',Arial,sans-serif;letter-spacing:.08em;text-transform:uppercase;cursor:pointer}
 .editor .toolbox .tool-tab:hover{color:#fff;background:rgba(255,255,255,.1)}
-.editor .toolbox .tool-tab.selected{background:#fff;color:#a21f25}
+.editor .toolbox .tool-tab.selected{background:#fff;color:#EB1C23}
 .tab-dot{position:absolute;top:3px;right:4px;width:6px;height:6px;border-radius:50%;background:#52d19b;box-shadow:0 0 0 1.5px rgba(26,5,8,.9)}
 .shape-card,.symmetry-card{display:flex;flex-direction:column;gap:9px}
 .shape-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}
 .editor .toolbox .shape-tile{width:100%;height:46px;display:grid;place-items:center;border:1px solid rgba(255,255,255,.14);border-radius:13px;background:rgba(255,255,255,.06);color:#fff;cursor:pointer;transition:background .15s ease,transform .15s ease,border-color .15s ease}
 .editor .toolbox .shape-tile:hover{background:rgba(255,255,255,.16);border-color:rgba(255,255,255,.4);transform:translateY(-1px)}
-.editor .toolbox .shape-tile.selected{background:#fff;color:#a21f25;border-color:#fff;box-shadow:0 6px 14px rgba(80,0,10,.3)}
+.editor .toolbox .shape-tile.selected{background:#fff;color:#EB1C23;border-color:#fff;box-shadow:0 6px 14px rgba(80,0,10,.3)}
 .shape-icon{width:26px;height:26px}
 .shape-fill{display:grid;grid-template-columns:1fr 1fr;gap:4px;padding:3px;border-radius:11px;background:rgba(255,255,255,.07)}
 .editor .toolbox .shape-fill button{width:100%;height:auto;padding:7px 2px;border:0;border-radius:8px;background:transparent;color:rgba(255,255,255,.75);font:800 8px 'DM Sans',Arial,sans-serif;letter-spacing:.12em;cursor:pointer}
-.editor .toolbox .shape-fill button.selected{background:#fff;color:#a21f25}
+.editor .toolbox .shape-fill button.selected{background:#fff;color:#EB1C23}
 .symmetry-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px}
 .editor .toolbox .symmetry-tile{width:100%;height:auto;display:flex;align-items:center;justify-content:flex-start;gap:8px;padding:7px 8px;border:1px solid rgba(255,255,255,.14);border-radius:13px;background:rgba(255,255,255,.06);color:#fff;cursor:pointer;transition:background .15s ease,border-color .15s ease}
 .editor .toolbox .symmetry-tile:hover{background:rgba(255,255,255,.16);border-color:rgba(255,255,255,.4)}
-.editor .toolbox .symmetry-tile.selected{background:#fff;color:#a21f25;border-color:#fff;box-shadow:0 6px 14px rgba(80,0,10,.3)}
+.editor .toolbox .symmetry-tile.selected{background:#fff;color:#EB1C23;border-color:#fff;box-shadow:0 6px 14px rgba(80,0,10,.3)}
 .symmetry-tile span{font:800 8px 'DM Sans',Arial,sans-serif;letter-spacing:.06em;text-transform:uppercase;line-height:1.1;text-align:left}
 .symmetry-icon{width:24px;height:24px;flex:none}
 .symmetry-count{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:5px 8px;border-radius:11px;background:rgba(255,255,255,.07);color:#fff}
@@ -245,7 +245,7 @@
 .doodle-cats{display:flex;flex-wrap:wrap;gap:5px;justify-content:center}
 .doodle-cat{padding:6px 10px;border:1px solid rgba(255,255,255,.2);border-radius:999px;background:rgba(255,255,255,.07);color:rgba(255,255,255,.82);font:800 9px 'DM Sans',Arial,sans-serif;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;transition:background .15s ease,border-color .15s ease}
 .doodle-cat:hover{background:rgba(255,255,255,.18);border-color:rgba(255,255,255,.5)}
-.doodle-cat.selected{background:#fff;color:#a21f25;border-color:#fff}
+.doodle-cat.selected{background:#fff;color:#EB1C23;border-color:#fff}
 .doodle-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;overflow-x:hidden;overflow-y:auto;min-height:0;padding:9px;margin:-5px;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.35) transparent}
 .doodle-tile{position:relative;display:block;width:100%;height:0;padding:0 0 100%;border:0;background:#f6eee7;border-radius:14px;cursor:grab;touch-action:none;user-select:none;overflow:hidden}
 .doodle-tile:active{cursor:grabbing}
