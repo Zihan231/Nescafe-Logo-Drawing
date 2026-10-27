@@ -22,7 +22,7 @@ import {
 } from "@phosphor-icons/react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { DOODLE_CATEGORIES } from "@/lib/doodles";
+import { getProfessionDoodles } from "@/lib/profession-doodles";
 
 const W = 760;
 const H = 560;
@@ -649,18 +649,7 @@ export default function EditPage() {
   const [dragPreview, setDragPreview] = useState(null);
   const trayDragRef = useRef(null);
   const trayStartRef = useRef({ x: 0, y: 0 });
-  const [sessionSelfie, setSessionSelfie] = useState(null);
-  const [doodleCategory, setDoodleCategory] = useState("classic");
-  const activeDoodleCategories = sessionSelfie
-    ? [
-        {
-          id: "my-photo",
-          label: "My Photo",
-          items: [{ label: "My Selfie", src: sessionSelfie, aspect: 1, alpha: true }]
-        },
-        ...DOODLE_CATEGORIES
-      ]
-    : DOODLE_CATEGORIES;
+  const professionDoodles = getProfessionDoodles(profession);
   const [collapsed, setCollapsed] = useState({ tools: false, doodles: false, ink: false, logo: false });
   const toggleCard = (key) => setCollapsed((current) => ({ ...current, [key]: !current[key] }));
   const stickerGestureRef = useRef({ id: null, pointers: new Map(), lastX: 0, lastY: 0, startDistance: 0, start: { w: 112, fontSize: 30 } });
@@ -853,10 +842,6 @@ export default function EditPage() {
     const savedName = sessionStorage.getItem("nescafe_user_name");
     const savedProfession = sessionStorage.getItem("nescafe_user_profession");
     if (savedProfession) setProfession(savedProfession);
-    if (savedPhoto) {
-      setSessionSelfie(savedPhoto);
-      setDoodleCategory("my-photo");
-    }
 
     const initializeProfile = () => {
       const photoSpot = leafCenterSpot();
@@ -1216,7 +1201,6 @@ export default function EditPage() {
       sessionStorage.removeItem("nescafe_user_name");
       sessionStorage.removeItem("nescafe_user_photo");
       sessionStorage.removeItem("nescafe_user_profession");
-      setSessionSelfie(null);
       resetEditor();
       setProfession("");
       setSentMessage(true);
@@ -1521,26 +1505,13 @@ export default function EditPage() {
         </div>
       </aside>
 
-      {/* Doodles by category: pinned to the right edge, aligned with the LOGO card below */}
+      {/* Doodles matched to the profession chosen during capture. */}
       <aside className={collapsed.doodles ? "doodle-card is-collapsed" : "doodle-card"}>
         <CollapseButton collapsed={collapsed.doodles} onClick={() => toggleCard("doodles")} label="doodles" />
         <span className="doodle-card-title">DROP A DOODLE</span>
-        <div className="doodle-cats" role="tablist" aria-label="Doodle categories">
-          {activeDoodleCategories.map((cat) => (
-            <button
-              key={cat.id}
-              type="button"
-              role="tab"
-              aria-selected={doodleCategory === cat.id}
-              className={doodleCategory === cat.id ? "doodle-cat selected" : "doodle-cat"}
-              onClick={() => setDoodleCategory(cat.id)}
-            >
-              {cat.label}
-            </button>
-          ))}
-        </div>
+        {profession && <span className="profession-doodle-label">{profession}</span>}
         <div className="doodle-grid">
-          {(activeDoodleCategories.find((cat) => cat.id === doodleCategory) || activeDoodleCategories[0]).items.map((item) => (
+          {professionDoodles.map((item) => (
             <button
               key={item.label + (item.src.length > 50 ? item.src.slice(0, 50) : item.src)}
               type="button"
@@ -1556,7 +1527,9 @@ export default function EditPage() {
             </button>
           ))}
         </div>
-        <p className="tool-hint">Click a doodle to add it, or drag it onto the leaf.</p>
+        <p className="tool-hint">
+          {professionDoodles.length ? "Click a doodle to add it, or drag it onto the leaf." : "Choose your profession on the capture page to see your doodles."}
+        </p>
       </aside>
 
       {/* Bottom Controls Bar with Both Color Sections */}

@@ -247,6 +247,7 @@
 .doodle-card{position:absolute;right:3.5vw;top:118px;z-index:10;width:var(--left-card-width);box-sizing:border-box;max-height:calc(100svh - 118px - 292px);display:flex;flex-direction:column;gap:10px;padding:12px;background:rgba(26,5,8,.82);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border:1px solid rgba(255,255,255,.18);border-radius:22px;box-shadow:0 14px 34px rgba(18,2,5,.45),inset 0 1px 0 rgba(255,255,255,.12)}
 .doodle-card-title{font:800 9px 'Myriad Pro',Arial,sans-serif;letter-spacing:.22em;color:rgba(255,255,255,.7);text-align:center}
 .doodle-cats{display:flex;flex-wrap:wrap;gap:5px;justify-content:center}
+.profession-doodle-label{display:block;padding:7px 10px;border:1px solid rgba(255,255,255,.2);border-radius:12px;background:rgba(255,255,255,.08);color:#fff;font:700 11px 'Nescafe Sans',Arial,sans-serif;line-height:1.4;text-align:center}
 .doodle-cat{padding:6px 10px;border:1px solid rgba(255,255,255,.2);border-radius:999px;background:rgba(255,255,255,.07);color:rgba(255,255,255,.82);font:800 9px 'Myriad Pro',Arial,sans-serif;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;transition:background .15s ease,border-color .15s ease}
 .doodle-cat:hover{background:rgba(255,255,255,.18);border-color:rgba(255,255,255,.5)}
 .doodle-cat.selected{background:#fff;color:#EB1C23;border-color:#fff}
