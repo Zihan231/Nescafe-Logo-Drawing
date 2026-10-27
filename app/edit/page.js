@@ -640,6 +640,7 @@ export default function EditPage() {
   const [leafGeo, setLeafGeo] = useState(null);
   const [size, setSize] = useState(4);
   const [sending, setSending] = useState(false);
+  const [profession, setProfession] = useState("");
   const [showConfirm, setShowConfirm] = useState(false);
   const [sentMessage, setSentMessage] = useState(false);
   const successTimerRef = useRef(null);
@@ -851,6 +852,8 @@ export default function EditPage() {
     if (typeof window === "undefined") return;
     const savedPhoto = sessionStorage.getItem("nescafe_user_photo");
     const savedName = sessionStorage.getItem("nescafe_user_name");
+    const savedProfession = sessionStorage.getItem("nescafe_user_profession");
+    if (savedProfession) setProfession(savedProfession);
     if (savedPhoto) {
       setSessionSelfie(savedPhoto);
       setDoodleCategory("my-photo");
@@ -1192,6 +1195,7 @@ export default function EditPage() {
       const blob = await fetch(image).then((response) => response.blob());
       const formData = new FormData();
       formData.append("image", blob, `nescafe-${Date.now()}.png`);
+      formData.append("profession", profession || sessionStorage.getItem("nescafe_user_profession") || "");
       const response = await fetch("/api/designs", {
         method: "POST",
         body: formData
@@ -1202,8 +1206,10 @@ export default function EditPage() {
       // Clear session storage and reset editor state
       sessionStorage.removeItem("nescafe_user_name");
       sessionStorage.removeItem("nescafe_user_photo");
+      sessionStorage.removeItem("nescafe_user_profession");
       setSessionSelfie(null);
       resetEditor();
+      setProfession("");
       setSentMessage(true);
       if (successTimerRef.current) clearTimeout(successTimerRef.current);
       successTimerRef.current = setTimeout(() => {
@@ -1787,6 +1793,7 @@ export default function EditPage() {
                   type="button"
                   className="modal-btn-confirm"
                   onClick={handleConfirmSend}
+                  disabled={sending}
                 >
                   <span>SEND NOW</span>
                   <PaperPlaneTilt weight="fill" size={15} />

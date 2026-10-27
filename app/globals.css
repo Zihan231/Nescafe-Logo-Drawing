@@ -427,6 +427,9 @@
   gap: clamp(12px, 1.8vh, 20px);
   width: min(500px, 92vw);
   max-height: calc(100svh - 120px);
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, .35) transparent;
 }
 
 .capture-name-block {
@@ -472,6 +475,60 @@
 .capture-name-input::placeholder {
   color: rgba(255, 255, 255, .4);
   font-weight: 400;
+}
+
+.capture-profession-block {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 7px;
+}
+
+.capture-profession-control {
+  position: relative;
+  width: 100%;
+  max-width: 340px;
+}
+
+.capture-profession-select {
+  width: 100%;
+  height: 48px;
+  padding: 0 42px 0 15px;
+  appearance: none;
+  border: 1.5px solid rgba(255, 255, 255, .22);
+  border-radius: 16px;
+  outline: none;
+  color: #fff;
+  background: rgba(255, 255, 255, .08);
+  font: 600 15px 'DM Sans', Arial, sans-serif;
+  cursor: pointer;
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, .3);
+  transition: border-color .22s ease, background .22s ease, box-shadow .22s ease;
+}
+
+.capture-profession-select:focus {
+  border-color: #EB1C23;
+  background: rgba(255, 255, 255, .14);
+  box-shadow: 0 0 0 3px rgba(235, 28, 35, .35), inset 0 2px 6px rgba(0, 0, 0, .2);
+}
+
+.capture-profession-select option {
+  color: #19090b;
+  background: #fff;
+}
+
+.capture-profession-select:invalid {
+  color: rgba(255, 255, 255, .48);
+}
+
+.capture-profession-icon {
+  position: absolute;
+  top: 50%;
+  right: 15px;
+  transform: translateY(-50%);
+  color: #fff;
+  pointer-events: none;
 }
 
 .capture-camera-block {

@@ -7,15 +7,18 @@ import {
   ArrowLeft,
   Camera,
   ArrowClockwise,
+  CaretDown,
   Check,
   UploadSimple,
   WarningCircle,
   Sparkle
 } from "@phosphor-icons/react";
+import { PROFESSIONS } from "@/lib/professions";
 
 export default function CapturePage() {
   const router = useRouter();
   const [userName, setUserName] = useState("");
+  const [profession, setProfession] = useState("");
   const [cameraActive, setCameraActive] = useState(false);
   const [cameraError, setCameraError] = useState(null);
   const [capturedPhoto, setCapturedPhoto] = useState(null);
@@ -74,6 +77,7 @@ export default function CapturePage() {
 
   // Auto-start camera on mount
   useEffect(() => {
+    setProfession(sessionStorage.getItem("nescafe_user_profession") || "");
     startCamera();
     return () => {
       stopCamera();
@@ -159,6 +163,7 @@ export default function CapturePage() {
 
   // Submit and continue to edit page
   const handleContinue = async () => {
+    if (!profession || processing) return;
     const finalName = userName.trim() || "My Logo";
     setProcessing(true);
 
@@ -186,6 +191,7 @@ export default function CapturePage() {
 
       // Save to sessionStorage for active session
       sessionStorage.setItem("nescafe_user_name", finalName);
+      sessionStorage.setItem("nescafe_user_profession", profession);
       if (photoUrl) {
         sessionStorage.setItem("nescafe_user_photo", photoUrl);
       } else {
@@ -254,7 +260,27 @@ export default function CapturePage() {
             />
           </div>
 
-          {/* Step 2: Camera & Selfie Framing */}
+          {/* Step 2: User's Profession */}
+          <div className="capture-profession-block">
+            <label htmlFor="profession-select" className="capture-label">
+              <span>YOUR PROFESSION</span>
+            </label>
+            <div className="capture-profession-control">
+              <select
+                id="profession-select"
+                className="capture-profession-select"
+                value={profession}
+                onChange={(event) => setProfession(event.target.value)}
+                required
+              >
+                <option value="" disabled>Select your profession</option>
+                {PROFESSIONS.map((option) => <option key={option} value={option}>{option}</option>)}
+              </select>
+              <CaretDown className="capture-profession-icon" size={17} weight="bold" aria-hidden="true" />
+            </div>
+          </div>
+
+          {/* Step 3: Camera & Selfie Framing */}
           <div className="capture-camera-block">
             <div className={`camera-viewport${flash ? " flash" : ""}`}>
               {/* Live Video */}
@@ -358,7 +384,7 @@ export default function CapturePage() {
                     type="button"
                     className="capture-confirm-btn"
                     onClick={handleContinue}
-                    disabled={processing}
+                    disabled={processing || !profession}
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                   >

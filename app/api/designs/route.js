@@ -3,6 +3,7 @@ import { promises as fs } from "node:fs";
 import path from "node:path";
 import { createDesign, getLatestDesigns } from "@/lib/design-store";
 import { publishDesign } from "@/lib/realtime";
+import { PROFESSIONS } from "@/lib/professions";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -68,6 +69,10 @@ export async function POST(request) {
   try {
     const formData = await request.formData();
     const file = formData.get("image");
+    const profession = formData.get("profession");
+    if (typeof profession !== "string" || !PROFESSIONS.includes(profession)) {
+      return NextResponse.json({ error: "Choose a valid profession" }, { status: 400 });
+    }
     if (!(file instanceof File)) return NextResponse.json({ error: "A PNG image is required" }, { status: 400 });
     if (file.size <= 0 || file.size > maxUploadBytes()) return NextResponse.json({ error: "PNG exceeds the upload limit" }, { status: 413 });
     const buffer = Buffer.from(await file.arrayBuffer());
@@ -83,7 +88,7 @@ export async function POST(request) {
     await fs.writeFile(temporaryPath, buffer, { flag: "wx" });
     await fs.rename(temporaryPath, storedPath);
 
-    const design = await createDesign({ id, imageUrl: `/uploads/${filename}`, width: dimensions.width, height: dimensions.height, fileSize: buffer.length });
+    const design = await createDesign({ id, imageUrl: `/uploads/${filename}`, width: dimensions.width, height: dimensions.height, fileSize: buffer.length, profession });
     publishDesign(design);
     return NextResponse.json(design, { status: 201, headers: { "Cache-Control": "no-store" } });
   } catch (error) {

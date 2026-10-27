@@ -13,6 +13,7 @@ model Design {
   width     Int
   height    Int
   fileSize  Int      @map("file_size")
+  profession String? @db.VarChar(80)
   createdAt DateTime @default(now()) @map("created_at")
 
   @@index([createdAt])
