@@ -472,6 +472,14 @@
   box-shadow: 0 0 0 3px rgba(235, 28, 35, .35), inset 0 2px 6px rgba(0, 0, 0, .2);
 }
 
+.capture-name-input[aria-invalid="true"] {
+  border-color: #ffca28;
+}
+
+.capture-required-mark {
+  color: #ffca28;
+}
+
 .capture-name-input::placeholder {
   color: rgba(255, 255, 255, .4);
   font-weight: 400;
@@ -491,11 +499,14 @@
   max-width: 340px;
 }
 
-.capture-profession-select {
+.capture-profession-trigger {
   width: 100%;
   height: 48px;
   padding: 0 42px 0 15px;
-  appearance: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  text-align: left;
   border: 1.5px solid rgba(255, 255, 255, .22);
   border-radius: 16px;
   outline: none;
@@ -504,31 +515,96 @@
   font: 600 15px 'DM Sans', Arial, sans-serif;
   cursor: pointer;
   box-shadow: inset 0 2px 6px rgba(0, 0, 0, .3);
-  transition: border-color .22s ease, background .22s ease, box-shadow .22s ease;
+  transition: border-color .22s ease, background .22s ease, box-shadow .22s ease, transform .18s ease;
 }
 
-.capture-profession-select:focus {
+.capture-profession-trigger:hover,
+.capture-profession-trigger:focus-visible,
+.capture-profession-trigger.is-open {
   border-color: #EB1C23;
   background: rgba(255, 255, 255, .14);
   box-shadow: 0 0 0 3px rgba(235, 28, 35, .35), inset 0 2px 6px rgba(0, 0, 0, .2);
 }
 
-.capture-profession-select option {
-  color: #19090b;
-  background: #fff;
+.capture-profession-trigger[aria-invalid="true"] {
+  border-color: #ffca28;
 }
 
-.capture-profession-select:invalid {
+.capture-profession-placeholder {
   color: rgba(255, 255, 255, .48);
 }
 
 .capture-profession-icon {
   position: absolute;
-  top: 50%;
+  top: 16px;
   right: 15px;
-  transform: translateY(-50%);
   color: #fff;
   pointer-events: none;
+  transition: transform .2s ease;
+}
+
+.capture-profession-icon.is-open {
+  transform: rotate(180deg);
+}
+
+.capture-profession-list {
+  position: relative;
+  z-index: 20;
+  width: 100%;
+  max-height: min(34vh, 250px);
+  margin-top: 8px;
+  padding: 7px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border: 1px solid rgba(235, 28, 35, .2);
+  border-radius: 18px;
+  background: linear-gradient(145deg, #fff 0%, #fff8f4 100%);
+  box-shadow: 0 18px 38px rgba(10, 0, 2, .42), inset 0 1px 0 #fff;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(162, 31, 37, .35) transparent;
+  animation: profession-list-in .16s ease-out;
+}
+
+@keyframes profession-list-in {
+  from { opacity: 0; transform: translateY(-5px) scale(.99); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.capture-profession-option {
+  min-height: 38px;
+  padding: 8px 11px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border-radius: 11px;
+  color: #3b1014;
+  font: 600 13px 'DM Sans', Arial, sans-serif;
+  cursor: pointer;
+  transition: color .14s ease, background .14s ease, transform .14s ease;
+}
+
+.capture-profession-option:hover,
+.capture-profession-option.is-active {
+  color: #8f171e;
+  background: #fae9e8;
+}
+
+.capture-profession-option.is-active {
+  transform: translateX(2px);
+}
+
+.capture-profession-option.is-selected {
+  color: #a21f25;
+  background: #f7dfde;
+  font-weight: 700;
+}
+
+.capture-field-error {
+  color: #ffdd72;
+  font: 600 11px 'DM Sans', Arial, sans-serif;
+  text-align: left;
+  line-height: 1.35;
 }
 
 .capture-camera-block {

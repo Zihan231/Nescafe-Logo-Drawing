@@ -19,6 +19,9 @@ export default function CapturePage() {
   const router = useRouter();
   const [userName, setUserName] = useState("");
   const [profession, setProfession] = useState("");
+  const [professionOpen, setProfessionOpen] = useState(false);
+  const [professionActiveIndex, setProfessionActiveIndex] = useState(0);
+  const [submitAttempted, setSubmitAttempted] = useState(false);
   const [cameraActive, setCameraActive] = useState(false);
   const [cameraError, setCameraError] = useState(null);
   const [capturedPhoto, setCapturedPhoto] = useState(null);
@@ -28,6 +31,8 @@ export default function CapturePage() {
   const videoRef = useRef(null);
   const streamRef = useRef(null);
   const fileInputRef = useRef(null);
+  const professionControlRef = useRef(null);
+  const professionOptionRefs = useRef([]);
 
   // Stop camera tracks helper
   const stopCamera = useCallback(() => {
@@ -83,6 +88,54 @@ export default function CapturePage() {
       stopCamera();
     };
   }, [startCamera, stopCamera]);
+
+  useEffect(() => {
+    if (!professionOpen) return;
+    professionOptionRefs.current[professionActiveIndex]?.scrollIntoView({ block: "nearest" });
+  }, [professionOpen, professionActiveIndex]);
+
+  useEffect(() => {
+    if (!professionOpen) return;
+    const closeOnOutsideClick = (event) => {
+      if (!professionControlRef.current?.contains(event.target)) setProfessionOpen(false);
+    };
+    document.addEventListener("pointerdown", closeOnOutsideClick);
+    return () => document.removeEventListener("pointerdown", closeOnOutsideClick);
+  }, [professionOpen]);
+
+  const handleProfessionKeyDown = (event) => {
+    const currentIndex = PROFESSIONS.indexOf(profession);
+    if (event.key === "ArrowDown") {
+      event.preventDefault();
+      if (!professionOpen) {
+        setProfessionActiveIndex(currentIndex >= 0 ? currentIndex : 0);
+        setProfessionOpen(true);
+      } else {
+        setProfessionActiveIndex((index) => Math.min(index + 1, PROFESSIONS.length - 1));
+      }
+    } else if (event.key === "ArrowUp") {
+      event.preventDefault();
+      if (!professionOpen) {
+        setProfessionActiveIndex(currentIndex >= 0 ? currentIndex : PROFESSIONS.length - 1);
+        setProfessionOpen(true);
+      } else {
+        setProfessionActiveIndex((index) => Math.max(index - 1, 0));
+      }
+    } else if ((event.key === "Enter" || event.key === " ") && professionOpen) {
+      event.preventDefault();
+      setProfession(PROFESSIONS[professionActiveIndex]);
+      setProfessionOpen(false);
+    } else if (event.key === "Escape" && professionOpen) {
+      event.preventDefault();
+      setProfessionOpen(false);
+    } else if (event.key === "Home" && professionOpen) {
+      event.preventDefault();
+      setProfessionActiveIndex(0);
+    } else if (event.key === "End" && professionOpen) {
+      event.preventDefault();
+      setProfessionActiveIndex(PROFESSIONS.length - 1);
+    }
+  };
 
   // Capture current frame from video into a circular PNG
   const handleSnap = () => {
@@ -163,8 +216,9 @@ export default function CapturePage() {
 
   // Submit and continue to edit page
   const handleContinue = async () => {
-    if (!profession || processing) return;
-    const finalName = userName.trim() || "My Logo";
+    setSubmitAttempted(true);
+    if (!userName.trim() || !profession || processing) return;
+    const finalName = userName.trim();
     setProcessing(true);
 
     try {
@@ -242,7 +296,7 @@ export default function CapturePage() {
           {/* Step 1: User's Name */}
           <div className="capture-name-block">
             <label htmlFor="user-name-input" className="capture-label">
-              <span>YOUR NAME</span>
+              <span>YOUR NAME <span className="capture-required-mark" aria-hidden="true">*</span></span>
             </label>
             <input
               id="user-name-input"
@@ -250,6 +304,8 @@ export default function CapturePage() {
               className="capture-name-input"
               placeholder="Enter your name"
               value={userName}
+              aria-invalid={submitAttempted && !userName.trim()}
+              aria-describedby={submitAttempted && !userName.trim() ? "user-name-error" : undefined}
               maxLength={20}
               autoComplete="off"
               spellCheck={false}
@@ -258,26 +314,65 @@ export default function CapturePage() {
                 if (e.key === "Enter" && capturedPhoto) handleContinue();
               }}
             />
+            {submitAttempted && !userName.trim() && (
+              <span className="capture-field-error" id="user-name-error" role="alert">Please enter your name to continue.</span>
+            )}
           </div>
 
           {/* Step 2: User's Profession */}
           <div className="capture-profession-block">
-            <label htmlFor="profession-select" className="capture-label">
-              <span>YOUR PROFESSION</span>
+            <label id="profession-label" htmlFor="profession-select" className="capture-label">
+              <span>YOUR PROFESSION <span className="capture-required-mark" aria-hidden="true">*</span></span>
             </label>
-            <div className="capture-profession-control">
-              <select
+            <div className="capture-profession-control" ref={professionControlRef}>
+              <button
+                type="button"
                 id="profession-select"
-                className="capture-profession-select"
-                value={profession}
-                onChange={(event) => setProfession(event.target.value)}
-                required
+                className={`capture-profession-trigger${professionOpen ? " is-open" : ""}`}
+                role="combobox"
+                aria-labelledby="profession-label"
+                aria-haspopup="listbox"
+                aria-expanded={professionOpen}
+                aria-controls="profession-options"
+                aria-activedescendant={professionOpen ? `profession-option-${professionActiveIndex}` : undefined}
+                aria-invalid={submitAttempted && !profession}
+                aria-describedby={submitAttempted && !profession ? "profession-error" : undefined}
+                onClick={() => {
+                  const currentIndex = PROFESSIONS.indexOf(profession);
+                  setProfessionActiveIndex(currentIndex >= 0 ? currentIndex : 0);
+                  setProfessionOpen((open) => !open);
+                }}
+                onKeyDown={handleProfessionKeyDown}
               >
-                <option value="" disabled>Select your profession</option>
-                {PROFESSIONS.map((option) => <option key={option} value={option}>{option}</option>)}
-              </select>
-              <CaretDown className="capture-profession-icon" size={17} weight="bold" aria-hidden="true" />
+                <span className={profession ? "" : "capture-profession-placeholder"}>{profession || "Select your profession"}</span>
+                <CaretDown className={`capture-profession-icon${professionOpen ? " is-open" : ""}`} size={17} weight="bold" aria-hidden="true" />
+              </button>
+              {professionOpen && (
+                <div className="capture-profession-list" id="profession-options" role="listbox" aria-labelledby="profession-label">
+                  {PROFESSIONS.map((option, index) => (
+                    <div
+                      key={option}
+                      ref={(element) => { professionOptionRefs.current[index] = element; }}
+                      id={`profession-option-${index}`}
+                      className={`capture-profession-option${professionActiveIndex === index ? " is-active" : ""}${profession === option ? " is-selected" : ""}`}
+                      role="option"
+                      aria-selected={profession === option}
+                      onMouseEnter={() => setProfessionActiveIndex(index)}
+                      onClick={() => {
+                        setProfession(option);
+                        setProfessionOpen(false);
+                      }}
+                    >
+                      <span>{option}</span>
+                      {profession === option && <Check size={16} weight="bold" aria-hidden="true" />}
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
+            {submitAttempted && !profession && (
+              <span className="capture-field-error" id="profession-error" role="alert">Please choose a profession to continue.</span>
+            )}
           </div>
 
           {/* Step 3: Camera & Selfie Framing */}
@@ -384,7 +479,7 @@ export default function CapturePage() {
                     type="button"
                     className="capture-confirm-btn"
                     onClick={handleContinue}
-                    disabled={processing || !profession}
+                    disabled={processing}
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                   >
