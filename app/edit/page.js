@@ -34,10 +34,9 @@ const EDITOR_COLOR = "#EB1C23";
 const STICKER_ASPECT = 1.23;
 const MAX_TEXT_LENGTH = 20;
 const TEXT_FONTS = [
-  { id: "Pacifico", label: "Script", weight: 400 },
-  { id: "DM Sans", label: "Bold", weight: 800 },
-  { id: "Allura", label: "Elegant", weight: 400 },
-  { id: "Bangers", label: "Comic", weight: 400 }
+  { id: "Better Times", label: "Handwritten", weight: 400 },
+  { id: "Nescafe Sans", label: "NESCAFÉ Bold", weight: 700 },
+  { id: "Myriad Pro", label: "Regular", weight: 400 }
 ];
 
 const fontSpec = (font, size) => `${TEXT_FONTS.find((f) => f.id === font)?.weight ?? 400} ${size}px "${font}"`;
@@ -879,7 +878,7 @@ export default function EditPage() {
       }
       if (savedName && savedName.trim()) {
         const text = savedName.trim();
-        const font = "Pacifico";
+        const font = "Better Times";
         const fontSize = Math.min(28, 28 * (nameSpot.span * 0.75) / measureText(text, font, 28).w);
         const dims = measureText(text, font, fontSize);
         initial.push({
@@ -900,7 +899,7 @@ export default function EditPage() {
         setPlacedStickers(initial);
         if (savedPhoto) setSelectedStickerId("selfie-dp");
         if (savedName && savedName.trim()) {
-          remeasureAfterFont("user-name-text", "Pacifico");
+          remeasureAfterFont("user-name-text", "Better Times");
         }
       }
     };
@@ -948,7 +947,7 @@ export default function EditPage() {
     const id = crypto.randomUUID();
     const spot = leafCenterSpot();
     const text = "Your text";
-    const font = "Pacifico";
+    const font = "Better Times";
     // Start at 30, but shrink if the leaf is narrower than the text at this row.
     const fit = (spot.span * 0.8) / measureText(text, font, 30).w;
     const fontSize = Math.max(12, Math.min(30, 30 * fit));
