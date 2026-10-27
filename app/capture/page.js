@@ -82,7 +82,6 @@ export default function CapturePage() {
 
   // Auto-start camera on mount
   useEffect(() => {
-    setProfession(sessionStorage.getItem("nescafe_user_profession") || "");
     startCamera();
     return () => {
       stopCamera();
