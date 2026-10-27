@@ -1246,7 +1246,7 @@ export default function EditPage() {
           <button className="nav-back" onClick={() => router.push("/")} aria-label="Back to home page">
             <ArrowLeft /> <span>BACK</span>
           </button>
-          <strong>LET&apos;S MAKE YOUR WORLD</strong>
+          <strong>MAKE YOUR WORLD</strong>
           <img src="/assets/nescafe-logo-trimmed.png" alt="NESCAFÉ — Make your world" />
         </div>
       </header>
