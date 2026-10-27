@@ -859,49 +859,59 @@ export default function EditPage() {
       setDoodleCategory("my-photo");
     }
 
-    const initial = [];
-    if (savedPhoto) {
-      initial.push({
-        id: "selfie-dp",
-        src: savedPhoto,
-        label: "My Selfie",
-        aspect: 1,
-        alpha: true,
-        x: W / 2,
-        y: H / 2 - 45,
-        w: 120,
-        h: 120,
-        rotation: 0
-      });
-    }
-    if (savedName && savedName.trim()) {
-      const text = savedName.trim();
-      const font = "Pacifico";
-      const fontSize = 28;
-      const dims = measureText(text, font, fontSize);
-      initial.push({
-        id: "user-name-text",
-        kind: "text",
-        text,
-        font,
-        color: "#EB1C23",
-        fontSize,
-        x: W / 2,
-        y: H / 2 + 55,
-        rotation: 0,
-        ...dims
-      });
-    }
-    if (initial.length > 0) {
-      setPlacedStickers((existing) => (existing.length === 0 ? initial : existing));
-      if (savedName && savedName.trim()) {
-        remeasureAfterFont("user-name-text", "Pacifico");
+    const initializeProfile = () => {
+      const photoSpot = leafCenterSpot();
+      const nameSpot = leafCenterSpot(savedPhoto ? 88 : 0);
+      const initial = [];
+      if (savedPhoto) {
+        initial.push({
+          id: "selfie-dp",
+          src: savedPhoto,
+          label: "My Selfie",
+          aspect: 1,
+          alpha: true,
+          x: photoSpot.x,
+          y: photoSpot.y,
+          w: 110,
+          h: 110,
+          rotation: 0
+        });
       }
-    }
+      if (savedName && savedName.trim()) {
+        const text = savedName.trim();
+        const font = "Pacifico";
+        const fontSize = Math.min(28, 28 * (nameSpot.span * 0.75) / measureText(text, font, 28).w);
+        const dims = measureText(text, font, fontSize);
+        initial.push({
+          id: "user-name-text",
+          kind: "text",
+          text,
+          font,
+          color: "#EB1C23",
+          fontSize,
+          x: nameSpot.x,
+          y: nameSpot.y,
+          rotation: 0,
+          ...dims
+        });
+      }
+      if (initial.length > 0) {
+        stickersRef.current = initial;
+        setPlacedStickers(initial);
+        if (savedPhoto) setSelectedStickerId("selfie-dp");
+        if (savedName && savedName.trim()) {
+          remeasureAfterFont("user-name-text", "Pacifico");
+        }
+      }
+    };
+    const mask = leafRef.current;
+    if (mask?.complete && mask.naturalWidth) initializeProfile();
+    else mask?.addEventListener("load", initializeProfile, { once: true });
+    return () => mask?.removeEventListener("load", initializeProfile);
   }, []);
 
   // The leaf is slanted, so its middle is not the middle of the canvas: find it from the mask.
-  const leafCenterSpot = () => {
+  const leafCenterSpot = (yOffset = 0) => {
     const fallback = { x: W / 2, y: H / 2, span: LEAF_SIZE * 0.5 };
     const mask = leafRef.current;
     if (!mask?.complete || !mask.naturalWidth) return fallback;
@@ -922,7 +932,7 @@ export default function EditPage() {
       }
     }
     if (!count) return fallback;
-    const cy = Math.round(sumY / count);
+    const cy = Math.max(0, Math.min(H - 1, Math.round(sumY / count) + yOffset));
     let first = -1;
     let last = -1;
     for (let x = 0; x < W; x++) {
