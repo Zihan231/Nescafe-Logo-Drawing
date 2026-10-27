@@ -1513,7 +1513,12 @@ export default function EditPage() {
       <aside className={collapsed.doodles ? "doodle-card is-collapsed" : "doodle-card"}>
         <CollapseButton collapsed={collapsed.doodles} onClick={() => toggleCard("doodles")} label="doodles" />
         <span className="doodle-card-title">DROP A DOODLE</span>
-        {profession && <span className="profession-doodle-label">Your profession: {profession}</span>}
+        {profession && (
+          <div className="profession-doodle-label">
+            <span className="profession-doodle-caption">Your profession</span>
+            <strong className="profession-doodle-name">{profession}</strong>
+          </div>
+        )}
         <div className="doodle-grid">
           {professionDoodles.map((item) => (
             <button
