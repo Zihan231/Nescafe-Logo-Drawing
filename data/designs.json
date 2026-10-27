@@ -32,6 +32,15 @@
       "fileSize": 47424,
       "profession": "Badminton Player",
       "createdAt": "2026-10-27T09:59:47.662Z"
+    },
+    {
+      "id": "8452a99e-e2a6-486f-9cf7-2715d4279ec0",
+      "imageUrl": "/uploads/8452a99e-e2a6-486f-9cf7-2715d4279ec0.png",
+      "width": 760,
+      "height": 560,
+      "fileSize": 28474,
+      "profession": "Model",
+      "createdAt": "2026-10-27T10:57:43.180Z"
     }
   ]
 }
