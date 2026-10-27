@@ -248,6 +248,7 @@
 .doodle-card-title{font:800 9px 'Myriad Pro',Arial,sans-serif;letter-spacing:.22em;color:rgba(255,255,255,.7);text-align:center}
 .doodle-cats{display:flex;flex-wrap:wrap;gap:5px;justify-content:center}
 .profession-doodle-label{display:block;padding:7px 10px;border:1px solid rgba(255,255,255,.2);border-radius:12px;background:rgba(255,255,255,.08);color:#fff;font:700 11px 'Nescafe Sans',Arial,sans-serif;line-height:1.4;text-align:center}
+.personal-photo-section{display:flex;flex-direction:column;gap:8px;width:100%;padding-top:12px;border-top:1px solid rgba(255,255,255,.18)}
 .doodle-cat{padding:6px 10px;border:1px solid rgba(255,255,255,.2);border-radius:999px;background:rgba(255,255,255,.07);color:rgba(255,255,255,.82);font:800 9px 'Myriad Pro',Arial,sans-serif;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;transition:background .15s ease,border-color .15s ease}
 .doodle-cat:hover{background:rgba(255,255,255,.18);border-color:rgba(255,255,255,.5)}
 .doodle-cat.selected{background:#fff;color:#EB1C23;border-color:#fff}

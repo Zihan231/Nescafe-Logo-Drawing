@@ -649,6 +649,8 @@ export default function EditPage() {
   const [dragPreview, setDragPreview] = useState(null);
   const trayDragRef = useRef(null);
   const trayStartRef = useRef({ x: 0, y: 0 });
+  const [sessionSelfie, setSessionSelfie] = useState(null);
+  const selfieDoodle = sessionSelfie ? { label: "Your photo", src: sessionSelfie, aspect: 1, alpha: true } : null;
   const professionDoodles = getProfessionDoodles(profession);
   const [collapsed, setCollapsed] = useState({ tools: false, doodles: false, ink: false, logo: false });
   const toggleCard = (key) => setCollapsed((current) => ({ ...current, [key]: !current[key] }));
@@ -839,6 +841,7 @@ export default function EditPage() {
   useEffect(() => {
     if (typeof window === "undefined") return;
     const savedPhoto = sessionStorage.getItem("nescafe_user_photo");
+    setSessionSelfie(savedPhoto);
     const savedName = sessionStorage.getItem("nescafe_user_name");
     const savedProfession = sessionStorage.getItem("nescafe_user_profession");
     if (savedProfession) setProfession(savedProfession);
@@ -1201,6 +1204,7 @@ export default function EditPage() {
       sessionStorage.removeItem("nescafe_user_name");
       sessionStorage.removeItem("nescafe_user_photo");
       sessionStorage.removeItem("nescafe_user_profession");
+      setSessionSelfie(null);
       resetEditor();
       setProfession("");
       setSentMessage(true);
@@ -1527,6 +1531,25 @@ export default function EditPage() {
             </button>
           ))}
         </div>
+        {selfieDoodle && (
+          <div className="personal-photo-section">
+            <span className="doodle-card-title">YOUR PHOTO</span>
+            <div className="doodle-grid">
+              <button
+                type="button"
+                className="doodle-tile"
+                onPointerDown={(event) => startTrayDrag(selfieDoodle, event)}
+                onPointerMove={moveTrayDrag}
+                onPointerUp={endTrayDrag}
+                onPointerCancel={endTrayDrag}
+                title="Add your photo again"
+                aria-label="Click or drag your photo onto the leaf"
+              >
+                <img className="alpha-art" src={selfieDoodle.src} alt="Your captured photo" draggable={false} />
+              </button>
+            </div>
+          </div>
+        )}
         <p className="tool-hint">
           {professionDoodles.length ? "Click a doodle to add it, or drag it onto the leaf." : "Choose your profession on the capture page to see your doodles."}
         </p>
