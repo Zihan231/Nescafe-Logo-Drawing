@@ -1319,11 +1319,9 @@ export default function EditPage() {
         const qr = await QRCode.toDataURL(link, { width: 520, margin: 1, errorCorrectionLevel: "M", color: { dark: "#3a0a0e", light: "#ffffff" } });
         setKeepsake({ cardUrl: URL.createObjectURL(cardBlob), qr, link });
       }
-      // Back to the start after a while if nobody taps Done.
+      // With a card the visitor stays here until they tap Done; without one the old short message closes itself.
       if (successTimerRef.current) clearTimeout(successTimerRef.current);
-      successTimerRef.current = setTimeout(() => {
-        handleDismissSuccess();
-      }, cardBlob ? 120000 : 2500);
+      if (!cardBlob) successTimerRef.current = setTimeout(handleDismissSuccess, 2500);
     } catch (error) {
       window.alert(error.message || "Unable to send your design. Please try again.");
       setSending(false);
@@ -1939,7 +1937,7 @@ export default function EditPage() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            onClick={handleDismissSuccess}
+            onClick={keepsake ? undefined : handleDismissSuccess}
           >
             <motion.div
               className={keepsake ? "nescafe-modal keepsake-modal" : "nescafe-modal"}
@@ -1949,14 +1947,16 @@ export default function EditPage() {
               transition={{ type: "spring", stiffness: 350, damping: 24 }}
               onClick={(e) => e.stopPropagation()}
             >
-              <button
-                type="button"
-                className="modal-close-btn"
-                onClick={handleDismissSuccess}
-                aria-label="Close dialog"
-              >
-                <X size={15} />
-              </button>
+              {!keepsake && (
+                <button
+                  type="button"
+                  className="modal-close-btn"
+                  onClick={handleDismissSuccess}
+                  aria-label="Close dialog"
+                >
+                  <X size={15} />
+                </button>
+              )}
 
               {keepsake ? (
                 <>
