@@ -1,9 +1,11 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, ArrowRight, Check, Confetti, Copy, WarningCircle } from "@phosphor-icons/react";
+import { ArrowLeft, ArrowRight, Check, Copy, SpeakerHigh, SpeakerSlash, WarningCircle } from "@phosphor-icons/react";
+import CoffeePour, { REVEAL_AT } from "@/components/CoffeePour";
+import { setMuted, unlockAudio } from "@/lib/coffee-sounds";
 
 const CONFETTI_COLORS = ["#ed1c2e", "#ffca28", "#fff3d6", "#5aa9f2", "#52d19b", "#ff8fb1"];
 
@@ -38,14 +40,35 @@ export default function RegisterPage() {
   const [copied, setCopied] = useState(false);
   const copyTimer = useRef(null);
   const [confetti, setConfetti] = useState([]);
+  const [soundOn, setSoundOn] = useState(true);
+  const reduceMotion = useReducedMotion();
+  const revealAt = reduceMotion ? 0 : REVEAL_AT; // when the pouring is done and the code shows
 
-  // A burst of confetti celebrates a new registration, then clears itself.
+  // Confetti celebrates a new registration the moment the code appears, then clears itself.
   useEffect(() => {
-    if (!result || result.returning) return undefined;
-    setConfetti(makeConfetti());
-    const timer = setTimeout(() => setConfetti([]), 5200);
-    return () => clearTimeout(timer);
-  }, [result]);
+    if (!result || result.returning || reduceMotion) return undefined;
+    const start = setTimeout(() => setConfetti(makeConfetti()), REVEAL_AT * 1000);
+    const stop = setTimeout(() => setConfetti([]), REVEAL_AT * 1000 + 5200);
+    return () => {
+      clearTimeout(start);
+      clearTimeout(stop);
+    };
+  }, [result, reduceMotion]);
+
+  // Remember whether the visitor muted the coffee sounds.
+  useEffect(() => {
+    let off = false;
+    try { off = localStorage.getItem("nescafe_sound") === "off"; } catch {}
+    setSoundOn(!off);
+    setMuted(off);
+  }, []);
+
+  const toggleSound = () => {
+    const next = !soundOn;
+    setSoundOn(next);
+    setMuted(!next);
+    try { localStorage.setItem("nescafe_sound", next ? "on" : "off"); } catch {}
+  };
 
   // Starting a registration starts a new visit, so any earlier verification on this device ends.
   useEffect(() => {
@@ -65,6 +88,7 @@ export default function RegisterPage() {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
+    unlockAudio(); // the click/Enter that submits the form is what lets the browser play sound later
     if (submitting || !validate()) return;
     setSubmitting(true);
     try {
@@ -229,21 +253,16 @@ export default function RegisterPage() {
             </form>
           ) : (
             <div className="register-success" role="status">
-              <motion.div
-                className="congrats-badge"
-                initial={{ scale: 0, rotate: -40 }}
-                animate={{ scale: 1, rotate: 0 }}
-                transition={{ type: "spring", stiffness: 260, damping: 14 }}
-                aria-hidden="true"
+              <button
+                type="button"
+                className="cp-sound-btn"
+                onClick={toggleSound}
+                aria-pressed={soundOn}
+                aria-label={soundOn ? "Mute sound" : "Turn sound on"}
+                title={soundOn ? "Mute sound" : "Turn sound on"}
               >
-                <motion.span
-                  animate={{ rotate: [0, -12, 12, -8, 8, 0], scale: [1, 1.12, 1] }}
-                  transition={{ duration: 1.3, delay: 0.5, repeat: 1, repeatDelay: 1.2 }}
-                  style={{ display: "grid", placeItems: "center" }}
-                >
-                  <Confetti size={34} weight="duotone" />
-                </motion.span>
-              </motion.div>
+                {soundOn ? <SpeakerHigh size={20} weight="bold" /> : <SpeakerSlash size={20} weight="bold" />}
+              </button>
               <motion.h1
                 className="register-title congrats-title"
                 initial={{ opacity: 0, y: 14, scale: 0.9 }}
@@ -263,6 +282,8 @@ export default function RegisterPage() {
                   : "You're registered! Here is your code. Keep it safe, you'll enter it on the next screen."}
               </motion.p>
 
+              <CoffeePour code={result.code} playSound={!reduceMotion} />
+
               <div className="code-display">
                 <div className="code-digits" aria-label={`Your code is ${result.code.split("").join(" ")}`}>
                   {result.code.split("").map((digit, index) => (
@@ -272,28 +293,42 @@ export default function RegisterPage() {
                       aria-hidden="true"
                       initial={{ opacity: 0, y: 22, scale: 0.5 }}
                       animate={{ opacity: 1, y: 0, scale: 1 }}
-                      transition={{ delay: 0.55 + index * 0.12, type: "spring", stiffness: 320, damping: 14 }}
+                      transition={{ delay: revealAt + index * 0.12, type: "spring", stiffness: 320, damping: 14 }}
                     >
                       {digit}
                     </motion.span>
                   ))}
                 </div>
-                <button
+                <motion.button
                   type="button"
                   className={`code-copy-btn${copied ? " is-copied" : ""}`}
                   onClick={handleCopy}
                   aria-label={copied ? "Code copied" : "Copy code"}
                   title={copied ? "Copied!" : "Copy code"}
+                  initial={{ opacity: 0, scale: 0.6 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: revealAt + 0.5, type: "spring", stiffness: 300, damping: 16 }}
                 >
                   {copied ? <Check size={22} weight="bold" /> : <Copy size={22} weight="bold" />}
-                </button>
+                </motion.button>
               </div>
-              <span className="code-copy-note" aria-live="polite">{copied ? "Copied to clipboard" : "Tap the icon to copy"}</span>
+              <motion.span
+                className="code-copy-note"
+                aria-live="polite"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: revealAt + 0.6 }}
+              >
+                {copied ? "Copied to clipboard" : "Tap the icon to copy"}
+              </motion.span>
 
               <motion.button
                 type="button"
                 className="capture-confirm-btn"
                 onClick={() => router.push("/capture")}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: revealAt + 0.7 }}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
               >
