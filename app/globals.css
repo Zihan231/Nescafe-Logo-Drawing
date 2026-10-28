@@ -866,3 +866,12 @@
 html,body{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent}
 input,textarea,select,[contenteditable="true"]{-webkit-user-select:text;user-select:text}
 img,svg,canvas{-webkit-user-drag:none;user-drag:none}
+
+/* Registration celebration */
+.congrats-badge{width:64px;height:64px;display:grid;place-items:center;border-radius:50%;background:linear-gradient(135deg,#ffe58a,#ffca28);color:#a21f25;box-shadow:0 10px 24px rgba(255,202,40,.45),0 0 0 6px rgba(255,202,40,.2)}
+.congrats-title{background:linear-gradient(90deg,#a21f25,#ed1c2e,#a21f25);background-size:200% 100%;-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;animation:congrats-shimmer 2.6s linear infinite}
+@keyframes congrats-shimmer{to{background-position:-200% 0}}
+.confetti-layer{position:fixed;inset:0;z-index:60;overflow:hidden;pointer-events:none}
+.confetti-piece{position:absolute;top:-24px;left:var(--x);width:var(--w);height:var(--h);background:var(--c);border-radius:var(--r);opacity:0;animation:confetti-fall var(--d) var(--delay) cubic-bezier(.22,.61,.36,1) forwards}
+@keyframes confetti-fall{0%{opacity:1;transform:translate3d(0,0,0) rotate(0)}85%{opacity:1}100%{opacity:0;transform:translate3d(var(--drift),108vh,0) rotate(var(--spin))}}
+@media(prefers-reduced-motion:reduce){.confetti-layer{display:none}.congrats-title{animation:none}}

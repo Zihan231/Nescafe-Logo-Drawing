@@ -3,7 +3,27 @@
 import { motion } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, ArrowRight, Check, Copy, WarningCircle } from "@phosphor-icons/react";
+import { ArrowLeft, ArrowRight, Check, Confetti, Copy, WarningCircle } from "@phosphor-icons/react";
+
+const CONFETTI_COLORS = ["#ed1c2e", "#ffca28", "#fff3d6", "#5aa9f2", "#52d19b", "#ff8fb1"];
+
+function makeConfetti(count = 48) {
+  return Array.from({ length: count }, (_, id) => {
+    const long = Math.random() > 0.5;
+    return {
+      id,
+      x: `${(Math.random() * 100).toFixed(1)}%`,
+      w: `${long ? 6 : 9}px`,
+      h: `${long ? 14 : 9}px`,
+      r: Math.random() > 0.6 ? "50%" : "2px",
+      c: CONFETTI_COLORS[id % CONFETTI_COLORS.length],
+      d: `${(2.4 + Math.random() * 1.8).toFixed(2)}s`,
+      delay: `${(Math.random() * 0.9).toFixed(2)}s`,
+      drift: `${Math.round((Math.random() - 0.5) * 220)}px`,
+      spin: `${Math.round(360 + Math.random() * 720)}deg`
+    };
+  });
+}
 
 const EMPTY_ERRORS = { name: "", phone: "", email: "", form: "" };
 
@@ -17,6 +37,15 @@ export default function RegisterPage() {
   const [result, setResult] = useState(null); // { code, name, returning }
   const [copied, setCopied] = useState(false);
   const copyTimer = useRef(null);
+  const [confetti, setConfetti] = useState([]);
+
+  // A burst of confetti celebrates a new registration, then clears itself.
+  useEffect(() => {
+    if (!result || result.returning) return undefined;
+    setConfetti(makeConfetti());
+    const timer = setTimeout(() => setConfetti([]), 5200);
+    return () => clearTimeout(timer);
+  }, [result]);
 
   // Starting a registration starts a new visit, so any earlier verification on this device ends.
   useEffect(() => {
@@ -87,6 +116,18 @@ export default function RegisterPage() {
       exit={{ opacity: 0 }}
       transition={{ duration: 0.4 }}
     >
+      {confetti.length > 0 && (
+        <div className="confetti-layer" aria-hidden="true">
+          {confetti.map((piece) => (
+            <span
+              key={piece.id}
+              className="confetti-piece"
+              style={{ "--x": piece.x, "--w": piece.w, "--h": piece.h, "--r": piece.r, "--c": piece.c, "--d": piece.d, "--delay": piece.delay, "--drift": piece.drift, "--spin": piece.spin }}
+            />
+          ))}
+        </div>
+      )}
+
       <header className="editor-head">
         <div className="editor-ribbon">
           <button className="nav-back" onClick={() => router.push("/")} aria-label="Back to home page">
@@ -188,17 +229,53 @@ export default function RegisterPage() {
             </form>
           ) : (
             <div className="register-success" role="status">
-              <h1 className="register-title">{result.returning ? "Welcome back" : "You're in"}, {result.name.split(" ")[0]}!</h1>
-              <p className="register-lead">
+              <motion.div
+                className="congrats-badge"
+                initial={{ scale: 0, rotate: -40 }}
+                animate={{ scale: 1, rotate: 0 }}
+                transition={{ type: "spring", stiffness: 260, damping: 14 }}
+                aria-hidden="true"
+              >
+                <motion.span
+                  animate={{ rotate: [0, -12, 12, -8, 8, 0], scale: [1, 1.12, 1] }}
+                  transition={{ duration: 1.3, delay: 0.5, repeat: 1, repeatDelay: 1.2 }}
+                  style={{ display: "grid", placeItems: "center" }}
+                >
+                  <Confetti size={34} weight="duotone" />
+                </motion.span>
+              </motion.div>
+              <motion.h1
+                className="register-title congrats-title"
+                initial={{ opacity: 0, y: 14, scale: 0.9 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                transition={{ delay: 0.15, type: "spring", stiffness: 220, damping: 16 }}
+              >
+                {result.returning ? "Welcome back" : "Congratulations"}, {result.name.split(" ")[0]}!
+              </motion.h1>
+              <motion.p
+                className="register-lead"
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.4 }}
+              >
                 {result.returning
                   ? "This phone number is already registered, so here is your code again."
-                  : "Here is your code. Keep it safe, you'll enter it on the next screen."}
-              </p>
+                  : "You're registered! Here is your code. Keep it safe, you'll enter it on the next screen."}
+              </motion.p>
 
               <div className="code-display">
                 <div className="code-digits" aria-label={`Your code is ${result.code.split("").join(" ")}`}>
                   {result.code.split("").map((digit, index) => (
-                    <span key={index} className="code-digit" aria-hidden="true">{digit}</span>
+                    <motion.span
+                      key={index}
+                      className="code-digit"
+                      aria-hidden="true"
+                      initial={{ opacity: 0, y: 22, scale: 0.5 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      transition={{ delay: 0.55 + index * 0.12, type: "spring", stiffness: 320, damping: 14 }}
+                    >
+                      {digit}
+                    </motion.span>
                   ))}
                 </div>
                 <button
