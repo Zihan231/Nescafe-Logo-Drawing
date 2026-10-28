@@ -861,3 +861,8 @@
 .code-gate-error{max-width:320px;text-align:center}
 .code-gate-link{margin-top:2px;padding:6px 8px;border:0;background:none;color:#a21f25;font:700 12px 'Myriad Pro',Arial,sans-serif;letter-spacing:.04em;text-decoration:underline;text-underline-offset:3px;cursor:pointer}
 .code-gate-link:hover{color:#EB1C23}
+
+/* App-like feel: interface text can't be selected or dragged. Typing fields stay selectable. */
+html,body{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent}
+input,textarea,select,[contenteditable="true"]{-webkit-user-select:text;user-select:text}
+img,svg,canvas{-webkit-user-drag:none;user-drag:none}
