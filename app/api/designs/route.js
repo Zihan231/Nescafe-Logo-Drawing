@@ -68,6 +68,7 @@ export async function POST(request) {
     return NextResponse.json({ error: "Upload must use multipart/form-data" }, { status: 415 });
   }
   let storedPath;
+  let framePath;
   try {
     const formData = await request.formData();
     const file = formData.get("image");
@@ -81,6 +82,16 @@ export async function POST(request) {
     const dimensions = readPngDimensions(buffer);
     if (!dimensions || dimensions.width < 1 || dimensions.height < 1 || dimensions.width > 4096 || dimensions.height > 4096) return NextResponse.json({ error: "Invalid PNG image" }, { status: 400 });
 
+    // Optional keepsake card (name + design in the NESCAFÉ frame) that visitors download from the QR page.
+    const frame = formData.get("frame");
+    let frameBuffer = null;
+    if (frame instanceof File) {
+      if (frame.size <= 0 || frame.size > 4 * maxUploadBytes()) return NextResponse.json({ error: "Card image exceeds the upload limit" }, { status: 413 });
+      frameBuffer = Buffer.from(await frame.arrayBuffer());
+      const frameSize = readPngDimensions(frameBuffer);
+      if (!frameSize || frameSize.width > 4096 || frameSize.height > 4096) return NextResponse.json({ error: "Invalid card image" }, { status: 400 });
+    }
+
     const id = crypto.randomUUID();
     const filename = `${id}.png`;
     const directory = uploadDirectory();
@@ -90,11 +101,17 @@ export async function POST(request) {
     await fs.writeFile(temporaryPath, buffer, { flag: "wx" });
     await fs.rename(temporaryPath, storedPath);
 
+    if (frameBuffer) {
+      framePath = path.join(directory, `${id}-frame.png`);
+      await fs.writeFile(framePath, frameBuffer);
+    }
+
     const design = await createDesign({ id, imageUrl: `/uploads/${filename}`, width: dimensions.width, height: dimensions.height, fileSize: buffer.length, profession });
     publishDesign(design);
     return NextResponse.json(design, { status: 201, headers: { "Cache-Control": "no-store" } });
   } catch (error) {
     if (storedPath) await fs.unlink(storedPath).catch(() => {});
+    if (framePath) await fs.unlink(framePath).catch(() => {});
     console.error("Failed to save design", error);
     return NextResponse.json({ error: "Unable to save design" }, { status: 500 });
   }

@@ -23,6 +23,7 @@ import {
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getProfessionDoodles } from "@/lib/profession-doodles";
+import { composeFrame } from "@/lib/frame";
 
 const W = 760;
 const H = 560;
@@ -643,6 +644,7 @@ export default function EditPage() {
   const [accessOk, setAccessOk] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [sentMessage, setSentMessage] = useState(false);
+  const [keepsake, setKeepsake] = useState(null); // { cardUrl, qr, link } once the design is sent
   const successTimerRef = useRef(null);
   const [placedStickers, setPlacedStickers] = useState([]);
   const [selectedStickerId, setSelectedStickerId] = useState(null);
@@ -1261,6 +1263,10 @@ export default function EditPage() {
     }
     setSentMessage(false);
     setSending(false);
+    setKeepsake((current) => {
+      if (current?.cardUrl) URL.revokeObjectURL(current.cardUrl);
+      return null;
+    });
     router.push("/");
   };
 
@@ -1277,7 +1283,16 @@ export default function EditPage() {
       const blob = await fetch(image).then((response) => response.blob());
       const formData = new FormData();
       formData.append("image", blob, `nescafe-${Date.now()}.png`);
-      formData.append("profession", profession || sessionStorage.getItem("nescafe_user_profession") || "");
+      const professionName = profession || sessionStorage.getItem("nescafe_user_profession") || "";
+      formData.append("profession", professionName);
+      const personName = sessionStorage.getItem("nescafe_user_name") || "";
+      let cardBlob = null;
+      try {
+        cardBlob = await composeFrame({ design: image, name: personName, profession: professionName });
+        formData.append("frame", cardBlob, `nescafe-card-${Date.now()}.png`);
+      } catch {
+        // The design still goes out; only the take-home card is skipped.
+      }
       const response = await fetch("/api/designs", {
         method: "POST",
         body: formData
@@ -1295,11 +1310,20 @@ export default function EditPage() {
       setSessionSelfie(null);
       resetEditor();
       setProfession("");
+      setKeepsake(cardBlob ? { pending: true } : null);
       setSentMessage(true);
+      if (cardBlob) {
+        const base = process.env.NEXT_PUBLIC_SITE_URL || window.location.origin;
+        const link = `${base.replace(/\/$/, "")}/d/${result.id}`;
+        const { default: QRCode } = await import("qrcode");
+        const qr = await QRCode.toDataURL(link, { width: 520, margin: 1, errorCorrectionLevel: "M", color: { dark: "#3a0a0e", light: "#ffffff" } });
+        setKeepsake({ cardUrl: URL.createObjectURL(cardBlob), qr, link });
+      }
+      // Back to the start after a while if nobody taps Done.
       if (successTimerRef.current) clearTimeout(successTimerRef.current);
       successTimerRef.current = setTimeout(() => {
         handleDismissSuccess();
-      }, 2500);
+      }, cardBlob ? 120000 : 2500);
     } catch (error) {
       window.alert(error.message || "Unable to send your design. Please try again.");
       setSending(false);
@@ -1918,7 +1942,7 @@ export default function EditPage() {
             onClick={handleDismissSuccess}
           >
             <motion.div
-              className="nescafe-modal"
+              className={keepsake ? "nescafe-modal keepsake-modal" : "nescafe-modal"}
               initial={{ scale: 0.88, opacity: 0, y: 16 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.92, opacity: 0 }}
@@ -1934,22 +1958,50 @@ export default function EditPage() {
                 <X size={15} />
               </button>
 
-              <h3 className="modal-title-pacifico">Flown to the World!</h3>
-              <p className="modal-subtitle">
-                Your design is now orbiting high above the Earth. Canvas is cleared and ready for your next creation!
-              </p>
-
-              <div className="nescafe-modal-actions" style={{ justifyContent: "center" }}>
-                <button
-                  type="button"
-                  className="modal-btn-confirm"
-                  onClick={handleDismissSuccess}
-                  style={{ minWidth: "150px", flex: "initial" }}
-                >
-                  <span>OK</span>
-                  <CheckCircle weight="bold" size={17} />
-                </button>
-              </div>
+              {keepsake ? (
+                <>
+                  {keepsake.cardUrl ? (
+                    <img className="keepsake-card" src={keepsake.cardUrl} alt="Your NESCAFÉ card" draggable={false} />
+                  ) : (
+                    <div className="keepsake-card-wait">PREPARING YOUR CARD…</div>
+                  )}
+                  <div className="keepsake-side">
+                    <h3 className="modal-title-pacifico">Flown to the World!</h3>
+                    <p className="modal-subtitle">Your design is now orbiting the Earth. Take your card home with you.</p>
+                    {keepsake.qr && (
+                      <>
+                        <div className="keepsake-qr">
+                          <img src={keepsake.qr} alt="QR code to download your card" draggable={false} />
+                        </div>
+                        <p className="keepsake-scan">SCAN TO DOWNLOAD</p>
+                        <p className="keepsake-note">Point your phone camera at the code to save your card.</p>
+                      </>
+                    )}
+                    <button type="button" className="modal-btn-confirm" onClick={handleDismissSuccess}>
+                      <span>DONE</span>
+                      <CheckCircle weight="bold" size={17} />
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <h3 className="modal-title-pacifico">Flown to the World!</h3>
+                  <p className="modal-subtitle">
+                    Your design is now orbiting high above the Earth. Canvas is cleared and ready for your next creation!
+                  </p>
+                  <div className="nescafe-modal-actions" style={{ justifyContent: "center" }}>
+                    <button
+                      type="button"
+                      className="modal-btn-confirm"
+                      onClick={handleDismissSuccess}
+                      style={{ minWidth: "150px", flex: "initial" }}
+                    >
+                      <span>OK</span>
+                      <CheckCircle weight="bold" size={17} />
+                    </button>
+                  </div>
+                </>
+              )}
             </motion.div>
           </motion.div>
         )}
