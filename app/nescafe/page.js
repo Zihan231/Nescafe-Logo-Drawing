@@ -6,17 +6,17 @@ import { useCallback, useEffect, useRef, useState } from "react";
 const FLIGHT_SECONDS = 22;
 // The newest designs are featured: they burst out from behind the centre logo, bigger than the rest.
 const FEATURED_COUNT = 5;
-const FEATURED_SECONDS = 16;
+const FEATURED_SECONDS = 18;
 
 // Each featured slot owns a fifth of the upper half-circle, so the five fan out sideways and upwards
-// (never down towards the bottom) and never fly the same way.
+// (never down towards the bottom) and never fly the same way. 92vmax is far enough to leave any screen.
 function featuredBurst(slotIndex) {
   const arc = 150; // degrees, from -165 (left) through straight up to -15 (right)
   const step = arc / (FEATURED_COUNT - 1);
   const angle = (-165 + slotIndex * step + randomBetween(-8, 8)) * (Math.PI / 180);
   return {
-    bx: `${(Math.cos(angle) * 62).toFixed(1)}vw`,
-    by: `${(Math.sin(angle) * 62).toFixed(1)}vh`,
+    bx: `${(Math.cos(angle) * 92).toFixed(1)}vmax`,
+    by: `${(Math.sin(angle) * 92).toFixed(1)}vmax`,
     rot: `${randomBetween(-14, 14).toFixed(1)}deg`
   };
 }
@@ -198,8 +198,8 @@ function randomFlight(width, height) {
 
 function getSafeSlotCount(width, height) {
   const pathLength = calculatePathLength(width, height);
-  // Leaf visual width in CSS is clamp(220px, 6vw + 150px, 285px)
-  const leafWidth = Math.min(285, Math.max(220, 0.06 * width + 150));
+  // Leaf visual width in CSS is clamp(210px, 6vw + 140px, 275px)
+  const leafWidth = Math.min(275, Math.max(210, 0.06 * width + 140));
   const effectiveWidth = leafWidth * 1.05;
   const minCenterDistance = effectiveWidth + 24;
   const computed = Math.floor(pathLength / minCenterDistance);
