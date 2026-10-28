@@ -198,8 +198,8 @@ function randomFlight(width, height) {
 
 function getSafeSlotCount(width, height) {
   const pathLength = calculatePathLength(width, height);
-  // Leaf visual width in CSS is clamp(230px, 6vw + 160px, 295px)
-  const leafWidth = Math.min(295, Math.max(230, 0.06 * width + 160));
+  // Leaf visual width in CSS is clamp(220px, 6vw + 150px, 285px)
+  const leafWidth = Math.min(285, Math.max(220, 0.06 * width + 150));
   const effectiveWidth = leafWidth * 1.05;
   const minCenterDistance = effectiveWidth + 24;
   const computed = Math.floor(pathLength / minCenterDistance);
