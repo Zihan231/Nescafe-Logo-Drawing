@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, ArrowRight, Check, Copy, WarningCircle } from "@phosphor-icons/react";
 
@@ -17,6 +17,11 @@ export default function RegisterPage() {
   const [result, setResult] = useState(null); // { code, name, returning }
   const [copied, setCopied] = useState(false);
   const copyTimer = useRef(null);
+
+  // Starting a registration starts a new visit, so any earlier verification on this device ends.
+  useEffect(() => {
+    fetch("/api/session", { method: "DELETE" }).catch(() => {});
+  }, []);
 
   const validate = () => {
     const next = { ...EMPTY_ERRORS };

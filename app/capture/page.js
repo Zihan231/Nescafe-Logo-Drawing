@@ -14,7 +14,6 @@ import {
   Sparkle
 } from "@phosphor-icons/react";
 import { PROFESSIONS } from "@/lib/professions";
-import CodeGate from "@/components/CodeGate";
 
 export default function CapturePage() {
   const router = useRouter();
@@ -82,7 +81,7 @@ export default function CapturePage() {
     }
   }, [stopCamera]);
 
-  // The page stays locked until the visitor has verified their registration code.
+  // Confirms the session and fetches the registered name.
   useEffect(() => {
     let alive = true;
     fetch("/api/session", { cache: "no-store" })
@@ -93,19 +92,16 @@ export default function CapturePage() {
           setUserName(String(data.name || "").trim().slice(0, 20));
           setGate("open");
         } else {
-          setGate("locked");
+          // The server normally never serves this page unverified (see proxy.js); this covers
+          // a session that expired while the page was open. A full load shows the code screen.
+          window.location.assign("/capture");
         }
       })
-      .catch(() => alive && setGate("locked"));
+      .catch(() => alive && window.location.assign("/capture"));
     return () => {
       alive = false;
     };
   }, []);
-
-  const handleVerified = (name) => {
-    setUserName(String(name || "").trim().slice(0, 20));
-    setGate("open");
-  };
 
   // Start the camera only after verification, so no permission prompt appears before it.
   useEffect(() => {
@@ -314,7 +310,6 @@ export default function CapturePage() {
 
       {/* Main capture workspace */}
       <div className="capture-container">
-        {gate !== "open" && <CodeGate checking={gate === "checking"} onVerified={handleVerified} />}
         {gate === "open" && (
         <motion.div
           className="capture-card"

@@ -640,6 +640,7 @@ export default function EditPage() {
   const [size, setSize] = useState(4);
   const [sending, setSending] = useState(false);
   const [profession, setProfession] = useState("");
+  const [accessOk, setAccessOk] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [sentMessage, setSentMessage] = useState(false);
   const successTimerRef = useRef(null);
@@ -844,9 +845,11 @@ export default function EditPage() {
     fetch("/api/session", { cache: "no-store" })
       .then((response) => response.json())
       .then((data) => {
-        if (alive && !data.verified) router.replace("/capture");
+        if (!alive) return;
+        if (data.verified) setAccessOk(true);
+        else router.replace("/capture");
       })
-      .catch(() => {});
+      .catch(() => alive && router.replace("/capture"));
     return () => {
       alive = false;
     };
@@ -1214,6 +1217,9 @@ export default function EditPage() {
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || "Unable to send your design");
 
+      // The visit is over: the next person has to register and enter their own code.
+      fetch("/api/session", { method: "DELETE" }).catch(() => {});
+
       // Clear session storage and reset editor state
       sessionStorage.removeItem("nescafe_user_name");
       sessionStorage.removeItem("nescafe_user_photo");
@@ -1234,6 +1240,9 @@ export default function EditPage() {
 
   const selectedSticker = placedStickers.find((item) => item.id === selectedStickerId);
   const transformColors = controlColors(leafColor);
+
+  // Nothing of the editor is shown until the server confirms the visitor entered a valid code.
+  if (!accessOk) return <main className="editor screen" aria-busy="true" />;
 
   return (
     <motion.main
