@@ -929,5 +929,6 @@ img,svg,canvas{-webkit-user-drag:none;user-drag:none}
 .register-card{width:min(580px,94vw)}
 
 .register-card{position:relative}
-.cp-sound-btn{position:absolute;top:14px;right:14px;z-index:5;width:38px;height:38px;display:grid;place-items:center;padding:0;border:1.5px solid rgba(162,31,37,.3);border-radius:12px;background:#fff0f0;color:#a21f25;cursor:pointer;transition:background .2s ease,border-color .2s ease,transform .15s ease}
+.register-success{position:relative}
+.cp-sound-btn{position:absolute;bottom:2px;right:2px;z-index:5;width:38px;height:38px;display:grid;place-items:center;padding:0;border:1.5px solid rgba(162,31,37,.3);border-radius:12px;background:#fff0f0;color:#a21f25;cursor:pointer;transition:background .2s ease,border-color .2s ease,transform .15s ease}
 .cp-sound-btn:hover{background:#f9dddd;border-color:#a21f25;transform:translateY(-1px)}
