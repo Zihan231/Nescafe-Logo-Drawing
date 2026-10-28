@@ -9,7 +9,6 @@ import {
   ArrowClockwise,
   CaretDown,
   Check,
-  UploadSimple,
   WarningCircle,
   Sparkle
 } from "@phosphor-icons/react";
@@ -31,7 +30,6 @@ export default function CapturePage() {
 
   const videoRef = useRef(null);
   const streamRef = useRef(null);
-  const fileInputRef = useRef(null);
   const professionControlRef = useRef(null);
   const professionOptionRefs = useRef([]);
 
@@ -74,8 +72,8 @@ export default function CapturePage() {
       console.warn("Camera access failed:", err);
       setCameraError(
         err.name === "NotAllowedError" || err.name === "PermissionDeniedError"
-          ? "Camera permission denied. You can upload a photo instead."
-          : "Could not access front camera. You can upload a photo."
+          ? "Camera permission denied. Allow camera access in your browser, then retry."
+          : "Could not access the front camera. Check that it is connected, then retry."
       );
       setCameraActive(false);
     }
@@ -202,39 +200,6 @@ export default function CapturePage() {
   const handleRetake = () => {
     setCapturedPhoto(null);
     startCamera();
-  };
-
-  // Fallback: file upload
-  const handleFileUpload = (event) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const img = new Image();
-      img.onload = () => {
-        const canvas = document.createElement("canvas");
-        canvas.width = 512;
-        canvas.height = 512;
-        const ctx = canvas.getContext("2d");
-
-        ctx.beginPath();
-        ctx.arc(256, 256, 256, 0, Math.PI * 2, true);
-        ctx.closePath();
-        ctx.clip();
-
-        const size = Math.min(img.width, img.height);
-        const sx = (img.width - size) / 2;
-        const sy = (img.height - size) / 2;
-        ctx.drawImage(img, sx, sy, size, size, 0, 0, 512, 512);
-
-        const dataUrl = canvas.toDataURL("image/png");
-        setCapturedPhoto(dataUrl);
-        stopCamera();
-      };
-      img.src = e.target.result;
-    };
-    reader.readAsDataURL(file);
   };
 
   // Submit and continue to edit page
@@ -408,14 +373,6 @@ export default function CapturePage() {
                   <p>{cameraError}</p>
                   <button
                     type="button"
-                    className="capture-fallback-btn"
-                    onClick={() => fileInputRef.current?.click()}
-                  >
-                    <UploadSimple weight="bold" />
-                    <span>Upload a Photo</span>
-                  </button>
-                  <button
-                    type="button"
                     className="capture-retry-btn"
                     onClick={startCamera}
                   >
@@ -425,15 +382,6 @@ export default function CapturePage() {
                 </div>
               )}
             </div>
-
-            {/* Hidden file input for fallback upload */}
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              style={{ display: "none" }}
-              onChange={handleFileUpload}
-            />
 
             {/* Camera Actions */}
             <div className="capture-controls">
@@ -451,15 +399,6 @@ export default function CapturePage() {
                     <Camera weight="bold" size={24} />
                     <span>SNAP SELFIE</span>
                   </motion.button>
-                  <button
-                    type="button"
-                    className="capture-secondary-btn"
-                    onClick={() => fileInputRef.current?.click()}
-                    title="Upload photo from device"
-                  >
-                    <UploadSimple weight="bold" size={18} />
-                    <span>UPLOAD</span>
-                  </button>
                 </div>
               ) : (
                 <div className="capture-btn-group">
