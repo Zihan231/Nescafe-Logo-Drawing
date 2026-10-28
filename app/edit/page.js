@@ -650,10 +650,17 @@ export default function EditPage() {
   const [dragPreview, setDragPreview] = useState(null);
   const trayDragRef = useRef(null);
   const trayStartRef = useRef({ x: 0, y: 0 });
+  const trayTouchRef = useRef(null);
   const [sessionSelfie, setSessionSelfie] = useState(null);
   const selfieDoodle = sessionSelfie ? { label: "Your photo", src: sessionSelfie, aspect: 1, alpha: true } : null;
   const professionDoodles = getProfessionDoodles(profession);
   const [collapsed, setCollapsed] = useState({ tools: false, doodles: false, ink: false, logo: false });
+  useEffect(() => {
+    if (window.matchMedia("(min-width: 601px) and (max-width: 1100px), (hover: none) and (pointer: coarse) and (min-width: 1101px) and (max-width: 1440px)").matches) {
+      setCollapsed((current) => ({ ...current, ink: true, logo: true }));
+    }
+  }, []);
+
   const toggleCard = (key) => setCollapsed((current) => ({ ...current, [key]: !current[key] }));
   const stickerGestureRef = useRef({ id: null, pointers: new Map(), lastX: 0, lastY: 0, startDistance: 0, start: { w: 112, fontSize: 30 } });
   const transformHandleRef = useRef(null);
@@ -982,21 +989,76 @@ export default function EditPage() {
     addSticker(sticker, ((point.x - rect.left) * W) / rect.width, ((point.y - rect.top) * H) / rect.height);
   };
 
+  // Mouse and pen drag straight away. On touch the tray must stay scrollable, so a finger swipe scrolls the
+  // list, a quick tap adds the doodle to the leaf, and pressing and holding for a moment picks it up to drag.
+  const TOUCH_HOLD_MS = 220;
+  const TOUCH_SLOP = 9;
+
+  const stopTouchScrollBlock = () => {
+    if (trayTouchRef.current?.block) window.removeEventListener("touchmove", trayTouchRef.current.block);
+  };
+
+  const clearTrayTouch = () => {
+    if (trayTouchRef.current) {
+      clearTimeout(trayTouchRef.current.timer);
+      stopTouchScrollBlock();
+    }
+    trayTouchRef.current = null;
+  };
+
   const startTrayDrag = (sticker, event) => {
+    trayStartRef.current = { x: event.clientX, y: event.clientY };
+    if (event.pointerType === "touch") {
+      clearTrayTouch();
+      const pending = { sticker, active: false, timer: null, block: null };
+      pending.timer = setTimeout(() => {
+        if (trayTouchRef.current !== pending) return;
+        pending.active = true;
+        pending.block = (touchEvent) => touchEvent.preventDefault(); // holding is now a drag, not a scroll
+        window.addEventListener("touchmove", pending.block, { passive: false });
+        trayDragRef.current = sticker;
+        setDragPreview({ sticker, x: trayStartRef.current.x, y: trayStartRef.current.y });
+      }, TOUCH_HOLD_MS);
+      trayTouchRef.current = pending;
+      return;
+    }
     event.preventDefault();
     event.currentTarget.setPointerCapture(event.pointerId);
     trayDragRef.current = sticker;
-    trayStartRef.current = { x: event.clientX, y: event.clientY };
     setDragPreview({ sticker, x: event.clientX, y: event.clientY });
   };
 
   const moveTrayDrag = (event) => {
+    const pending = trayTouchRef.current;
+    if (pending && !pending.active) {
+      // Moved before the hold finished: the person is scrolling the list.
+      if (Math.hypot(event.clientX - trayStartRef.current.x, event.clientY - trayStartRef.current.y) > TOUCH_SLOP) clearTrayTouch();
+      return;
+    }
     if (!trayDragRef.current) return;
     setDragPreview({ sticker: trayDragRef.current, x: event.clientX, y: event.clientY });
   };
 
   const endTrayDrag = (event) => {
+    const pending = trayTouchRef.current;
+    if (pending && !pending.active) {
+      // Released before the hold finished without scrolling: a tap.
+      const wasTap = event.type === "pointerup" && Math.hypot(event.clientX - trayStartRef.current.x, event.clientY - trayStartRef.current.y) <= TOUCH_SLOP;
+      const tapped = pending.sticker;
+      clearTrayTouch();
+      if (wasTap) {
+        const spot = leafCenterSpot();
+        addSticker(tapped, spot.x, spot.y);
+      }
+      return;
+    }
+    clearTrayTouch();
     if (!trayDragRef.current) return;
+    if (event.type === "pointercancel" && event.pointerType === "touch") {
+      trayDragRef.current = null;
+      setDragPreview(null);
+      return;
+    }
     const moved = Math.hypot(event.clientX - trayStartRef.current.x, event.clientY - trayStartRef.current.y);
     if (moved < 6 && event.type === "pointerup") {
       // A plain click adds the doodle in the middle of the leaf.
@@ -1555,6 +1617,7 @@ export default function EditPage() {
               onPointerMove={moveTrayDrag}
               onPointerUp={endTrayDrag}
               onPointerCancel={endTrayDrag}
+              onContextMenu={(event) => event.preventDefault()}
               title={item.label}
               aria-label={`Click or drag ${item.label} onto the leaf`}
             >
@@ -1573,6 +1636,7 @@ export default function EditPage() {
                 onPointerMove={moveTrayDrag}
                 onPointerUp={endTrayDrag}
                 onPointerCancel={endTrayDrag}
+              onContextMenu={(event) => event.preventDefault()}
                 title="Add your photo again"
                 aria-label="Click or drag your photo onto the leaf"
               >

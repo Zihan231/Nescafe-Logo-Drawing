@@ -179,7 +179,7 @@
 .brush-tile span{font:800 8px 'Myriad Pro',Arial,sans-serif;letter-spacing:.06em;text-transform:uppercase;line-height:1;white-space:nowrap}
 .brush-sample{width:50px;height:17px;flex:none}
 @media(max-width:1300px){.editor .toolbox{left:2vw}}
-@media(max-width:1100px){.editor .toolbox{width:58px;padding:8px 6px}.tool-card-title,.brush-card-title,.brush-tile span{display:none}.tool-row{flex-direction:column;align-items:center}.brush-grid{grid-template-columns:1fr}.editor .toolbox .brush-card .brush-tile{padding:6px 2px}.brush-sample{width:38px}}
+@media(max-width:1100px),(hover:none) and (pointer:coarse) and (max-width:1440px){.editor .toolbox{width:58px;padding:8px 6px}.tool-card-title,.brush-card-title,.brush-tile span{display:none}.tool-row{flex-direction:column;align-items:center}.brush-grid{grid-template-columns:1fr}.editor .toolbox .brush-card .brush-tile{padding:6px 2px}.brush-sample{width:38px}}
 @media(max-width:600px){.editor .toolbox{left:50%;top:74px;transform:translateX(-50%);width:auto;flex-direction:row;padding:5px 10px;border-radius:16px}.tool-row{flex-direction:row}.brush-card{position:absolute;left:50%;transform:translateX(-50%);top:calc(100% + 6px);width:min(94vw,420px);padding:7px 8px;background:rgba(26,5,8,.9);border:1px solid rgba(255,255,255,.18);border-radius:16px}.brush-grid{display:flex;overflow-x:auto;gap:6px}.editor .toolbox .brush-card .brush-tile{width:52px;flex:none}}
 
 .canvas-shell{container-type:inline-size}
@@ -194,7 +194,7 @@
 .editor .toolbox .text-font.selected{background:#fff;color:#EB1C23;border-color:#fff}
 .text-colors{display:flex;justify-content:space-between;gap:3px}
 .editor .toolbox .text-colors .swatch{width:19px;height:19px;min-width:0;border-radius:50%;flex:none}
-@media(max-width:1100px){.editor .toolbox .add-text-btn span{display:none}.editor .toolbox.text-editing{width:236px}}
+@media(max-width:1100px),(hover:none) and (pointer:coarse) and (max-width:1440px){.editor .toolbox .add-text-btn span{display:none}.editor .toolbox.text-editing{width:236px}}
 @media(max-width:600px){.editor .toolbox.text-editing{width:auto}.text-section{position:absolute;left:50%;transform:translateX(-50%);top:calc(100% + 62px);width:min(94vw,320px);background:rgba(26,5,8,.92)}}
 .color-panel.compact{flex-direction:column;gap:8px;padding:0}
 .color-panel.compact .color-panel-area{width:100%;aspect-ratio:auto;height:84px}
@@ -236,10 +236,10 @@
 .symmetry-guides line{stroke:rgba(255,255,255,.75);stroke-width:1.6;stroke-dasharray:7 7;vector-effect:non-scaling-stroke}
 .symmetry-guides circle{fill:rgba(255,255,255,.85)}
 .symmetry-guides g{filter:drop-shadow(0 0 1.5px rgba(0,0,0,.6))}
-@media(max-width:1100px){.tool-tabs{grid-template-columns:1fr}.editor .toolbox .tool-tab span,.tool-hint,.symmetry-tile span,.symmetry-count span,.shape-fill{display:none}.shape-grid,.symmetry-grid{grid-template-columns:1fr}.editor .toolbox .shape-tile{height:36px}.shape-icon{width:22px;height:22px}.editor .toolbox .symmetry-tile{justify-content:center;padding:6px 2px}.editor .toolbox.text-editing .tool-panel{display:none}}
+@media(max-width:1100px),(hover:none) and (pointer:coarse) and (max-width:1440px){.tool-tabs{grid-template-columns:1fr}.editor .toolbox .tool-tab span,.tool-hint,.symmetry-tile span,.symmetry-count span,.shape-fill{display:none}.shape-grid,.symmetry-grid{grid-template-columns:1fr}.editor .toolbox .shape-tile{height:36px}.shape-icon{width:22px;height:22px}.editor .toolbox .symmetry-tile{justify-content:center;padding:6px 2px}.editor .toolbox.text-editing .tool-panel{display:none}}
 @media(max-width:600px){.tool-panel{position:absolute;left:50%;transform:translateX(-50%);top:calc(100% + 6px);width:min(94vw,420px);padding:8px;background:rgba(26,5,8,.92);border:1px solid rgba(255,255,255,.18);border-radius:16px;z-index:12}.tool-tabs{grid-template-columns:repeat(3,1fr)}.editor .toolbox .tool-tab span{display:inline}.tool-panel .brush-card{position:static;transform:none;width:auto;background:none;border:0;padding:0}.shape-grid{display:flex;overflow-x:auto}.editor .toolbox .shape-tile{width:46px;flex:none}.symmetry-grid{display:flex;overflow-x:auto}.editor .toolbox .symmetry-tile{width:auto;flex:none}.symmetry-tile span{display:inline}.text-section{top:calc(100% + 6px)}}
 :root{--left-card-width:376px}
-@media(min-width:1101px){
+@media(min-width:1101px) and (hover:hover),(min-width:1441px){
 .editor .toolbox{width:var(--left-card-width)}
 .control-dock.ink-stroke-dock{width:var(--left-card-width);box-sizing:border-box}
 .brush-grid{grid-template-columns:repeat(3,1fr)}
@@ -264,14 +264,14 @@
 .doodle-tile:active{cursor:grabbing}
 .doodle-tile img{position:absolute;inset:6px;width:calc(100% - 12px);height:calc(100% - 12px);object-fit:contain;mix-blend-mode:multiply;pointer-events:none}
 .doodle-card .tool-hint{margin:0}
-@media(min-width:1101px){.control-dock.logo-dock{width:var(--left-card-width);box-sizing:border-box}}
+@media(min-width:1101px) and (hover:hover),(min-width:1441px){.control-dock.logo-dock{width:var(--left-card-width);box-sizing:border-box}}
 @media(max-width:1300px){.doodle-card{right:2vw}}
-@media(max-width:1100px){.doodle-card{width:230px}.doodle-grid{grid-template-columns:repeat(3,1fr)}.doodle-card .tool-hint{display:none}}
+@media(max-width:1100px),(hover:none) and (pointer:coarse) and (max-width:1440px){.doodle-card{width:230px}.doodle-grid{grid-template-columns:repeat(3,1fr)}.doodle-card .tool-hint{display:none}}
 @media(max-width:600px){.doodle-card{right:auto;left:50%;transform:translateX(-50%);top:auto;bottom:150px;width:min(94vw,420px);max-height:200px}.doodle-grid{grid-template-columns:repeat(5,1fr)}}
 .placed-sticker img.alpha-art,.doodle-tile img.alpha-art{mix-blend-mode:normal}
 .doodle-card{--doodle-card-w:var(--left-card-width);--doodle-cols:4;--doodle-gap:8px;--doodle-pad:9px}
 .doodle-grid{grid-auto-rows:max-content;align-content:start;flex:none;scrollbar-gutter:stable;max-height:calc(2 * ((var(--doodle-card-w) - 38px - 2 * var(--doodle-pad) - (var(--doodle-cols) - 1) * var(--doodle-gap)) / var(--doodle-cols)) + var(--doodle-gap) + 2 * var(--doodle-pad) + 6px)}
-@media(max-width:1100px){.doodle-card{--doodle-card-w:230px;--doodle-cols:3}}
+@media(max-width:1100px),(hover:none) and (pointer:coarse) and (max-width:1440px){.doodle-card{--doodle-card-w:230px;--doodle-cols:3}}
 @media(max-width:600px){.doodle-card{--doodle-card-w:min(94vw,420px);--doodle-cols:5}}
 .doodle-tile img{transition:transform .18s ease}
 .doodle-tile:hover img{transform:scale(1.1) rotate(-3deg)}
@@ -283,7 +283,7 @@
 .doodle-card.is-collapsed>*:not(.card-collapse-btn):not(.doodle-card-title){display:none}
 .control-dock.is-collapsed .color-panel{display:none}
 .editor .toolbox.is-collapsed,.doodle-card.is-collapsed{padding-bottom:12px}
-@media(max-width:1100px){.editor .toolbox.is-collapsed>*:not(.card-collapse-btn){display:none}}
+@media(max-width:1100px),(hover:none) and (pointer:coarse) and (max-width:1440px){.editor .toolbox.is-collapsed>*:not(.card-collapse-btn){display:none}}
 .dock-head{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:22px}
 .dock-head span{flex:1;text-align:center;padding-left:22px;font:800 8px 'Myriad Pro',Arial,sans-serif;letter-spacing:.22em;color:rgba(255,255,255,.7)}
 .control-dock .dock-head .card-collapse-btn{position:static;top:auto;right:auto;width:22px;height:22px;border-radius:7px;flex:none;background:rgba(255,255,255,.1)}
@@ -932,3 +932,37 @@ img,svg,canvas{-webkit-user-drag:none;user-drag:none}
 .register-success{position:relative}
 .cp-sound-btn{position:absolute;bottom:2px;right:2px;z-index:5;width:38px;height:38px;display:grid;place-items:center;padding:0;border:1.5px solid rgba(162,31,37,.3);border-radius:12px;background:#fff0f0;color:#a21f25;cursor:pointer;transition:background .2s ease,border-color .2s ease,transform .15s ease}
 .cp-sound-btn:hover{background:#f9dddd;border-color:#a21f25;transform:translateY(-1px)}
+
+/* ===== Tablets first (601-1100px, portrait and landscape) =====
+   Tools rail on the left, canvas in the middle, doodles on the right, the two colour plates side by side at
+   the bottom (minimised on start). Every rail scrolls inside its own height instead of running under the plates. */
+@media (min-width:601px) and (max-width:1100px),(hover:none) and (pointer:coarse) and (min-width:1101px) and (max-width:1440px){
+  .editor-grid{grid-template-columns:76px minmax(0,1fr) 252px;gap:12px;padding:8px 2vw 214px}
+  /* The leaf only fills about half of the canvas, so the canvas may be wider than the middle column:
+     its empty edges slide under the side rails and the leaf itself stays clear of them.
+     (No auto margins here: with them a wider-than-column canvas would sit against the left edge.) */
+  .studio{min-width:0}
+  .canvas-shell{--shell-w:min(760px,calc((100svh - 118px - 214px - 16px) * 1.357),185%);width:var(--shell-w);margin:4px 0 8px}
+
+  .editor .toolbox{max-height:calc(100svh - 118px - 214px);overflow-y:auto;overscroll-behavior:contain;scrollbar-width:none;padding-top:38px}
+  .editor .toolbox::-webkit-scrollbar{display:none}
+  .editor .toolbox .card-collapse-btn{top:8px;right:auto;left:50%;transform:translateX(-50%)}
+
+  .doodle-card{width:240px;right:2vw;max-height:calc(100svh - 118px - 214px);overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;touch-action:pan-y;scrollbar-width:thin}
+  .doodle-card>*{flex-shrink:0}
+  .doodle-card .doodle-grid{max-height:none;overflow:visible;margin:0;padding:4px}
+  .doodle-card .personal-photo-section .doodle-grid{grid-template-columns:repeat(3,1fr)}
+  .doodle-tile{touch-action:pan-y}
+
+  .editor-controls-bar{bottom:86px;padding:0 2vw;flex-wrap:nowrap;justify-content:space-between;align-items:flex-end;gap:12px}
+  .control-dock{flex:1 1 0;min-width:0;width:auto}
+  .control-dock .dock-row{flex-wrap:wrap;gap:8px 12px}
+  .control-dock .color-panel{width:100%}
+}
+
+/* the profession label grows and shrinks with its card instead of using fixed sizes */
+.doodle-card{container-type:inline-size;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin}
+.doodle-card>*{flex-shrink:0}
+.profession-doodle-label{padding:clamp(8px,4cqw,11px) clamp(10px,6cqw,15px) clamp(8px,4.4cqw,12px) clamp(12px,7cqw,18px)}
+.profession-doodle-caption{font-size:clamp(8px,3.4cqw,9px)}
+.profession-doodle-name{font-size:clamp(13px,6.4cqw,16px);text-wrap:balance}
