@@ -91,11 +91,12 @@ export default function CapturePage() {
           setGate("open");
         } else {
           // The server normally never serves this page unverified (see proxy.js); this covers
-          // a session that expired while the page was open. A full load shows the code screen.
-          window.location.assign("/capture");
+          // a session that expired while the page was open. Refreshing in place (no page load, so
+          // full screen mode stays on) shows the code screen.
+          router.refresh();
         }
       })
-      .catch(() => alive && window.location.assign("/capture"));
+      .catch(() => alive && router.refresh());
     return () => {
       alive = false;
     };

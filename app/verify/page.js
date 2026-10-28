@@ -28,8 +28,9 @@ export default function VerifyPage() {
       </header>
 
       <div className="capture-container">
-        {/* A full page load lets the server check the new cookie and serve the real capture page. */}
-        <CodeGate checking={false} onVerified={() => window.location.assign("/capture")} />
+        {/* Refreshing in place (not a page load) lets the server see the new cookie and serve the real
+            capture page without leaving full screen mode. */}
+        <CodeGate checking={false} onVerified={() => router.refresh()} />
       </div>
     </motion.main>
   );
