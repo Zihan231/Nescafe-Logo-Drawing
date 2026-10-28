@@ -864,8 +864,9 @@ export default function EditPage() {
     if (savedProfession) setProfession(savedProfession);
 
     const initializeProfile = () => {
-      const photoSpot = leafCenterSpot();
-      const nameSpot = leafCenterSpot(savedPhoto ? 88 : 0);
+      // Photo and name are placed as one group centred on the leaf: photo a little above the middle, name below it.
+      const photoSpot = leafCenterSpot(savedPhoto && savedName?.trim() ? -26 : 0);
+      const nameSpot = leafCenterSpot(savedPhoto ? 62 : 0);
       const initial = [];
       if (savedPhoto) {
         initial.push({
@@ -1241,12 +1242,14 @@ export default function EditPage() {
   const selectedSticker = placedStickers.find((item) => item.id === selectedStickerId);
   const transformColors = controlColors(leafColor);
 
-  // Nothing of the editor is shown until the server confirms the visitor entered a valid code.
-  if (!accessOk) return <main className="editor screen" aria-busy="true" />;
-
+  // The server (proxy.js) already refuses to serve this page without a valid code. The page is
+  // still mounted while the session is re-checked, so refs and start-up effects (profile,
+  // mirror geometry, undo history) work; it just stays hidden until the check passes.
   return (
     <motion.main
       className="editor screen"
+      style={accessOk ? undefined : { visibility: "hidden" }}
+      aria-busy={!accessOk}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
