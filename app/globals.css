@@ -977,3 +977,20 @@ img,svg,canvas{-webkit-user-drag:none;user-drag:none}
 .keepsake-side .modal-btn-confirm{background:#EB1C23;box-shadow:0 10px 26px rgba(235,28,35,.4)}
 .keepsake-side .modal-btn-confirm:hover{background:#d4151c;box-shadow:0 14px 32px rgba(235,28,35,.5)}
 .editor .toolbox .tool-row button[aria-label="Eraser"] svg{width:24px;height:24px}
+
+/* ===== Newest 5 designs: burst out from behind the centre logo, bigger than the older ones ===== */
+.live-world .featured-layer{position:absolute;inset:0;z-index:2;overflow:hidden;pointer-events:none}
+.featured-design{position:absolute;width:clamp(340px,calc(10vw + 240px),470px);opacity:0;filter:drop-shadow(0 14px 20px rgba(0,0,0,.5));will-change:transform,opacity;animation:nescafe-burst-move 16s cubic-bezier(.3,.12,.62,.96) infinite,nescafe-burst-fade 16s linear infinite}
+/* One continuous move (a single easing), with the fade running separately so nothing stutters */
+@keyframes nescafe-burst-move{
+  from{transform:translate(-50%,-50%) translate(0,0) scale(.2) rotate(0deg)}
+  to{transform:translate(-50%,-50%) translate(var(--burst-x),var(--burst-y)) scale(1.25) rotate(var(--burst-rot))}
+}
+@keyframes nescafe-burst-fade{
+  0%{opacity:0}
+  10%{opacity:1}
+  86%{opacity:1}
+  100%{opacity:0}
+}
+@media(max-width:600px){.featured-design{width:clamp(250px,70vw,340px)}}
+@media(prefers-reduced-motion:reduce){.featured-design{animation-duration:16s!important}}

@@ -4,6 +4,22 @@ import { motion } from "framer-motion";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 const FLIGHT_SECONDS = 22;
+// The newest designs are featured: they burst out from behind the centre logo, bigger than the rest.
+const FEATURED_COUNT = 5;
+const FEATURED_SECONDS = 16;
+
+// Each featured slot owns a fifth of the upper half-circle, so the five fan out sideways and upwards
+// (never down towards the bottom) and never fly the same way.
+function featuredBurst(slotIndex) {
+  const arc = 150; // degrees, from -165 (left) through straight up to -15 (right)
+  const step = arc / (FEATURED_COUNT - 1);
+  const angle = (-165 + slotIndex * step + randomBetween(-8, 8)) * (Math.PI / 180);
+  return {
+    bx: `${(Math.cos(angle) * 62).toFixed(1)}vw`,
+    by: `${(Math.sin(angle) * 62).toFixed(1)}vh`,
+    rot: `${randomBetween(-14, 14).toFixed(1)}deg`
+  };
+}
 
 // Deterministic (seeded) so server and client render identical stars.
 function buildStars(count) {
@@ -211,12 +227,17 @@ export default function NescafePage() {
   const seenRef = useRef(new Set());
   const initializedRef = useRef(false);
   const slotCountRef = useRef(0);
+  const [featured, setFeatured] = useState([]);
+  const [origin, setOrigin] = useState({ x: 0.5, y: 0.5 }); // centre of the NESCAFÉ logo, as screen fractions
+  const logoRef = useRef(null);
 
   // Next design in chronological order (looping), never the same one twice in a row.
   const pickNextDesign = useCallback(() => {
     let next = priorityQueueRef.current.shift();
     if (!next) {
-      const list = listRef.current;
+      const all = listRef.current;
+      // The newest few are featured at the centre, so the left-to-right flow shows the older ones.
+      const list = all.length > FEATURED_COUNT ? all.slice(0, -FEATURED_COUNT) : all;
       if (!list.length) return null;
       next = list[cursorRef.current++ % list.length];
       if (list.length > 1 && next.id === lastShownRef.current) {
@@ -261,6 +282,32 @@ export default function NescafePage() {
     setSlots(buildSlots(getSafeSlotCount(window.innerWidth, window.innerHeight)));
   }, [buildSlots]);
 
+  // Keep one featured slot per recent design (up to FEATURED_COUNT).
+  const syncFeatured = useCallback(() => {
+    setFeatured((current) => {
+      const target = Math.min(FEATURED_COUNT, listRef.current.length);
+      if (current.length >= target) return current;
+      const next = [...current];
+      while (next.length < target) {
+        const shown = new Set(next.map((item) => item.design?.id));
+        const design = [...listRef.current].reverse().slice(0, FEATURED_COUNT).find((item) => !shown.has(item.id));
+        const k = next.length;
+        next.push({ k, design, burst: featuredBurst(k), delay: current.length ? 0 : -((FEATURED_COUNT - 1 - k) * FEATURED_SECONDS) / FEATURED_COUNT });
+      }
+      return next;
+    });
+  }, []);
+
+  // When a featured slot finishes a pass it picks the newest design nobody else is showing.
+  const handleFeaturedIteration = useCallback((k) => {
+    setFeatured((current) => current.map((item) => {
+      if (item.k !== k) return item;
+      const shown = new Set(current.filter((other) => other.k !== k).map((other) => other.design?.id));
+      const design = [...listRef.current].reverse().slice(0, FEATURED_COUNT).find((candidate) => !shown.has(candidate.id)) || item.design;
+      return { ...item, design, burst: featuredBurst(k) };
+    }));
+  }, []);
+
   const acceptDesign = useCallback(async (design) => {
     if (!design?.id || !design?.imageUrl || seenRef.current.has(design.id)) return;
     seenRef.current.add(design.id);
@@ -271,13 +318,9 @@ export default function NescafePage() {
     }
 
     addToList(ready);
-    if (initializedRef.current) {
-      // Fresh upload takes the very next slot boundary.
-      priorityQueueRef.current.push(ready);
-    } else {
-      startIfNeeded();
-    }
-  }, [addToList, startIfNeeded]);
+    if (!initializedRef.current) startIfNeeded();
+    syncFeatured();
+  }, [addToList, startIfNeeded, syncFeatured]);
 
   const reconcile = useCallback(async () => {
     try {
@@ -293,15 +336,12 @@ export default function NescafePage() {
         addToList(d);
       });
 
-      if (!initializedRef.current) {
-        startIfNeeded();
-        return;
-      }
-      priorityQueueRef.current.push(...fresh);
+      if (!initializedRef.current) startIfNeeded();
+      syncFeatured();
     } catch {
       // EventSource reconnects automatically
     }
-  }, [addToList, startIfNeeded]);
+  }, [addToList, startIfNeeded, syncFeatured]);
 
   useEffect(() => {
     const handleResize = () => {
@@ -324,6 +364,25 @@ export default function NescafePage() {
     source.onerror = () => reconcile();
     return () => source.close();
   }, [acceptDesign, reconcile]);
+
+  // Featured designs start at the middle of the NESCAFÉ logo.
+  useEffect(() => {
+    const measure = () => {
+      const logo = logoRef.current;
+      if (!logo) return;
+      const box = logo.getBoundingClientRect();
+      if (!box.width) return;
+      setOrigin({ x: (box.left + box.width / 2) / window.innerWidth, y: (box.top + box.height / 2) / window.innerHeight });
+    };
+    measure();
+    const logo = logoRef.current;
+    logo?.addEventListener("load", measure);
+    window.addEventListener("resize", measure);
+    return () => {
+      logo?.removeEventListener("load", measure);
+      window.removeEventListener("resize", measure);
+    };
+  }, []);
 
   return (
     <motion.main className="screen nescafe-world-screen live-world" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.65 }}>
@@ -366,8 +425,28 @@ export default function NescafePage() {
           <Ufo key={ufo.id} ufo={ufo} />
         ))}
       </div>
+      <div className="featured-layer" aria-label="Newest NESCAFÉ designs">
+        {featured.map((slot) => slot.design?.imageUrl && (
+          <div
+            key={`featured-${slot.k}`}
+            className="featured-design"
+            style={{
+              left: `${(origin.x * 100).toFixed(2)}%`,
+              top: `${(origin.y * 100).toFixed(2)}%`,
+              animationDelay: `${slot.delay}s`,
+              "--burst-x": slot.burst.bx,
+              "--burst-y": slot.burst.by,
+              "--burst-rot": slot.burst.rot,
+              "--design-glow": slot.design.glowColor || "rgb(255 255 255)"
+            }}
+            onAnimationIteration={(event) => event.animationName === "nescafe-burst-move" && handleFeaturedIteration(slot.k)}
+          >
+            <img className="flight-design-image" src={slot.design.imageUrl} alt="Newest community-designed NESCAFÉ leaf" />
+          </div>
+        ))}
+      </div>
       <div className="world-center-wrap" aria-hidden="true">
-        <img className="world-logo" src="/assets/nescafe-logo.png" alt="" />
+        <img ref={logoRef} className="world-logo" src="/assets/nescafe-logo.png" alt="" />
       </div>
       <div className="flight-layer" aria-label="Live NESCAFÉ designs">
         {slots.map((slot) => (
