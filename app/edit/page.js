@@ -8,7 +8,6 @@ import {
   CaretDown,
   CaretUp,
   CheckCircle,
-  Eraser,
   FlipHorizontal,
   PaintBucket,
   PaintBrush,
@@ -20,6 +19,7 @@ import {
   Trash,
   X
 } from "@phosphor-icons/react";
+import { LuEraser } from "react-icons/lu";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getProfessionDoodles } from "@/lib/profession-doodles";
@@ -1442,7 +1442,7 @@ export default function EditPage() {
           <PencilSimple />
         </button>
         <button className={tool === "eraser" ? "active" : ""} onClick={() => setTool("eraser")} aria-label="Eraser">
-          <Eraser />
+          <LuEraser />
         </button>
         <button onClick={undo} disabled={!canUndo} aria-label="Undo" title="Undo (Ctrl+Z)">
           <ArrowCounterClockwise />
