@@ -655,10 +655,15 @@ export default function EditPage() {
   const selfieDoodle = sessionSelfie ? { label: "Your photo", src: sessionSelfie, aspect: 1, alpha: true } : null;
   const professionDoodles = getProfessionDoodles(profession);
   const [collapsed, setCollapsed] = useState({ tools: false, doodles: false, ink: false, logo: false });
+  // Everything in the side cards and colour plates scales with the window so the design never re-flows.
   useEffect(() => {
-    if (window.matchMedia("(min-width: 601px) and (max-width: 1100px), (hover: none) and (pointer: coarse) and (min-width: 1101px) and (max-width: 1440px)").matches) {
-      setCollapsed((current) => ({ ...current, ink: true, logo: true }));
-    }
+    const fit = () => {
+      const zoom = Math.max(0.5, Math.min(1, window.innerWidth / 1440, window.innerHeight / 800));
+      document.querySelector(".editor")?.style.setProperty("--ui-zoom", zoom.toFixed(3));
+    };
+    fit();
+    window.addEventListener("resize", fit);
+    return () => window.removeEventListener("resize", fit);
   }, []);
 
   const toggleCard = (key) => setCollapsed((current) => ({ ...current, [key]: !current[key] }));
