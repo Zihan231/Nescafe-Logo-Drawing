@@ -35,7 +35,7 @@ export default function Home() {
         />
         <motion.button
           className="start-btn landing-start"
-          onClick={() => router.push("/capture")}
+          onClick={() => router.push("/register")}
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
         >

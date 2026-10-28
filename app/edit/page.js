@@ -838,6 +838,20 @@ export default function EditPage() {
     });
   };
 
+  // Only verified visitors can draw: anyone else goes back to the code step.
+  useEffect(() => {
+    let alive = true;
+    fetch("/api/session", { cache: "no-store" })
+      .then((response) => response.json())
+      .then((data) => {
+        if (alive && !data.verified) router.replace("/capture");
+      })
+      .catch(() => {});
+    return () => {
+      alive = false;
+    };
+  }, [router]);
+
   useEffect(() => {
     if (typeof window === "undefined") return;
     const savedPhoto = sessionStorage.getItem("nescafe_user_photo");

@@ -9,3 +9,6 @@ uploads/*
 .worktrees
 /tmp/ai-doodles/
 __pycache__/
+
+# Visitor registrations (names, phone numbers, emails) when no database is configured
+data/users.json

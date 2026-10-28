@@ -3,6 +3,7 @@ import { promises as fs } from "node:fs";
 import path from "node:path";
 import { createDesign, getLatestDesigns } from "@/lib/design-store";
 import { publishDesign } from "@/lib/realtime";
+import { readSession } from "@/lib/session";
 import { PROFESSIONS } from "@/lib/professions";
 
 export const runtime = "nodejs";
@@ -61,6 +62,7 @@ export async function GET(request) {
 }
 
 export async function POST(request) {
+  if (!readSession(request)) return NextResponse.json({ error: "Please register and verify your code first." }, { status: 401 });
   if (!withinRateLimit(request)) return NextResponse.json({ error: "Too many uploads. Please wait a moment." }, { status: 429 });
   if (!request.headers.get("content-type")?.toLowerCase().startsWith("multipart/form-data")) {
     return NextResponse.json({ error: "Upload must use multipart/form-data" }, { status: 415 });

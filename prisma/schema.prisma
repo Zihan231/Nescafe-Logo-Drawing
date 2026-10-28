@@ -19,3 +19,15 @@ model Design {
   @@index([createdAt])
   @@map("designs")
 }
+
+model User {
+  id         String    @id @default(uuid()) @db.VarChar(36)
+  name       String    @db.VarChar(40)
+  phone      String    @unique @db.VarChar(20)
+  email      String?   @db.VarChar(190)
+  code       String    @unique @db.Char(4)
+  createdAt  DateTime  @default(now()) @map("created_at")
+  verifiedAt DateTime? @map("verified_at")
+
+  @@map("users")
+}

@@ -14,9 +14,11 @@ import {
   Sparkle
 } from "@phosphor-icons/react";
 import { PROFESSIONS } from "@/lib/professions";
+import CodeGate from "@/components/CodeGate";
 
 export default function CapturePage() {
   const router = useRouter();
+  const [gate, setGate] = useState("checking"); // "checking" | "locked" | "open"
   const [userName, setUserName] = useState("");
   const [profession, setProfession] = useState("");
   const [professionOpen, setProfessionOpen] = useState(false);
@@ -80,13 +82,39 @@ export default function CapturePage() {
     }
   }, [stopCamera]);
 
-  // Auto-start camera on mount
+  // The page stays locked until the visitor has verified their registration code.
   useEffect(() => {
+    let alive = true;
+    fetch("/api/session", { cache: "no-store" })
+      .then((response) => response.json())
+      .then((data) => {
+        if (!alive) return;
+        if (data.verified) {
+          setUserName(String(data.name || "").trim().slice(0, 20));
+          setGate("open");
+        } else {
+          setGate("locked");
+        }
+      })
+      .catch(() => alive && setGate("locked"));
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  const handleVerified = (name) => {
+    setUserName(String(name || "").trim().slice(0, 20));
+    setGate("open");
+  };
+
+  // Start the camera only after verification, so no permission prompt appears before it.
+  useEffect(() => {
+    if (gate !== "open") return undefined;
     startCamera();
     return () => {
       stopCamera();
     };
-  }, [startCamera, stopCamera]);
+  }, [gate, startCamera, stopCamera]);
 
   useEffect(() => {
     if (!professionOpen) return;
@@ -216,7 +244,7 @@ export default function CapturePage() {
   // Submit and continue to edit page
   const handleContinue = async () => {
     setSubmitAttempted(true);
-    if (!userName.trim() || !profession || processing) return;
+    if (!profession || processing) return;
     const finalName = userName.trim();
     setProcessing(true);
 
@@ -286,39 +314,15 @@ export default function CapturePage() {
 
       {/* Main capture workspace */}
       <div className="capture-container">
+        {gate !== "open" && <CodeGate checking={gate === "checking"} onVerified={handleVerified} />}
+        {gate === "open" && (
         <motion.div
           className="capture-card"
           initial={{ scale: 0.95, opacity: 0, y: 16 }}
           animate={{ scale: 1, opacity: 1, y: 0 }}
           transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
         >
-          {/* Step 1: User's Name */}
-          <div className="capture-name-block">
-            <label htmlFor="user-name-input" className="capture-label">
-              <span>YOUR NAME <span className="capture-required-mark" aria-hidden="true">*</span></span>
-            </label>
-            <input
-              id="user-name-input"
-              type="text"
-              className="capture-name-input"
-              placeholder="Enter your name"
-              value={userName}
-              aria-invalid={submitAttempted && !userName.trim()}
-              aria-describedby={submitAttempted && !userName.trim() ? "user-name-error" : undefined}
-              maxLength={20}
-              autoComplete="off"
-              spellCheck={false}
-              onChange={(e) => setUserName(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && capturedPhoto) handleContinue();
-              }}
-            />
-            {submitAttempted && !userName.trim() && (
-              <span className="capture-field-error" id="user-name-error" role="alert">Please enter your name to continue.</span>
-            )}
-          </div>
-
-          {/* Step 2: User's Profession */}
+          {/* Step 1: User's Profession (the name comes from registration) */}
           <div className="capture-profession-block">
             <label id="profession-label" htmlFor="profession-select" className="capture-label">
               <span>YOUR PROFESSION <span className="capture-required-mark" aria-hidden="true">*</span></span>
@@ -374,7 +378,7 @@ export default function CapturePage() {
             )}
           </div>
 
-          {/* Step 3: Camera & Selfie Framing */}
+          {/* Step 2: Camera & Selfie Framing */}
           <div className="capture-camera-block">
             <div className={`camera-viewport${flash ? " flash" : ""}`}>
               {/* Live Video */}
@@ -490,6 +494,7 @@ export default function CapturePage() {
             </div>
           </div>
         </motion.div>
+        )}
       </div>
     </motion.main>
   );

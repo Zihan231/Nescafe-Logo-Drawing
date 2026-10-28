@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { promises as fs } from "node:fs";
 import path from "node:path";
+import { readSession } from "@/lib/session";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -8,6 +9,7 @@ export const dynamic = "force-dynamic";
 const uploadDirectory = () => process.env.UPLOAD_DIRECTORY || path.join(process.cwd(), "uploads");
 
 export async function POST(request) {
+  if (!readSession(request)) return NextResponse.json({ error: "Please register and verify your code first." }, { status: 401 });
   try {
     let buffer;
     const contentType = request.headers.get("content-type") || "";
