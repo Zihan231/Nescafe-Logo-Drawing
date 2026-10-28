@@ -976,3 +976,4 @@ img,svg,canvas{-webkit-user-drag:none;user-drag:none}
 .dl-hint{max-width:420px;margin:0;font-size:13px;line-height:1.5;color:rgba(255,255,255,.78)}
 .keepsake-side .modal-btn-confirm{background:#EB1C23;box-shadow:0 10px 26px rgba(235,28,35,.4)}
 .keepsake-side .modal-btn-confirm:hover{background:#d4151c;box-shadow:0 14px 32px rgba(235,28,35,.5)}
+.editor .toolbox .tool-row button[aria-label="Eraser"] svg{width:22px;height:22px}
