@@ -727,7 +727,7 @@ export default function EditPage() {
 
     const onDown = (event) => {
       if (event.pointerType !== "touch") return;
-      touches.set(event.pointerId, { x: event.clientX, y: event.clientY, sticker: Boolean(event.target.closest?.(".placed-sticker")) });
+      touches.set(event.pointerId, { x: event.clientX, y: event.clientY, sticker: Boolean(event.target.closest?.(".placed-sticker, .sticker-controls")) });
       if (pinch) {
         event.stopPropagation();
         return;
@@ -1502,39 +1502,50 @@ export default function EditPage() {
                   ) : (
                     <img className={sticker.alpha ? "alpha-art" : undefined} src={sticker.src} alt={sticker.label} />
                   )}
-                  {selectedStickerId === sticker.id && (
-                    <>
-                      {['nw','ne','sw','se'].map((corner) => <button key={corner} className={`transform-handle resize-handle ${corner}`} onPointerDown={(event)=>startResizeHandle(sticker,event)} onPointerMove={moveTransformHandle} onPointerUp={endTransformHandle} onPointerCancel={endTransformHandle} aria-label="Resize" />)}
-                      <span className="rotate-stem" />
-                      <span className="rotate-bridge" />
-                      <button
-                        type="button"
-                        className="transform-handle rotate-handle"
-                        onPointerDown={(event) => startRotateHandle(sticker, event)}
-                        onPointerMove={moveTransformHandle}
-                        onPointerUp={endTransformHandle}
-                        onPointerCancel={endTransformHandle}
-                        aria-label="Rotate doodle"
-                        title="Rotate doodle"
-                      >
-                        <ArrowClockwise weight="bold" />
-                      </button>
-                      <button
-                        type="button"
-                        className="transform-handle delete-handle"
-                        onPointerDown={(event) => {
-                          event.preventDefault();
-                          event.stopPropagation();
-                        }}
-                        onClick={(event) => requestDeleteSticker(sticker.id, event)}
-                        aria-label="Delete doodle"
-                        title="Delete doodle"
-                      >
-                        <X weight="bold" />
-                      </button>
-                    </>
-                  )}
                 </div>
+              ))}
+            </div>
+            {/* Handles live outside the leaf-shaped mask so they stay visible when a doodle is moved past the edge */}
+            <div className="sticker-controls-layer" style={{ "--selection-color": transformColors.outline, "--selection-ink": transformColors.ink }}>
+              {placedStickers.filter((sticker) => sticker.id === selectedStickerId).map((sticker) => (
+                <div
+                  key={sticker.id}
+                  className="sticker-controls"
+                  onPointerDown={(event) => startPlacedDrag(sticker.id, event)}
+                  onPointerMove={movePlacedDrag}
+                  onPointerUp={endPlacedDrag}
+                  onPointerCancel={endPlacedDrag}
+                  style={{ left: `${(sticker.x / W) * 100}%`, top: `${(sticker.y / H) * 100}%`, width: `${(sticker.w / W) * 100}%`, height: `${(sticker.h / H) * 100}%`, transform: `translate(-50%,-50%) rotate(${sticker.rotation}deg)` }}
+                >
+                              {['nw','ne','sw','se'].map((corner) => <button key={corner} className={`transform-handle resize-handle ${corner}`} onPointerDown={(event)=>startResizeHandle(sticker,event)} onPointerMove={moveTransformHandle} onPointerUp={endTransformHandle} onPointerCancel={endTransformHandle} aria-label="Resize" />)}
+                              <span className="rotate-stem" />
+                              <span className="rotate-bridge" />
+                              <button
+                                type="button"
+                                className="transform-handle rotate-handle"
+                                onPointerDown={(event) => startRotateHandle(sticker, event)}
+                                onPointerMove={moveTransformHandle}
+                                onPointerUp={endTransformHandle}
+                                onPointerCancel={endTransformHandle}
+                                aria-label="Rotate doodle"
+                                title="Rotate doodle"
+                              >
+                                <ArrowClockwise weight="bold" />
+                              </button>
+                              <button
+                                type="button"
+                                className="transform-handle delete-handle"
+                                onPointerDown={(event) => {
+                                  event.preventDefault();
+                                  event.stopPropagation();
+                                }}
+                                onClick={(event) => requestDeleteSticker(sticker.id, event)}
+                                aria-label="Delete doodle"
+                                title="Delete doodle"
+                              >
+                                <X weight="bold" />
+                              </button>
+                                    </div>
               ))}
             </div>
             <img ref={outlineRef} className="leaf-dotted-outline" src="/assets/leaf-outline.svg" alt="" aria-hidden="true" />

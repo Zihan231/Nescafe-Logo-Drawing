@@ -1012,3 +1012,10 @@ img,svg,canvas{-webkit-user-drag:none;user-drag:none}
 .canvas-shell{touch-action:none;transform-origin:center center;will-change:transform}
 .zoom-reset-btn{position:absolute;left:50%;bottom:6px;z-index:12;transform:translateX(-50%);display:inline-flex;align-items:center;gap:6px;padding:9px 16px;border:1.5px solid rgba(255,255,255,.55);border-radius:999px;background:rgba(26,5,8,.86);color:#fff;font:800 10px 'Nescafe Sans','Myriad Pro',Arial,sans-serif;letter-spacing:.16em;cursor:pointer;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);box-shadow:0 10px 24px rgba(18,2,5,.45)}
 .zoom-reset-btn:active{transform:translateX(-50%) scale(.97)}
+
+/* Doodle handles are drawn above the leaf mask so they never get cut off at the leaf edge */
+.sticker-controls-layer{position:absolute;inset:0;z-index:4;pointer-events:none}
+.sticker-controls{position:absolute;pointer-events:auto;cursor:grab;touch-action:none;user-select:none}
+.sticker-controls:active{cursor:grabbing}
+.sticker-controls:after{content:"";position:absolute;inset:0;border:2px solid var(--selection-color);border-radius:5px;filter:drop-shadow(0 2px 3px rgba(0,0,0,.55));pointer-events:none}
+.placed-sticker.selected:after{display:none}
