@@ -878,8 +878,8 @@ img,svg,canvas{-webkit-user-drag:none;user-drag:none}
 
 /* Coffee pour: NESCAFÉ mug fills while the code digits drop in (components/CoffeePour.js) */
 /* The scene is tall so the stream has room to pour; once the code appears the empty space above the mug is closed up. */
-.cp-wrap{--cp-h:clamp(250px,42vh,420px);width:100%;display:block;text-align:center;height:var(--cp-h);overflow:hidden;animation:cp-collapse .8s cubic-bezier(.45,0,.2,1) var(--reveal) forwards}
-.cp-scene{display:block;margin:0 auto;height:var(--cp-h);width:auto;max-width:100%;overflow:hidden;animation:cp-lift .8s cubic-bezier(.45,0,.2,1) var(--reveal) forwards}
+.cp-wrap{--cp-h:clamp(250px,42vh,420px);width:100%;display:block;text-align:center;height:var(--cp-h);position:relative;z-index:3;overflow:visible;pointer-events:none;animation:cp-collapse .8s cubic-bezier(.45,0,.2,1) var(--reveal) forwards}
+.cp-scene{display:block;margin:0 auto;height:var(--cp-h);width:auto;max-width:100%;overflow:visible;animation:cp-lift .8s cubic-bezier(.45,0,.2,1) var(--reveal) forwards}
 .cp-logo{filter:drop-shadow(0 0 .8px rgba(42,10,12,.6))}
 .cp-scene .cp-digit-text{font:700 22px 'Nescafe Sans',Arial,sans-serif;fill:#6b3a1f}
 .cp-mug{transform-box:view-box;transform-origin:146px 280px;animation:cp-mug-in .75s cubic-bezier(.2,.9,.3,1.12) both}
@@ -899,8 +899,8 @@ img,svg,canvas{-webkit-user-drag:none;user-drag:none}
 .cp-ripple{opacity:0;transform-origin:0 0;transform-box:view-box;animation:cp-ripple .95s ease-out var(--hit) forwards}
 .cp-ripple-2{animation-delay:calc(var(--hit) + .14s)}
 .cp-drop{opacity:0;animation:cp-splash .7s cubic-bezier(.2,.7,.4,1) var(--hit) forwards}
-@keyframes cp-collapse{to{height:calc(var(--cp-h) * .905)}}
-@keyframes cp-lift{to{margin-top:calc(var(--cp-h) * -.04)}}
+@keyframes cp-collapse{to{height:calc(var(--cp-h) * .685)}}
+@keyframes cp-lift{to{margin-top:calc(var(--cp-h) * -.26)}}
 @keyframes cp-mug-in{from{opacity:0;transform:translateY(26px) scale(.94)}to{opacity:1;transform:none}}
 @keyframes cp-fade{from{opacity:0}to{opacity:1}}
 @keyframes cp-stream-in{from{transform:scaleY(0)}to{transform:scaleY(1)}}
@@ -921,8 +921,8 @@ img,svg,canvas{-webkit-user-drag:none;user-drag:none}
 @keyframes cp-ripple{from{opacity:.95;transform:scale(.35)}to{opacity:0;transform:scale(3.4,2.4)}}
 @keyframes cp-splash{0%{opacity:1;transform:translate(0,0)}45%{opacity:1;transform:translate(var(--dx),var(--dy))}100%{opacity:0;transform:translate(calc(var(--dx) * 1.5),6px)}}
 @media(prefers-reduced-motion:reduce){
-  .cp-wrap{animation:none;height:calc(var(--cp-h) * .905)}
-  .cp-scene{animation:none;margin-top:calc(var(--cp-h) * -.04)}
+  .cp-wrap{animation:none;height:calc(var(--cp-h) * .685)}
+  .cp-scene{animation:none;margin-top:calc(var(--cp-h) * -.26)}
   .cp-wrap *{animation:none !important}
   .cp-token,.cp-impact,.cp-stream-wrap{display:none}
   .cp-steam path{opacity:.3}
