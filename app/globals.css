@@ -1095,3 +1095,27 @@ img,svg,canvas{-webkit-user-drag:none;user-drag:none}
 /* While a drawing tool is on, strokes go through doodles; the Select tool brings them back */
 .placed-stickers.is-drawing .placed-sticker{pointer-events:none}
 .sticker-controls-layer.is-drawing .sticker-controls{pointer-events:none}
+
+/* Layers tab in the tools card */
+@media(min-width:601px){.editor .toolbox .tool-tabs{grid-template-columns:repeat(4,1fr)}}
+.layer-panel{display:flex;flex-direction:column;gap:8px}
+.layer-list{display:flex;flex-direction:column;gap:5px;max-height:210px;overflow-y:auto;overscroll-behavior:contain;touch-action:pan-y;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.35) transparent;padding-right:2px}
+.layer-row{display:flex;align-items:center;gap:8px;padding:6px 8px;border:1px solid rgba(255,255,255,.14);border-radius:11px;background:rgba(255,255,255,.06);color:#fff;cursor:pointer;transition:background .15s ease,border-color .15s ease}
+.layer-row:hover{background:rgba(255,255,255,.14)}
+.layer-row.is-selected{background:#fff;color:#EB1C23;border-color:#fff}
+.layer-row-drawing{cursor:default;border-style:dashed;border-color:rgba(255,255,255,.45);background:rgba(235,28,35,.25)}
+.layer-row-drawing:hover{background:rgba(235,28,35,.25)}
+.layer-thumb{display:grid;place-items:center;flex:none;width:28px;height:28px;border-radius:8px;background:#f6eee7;color:#EB1C23;overflow:hidden}
+.layer-row-drawing .layer-thumb{background:rgba(255,255,255,.16);color:#fff}
+.layer-thumb img{width:100%;height:100%;object-fit:contain;padding:2px;box-sizing:border-box}
+.layer-name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:800 9.5px 'Myriad Pro',Arial,sans-serif;letter-spacing:.06em;text-transform:uppercase}
+.layer-row-btn{display:grid;place-items:center;flex:none;width:24px;height:24px;padding:0;border:1px solid currentColor;border-radius:7px;background:transparent;color:inherit;cursor:pointer;opacity:.85}
+.layer-row-btn:hover:not(:disabled){background:rgba(255,255,255,.2)}
+.layer-row.is-selected .layer-row-btn:hover:not(:disabled){background:rgba(235,28,35,.12)}
+.layer-row-btn:disabled{opacity:.25;cursor:default}
+
+/* The Layers list stays available while a text item is selected (the rest of the tools hide then) */
+.editor .toolbox.text-editing .tool-panel.keep-open{display:flex}
+.editor .toolbox.text-editing .tool-panel.keep-open .tool-tabs{display:grid}
+/* Keep the tools card clear of the ink colour card below it: it scrolls inside instead of running underneath */
+@media(min-width:601px){.editor .toolbox{max-height:calc((100svh - 118px - 292px * var(--ui-zoom)) / var(--ui-zoom))}}

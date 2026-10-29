@@ -16,6 +16,7 @@ import {
   PaintBucket,
   PaintBrush,
   PaperPlaneTilt,
+  Stack,
   PenNib,
   PencilSimple,
   Shapes,
@@ -1875,9 +1876,9 @@ export default function EditPage() {
             </div>
           )}
 
-          <div className="tool-panel">
+          <div className={`tool-panel${toolTab === "layers" ? " keep-open" : ""}`}>
           <div className="tool-tabs" role="tablist" aria-label="Drawing options">
-            {[["brushes", "Brush", PaintBrush], ["shapes", "Shapes", Shapes], ["symmetry", "Mirror", FlipHorizontal]].map(([id, label, Icon]) => (
+            {[["brushes", "Brush", PaintBrush], ["shapes", "Shapes", Shapes], ["symmetry", "Mirror", FlipHorizontal], ["layers", "Layers", Stack]].map(([id, label, Icon]) => (
               <button
                 key={id}
                 type="button"
@@ -1986,6 +1987,42 @@ export default function EditPage() {
                 </div>
               )}
               <p className="tool-hint">Draw once, and every stroke is copied around the leaf.</p>
+            </div>
+          )}
+          {toolTab === "layers" && (
+            <div className="layer-panel">
+              <p className="tool-hint">Top of the list is in front. Strokes you draw live in the Drawing row.</p>
+              <div className="layer-list" role="list">
+                {[...layerStack(placedStickers)].reverse().map((item, row, rows) => (
+                  item === null ? (
+                    <div key="drawing" className="layer-row layer-row-drawing" role="listitem">
+                      <span className="layer-thumb"><PaintBrush weight="bold" size={14} /></span>
+                      <span className="layer-name">Drawing</span>
+                    </div>
+                  ) : (
+                    <div
+                      key={item.id}
+                      role="listitem"
+                      className={`layer-row${selectedStickerId === item.id ? " is-selected" : ""}`}
+                      onClick={() => {
+                        setTool("none");
+                        setSelectedStickerId(item.id);
+                      }}
+                    >
+                      <span className="layer-thumb">
+                        {item.kind === "text" ? <TextT weight="bold" size={14} /> : <img src={item.src} alt="" draggable={false} style={item.flipX ? { transform: "scaleX(-1)" } : undefined} />}
+                      </span>
+                      <span className="layer-name">{item.kind === "text" ? item.text : item.label}</span>
+                      <button type="button" className="layer-row-btn" onClick={(event) => moveLayer(item.id, 1, event)} disabled={row === 0} aria-label="Bring forward" title="Bring forward">
+                        <ArrowUp weight="bold" size={12} />
+                      </button>
+                      <button type="button" className="layer-row-btn" onClick={(event) => moveLayer(item.id, -1, event)} disabled={row === rows.length - 1} aria-label="Send backward" title="Send backward">
+                        <ArrowDown weight="bold" size={12} />
+                      </button>
+                    </div>
+                  )
+                ))}
+              </div>
             </div>
           )}
         </div>
