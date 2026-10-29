@@ -2138,12 +2138,27 @@ export default function EditPage() {
                   {keepsake.cardUrl ? (
                     <img className="keepsake-card" src={keepsake.cardUrl} alt="Your NESCAFÉ card" draggable={false} />
                   ) : (
-                    <div className="keepsake-card-wait">PREPARING YOUR CARD…</div>
+                    <div className="keepsake-card-skeleton" role="status" aria-label="Preparing your card">
+                      <span className="sk sk-name" />
+                      <span className="sk sk-role" />
+                      <span className="sk sk-leaf" />
+                      <span className="sk sk-word" />
+                      <span className="sk sk-dot sk-dot-1" />
+                      <span className="sk sk-dot sk-dot-2" />
+                      <span className="sk sk-dot sk-dot-3" />
+                      <span className="sk sk-foot" />
+                    </div>
                   )}
                   <div className="keepsake-side">
                     <h3 className="modal-title-pacifico">{keepsake.qr ? "Flown to the World!" : "Sending to the world…"}</h3>
                     <p className="modal-subtitle">{keepsake.qr ? "Your design is now orbiting the Earth. Take your card home with you." : "Hang on a moment while your design takes off and your card is made."}</p>
-                    {!keepsake.qr && <div className="keepsake-spinner" role="status" aria-label="Sending" />}
+                    {!keepsake.qr && (
+                      <div className="keepsake-qr-skeleton" role="status" aria-label="Preparing your QR code">
+                        <span className="sk sk-qr" />
+                        <span className="sk sk-line sk-line-1" />
+                        <span className="sk sk-line sk-line-2" />
+                      </div>
+                    )}
                     {keepsake.qr && (
                       <>
                         <div className="keepsake-qr">

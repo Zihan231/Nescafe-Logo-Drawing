@@ -1028,3 +1028,27 @@ img,svg,canvas{-webkit-user-drag:none;user-drag:none}
 @keyframes keepsake-spin{to{transform:rotate(360deg)}}
 .keepsake-side .modal-btn-confirm:disabled{opacity:.45;cursor:default;box-shadow:none}
 @media(prefers-reduced-motion:reduce){.keepsake-spinner{animation-duration:2.4s}}
+
+/* Skeleton placeholders while the card and QR code are being made */
+.sk{display:block;position:relative;overflow:hidden;background:rgba(255,255,255,.1)}
+.sk:after{content:"";position:absolute;inset:0;transform:translateX(-100%);background:linear-gradient(90deg,transparent,rgba(255,255,255,.28),transparent);animation:sk-shimmer 1.5s ease-in-out infinite}
+@keyframes sk-shimmer{to{transform:translateX(100%)}}
+.keepsake-card-skeleton{position:relative;width:100%;aspect-ratio:5/4;border-radius:22px;border:4px solid rgba(235,28,35,.55);background:#1c0609;box-shadow:0 18px 40px rgba(60,5,10,.38);overflow:hidden}
+.keepsake-card-skeleton .sk{position:absolute;border-radius:10px}
+.sk-name{left:7%;top:9%;width:42%;height:7.5%}
+.sk-role{left:7%;top:20%;width:22%;height:3.6%}
+.sk-leaf{left:9%;top:29%;width:62%;height:56%;border-radius:62% 6% 62% 6% / 70% 6% 70% 6%;background:rgba(255,255,255,.13)}
+.sk-word{right:6.5%;top:12%;width:11%;height:76%;border-radius:12px}
+.sk-dot{width:5%;aspect-ratio:1;border-radius:50%}
+.sk-dot-1{left:30%;top:10%;background:rgba(235,28,35,.35)}
+.sk-dot-2{left:78%;top:16%;background:rgba(255,255,255,.18)}
+.sk-dot-3{left:66%;top:84%;background:rgba(245,183,41,.3)}
+.sk-foot{left:7%;bottom:6%;width:24%;height:3.4%;border-radius:8px}
+.keepsake-qr-skeleton{display:flex;flex-direction:column;align-items:center;gap:10px;width:100%;margin:6px 0 16px}
+.keepsake-qr-skeleton .sk{background:rgba(235,28,35,.1);border-radius:14px}
+.keepsake-qr-skeleton .sk:after{background:linear-gradient(90deg,transparent,rgba(255,255,255,.85),transparent)}
+.sk-qr{width:min(100%,230px);aspect-ratio:1;border-radius:22px!important}
+.sk-line{height:11px;border-radius:6px!important}
+.sk-line-1{width:46%}
+.sk-line-2{width:68%}
+@media(prefers-reduced-motion:reduce){.sk:after{animation-duration:3.2s}}
