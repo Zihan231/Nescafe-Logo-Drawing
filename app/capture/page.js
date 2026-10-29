@@ -295,13 +295,6 @@ export default function CapturePage() {
                   />
                 )}
 
-                {/* Dashed framing outline: only while the camera is live, so the finished photo has no ring around it */}
-                {!capturedPhoto && (
-                  <svg className="camera-shape-guide" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
-                    <path d={shape.path || "M0 0H100V100H0Z"} fill="none" stroke="rgba(255,255,255,.7)" strokeWidth="2" strokeDasharray="7 6" vectorEffect="non-scaling-stroke" />
-                  </svg>
-                )}
-
                 {/* Error overlay if camera is blocked */}
                 {cameraError && !capturedPhoto && (
                   <div className="camera-fallback-overlay">

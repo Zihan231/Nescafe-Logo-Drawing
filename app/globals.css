@@ -629,7 +629,7 @@
 }
 
 .camera-shape-wrap {
-  filter: drop-shadow(0 14px 26px rgba(0, 0, 0, .42));
+  /* no outline, ring or shadow around the photo */
 }
 
 .camera-viewport {
@@ -637,7 +637,7 @@
   width: clamp(190px, 28vh, 290px);
   height: clamp(190px, 28vh, 290px);
   overflow: hidden;
-  background: #0c0204;
+  background: transparent;
 }
 
 .camera-viewport.flash {
@@ -1068,3 +1068,5 @@ img,svg,canvas{-webkit-user-drag:none;user-drag:none}
 .personal-photo-section .doodle-tile img{inset:3px;width:calc(100% - 6px);height:calc(100% - 6px);filter:drop-shadow(0 2px 4px rgba(0,0,0,.35))}
 
 .camera-shape-wrap.has-photo{filter:none}
+
+.camera-video:not(.active){background:#0c0204}
