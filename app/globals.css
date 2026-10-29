@@ -893,7 +893,7 @@ img,svg,canvas{-webkit-user-drag:none;user-drag:none}
 .cp-wave-slide.cp-wave-back{animation-duration:3.1s;animation-direction:reverse}
 .cp-foam{animation:cp-fade .9s ease-out var(--pour-end) both}
 .cp-steam path{fill:none;stroke:url(#cp-smoke-fade);stroke-linecap:round;opacity:0;transform-box:fill-box;transform-origin:50% 100%;animation:cp-smoke var(--dur) cubic-bezier(.3,.2,.5,1) var(--delay) infinite both}
-.cp-token{transform:translate(var(--x),-80px);animation:cp-fall var(--fall) cubic-bezier(.5,0,.9,.55) var(--delay) both}
+.cp-token{opacity:0;transform:translate(var(--x),-26px);animation:cp-fall var(--fall) cubic-bezier(.5,0,.9,.55) var(--delay) both}
 .cp-token-body{animation:cp-sink .5s ease-in calc(var(--delay) + var(--fall)) both}
 .cp-impact{transform:translate(var(--x),var(--y))}
 .cp-ripple{opacity:0;transform-origin:0 0;transform-box:view-box;animation:cp-ripple .95s ease-out var(--hit) forwards}
@@ -916,7 +916,7 @@ img,svg,canvas{-webkit-user-drag:none;user-drag:none}
   82%{opacity:.4}
   100%{opacity:0;transform:translate(calc(var(--sway) * -.6 + var(--drift)),-14px) scale(1.55,1.25)}
 }
-@keyframes cp-fall{from{transform:translate(var(--x),-80px) rotate(var(--rot))}to{transform:translate(var(--x),var(--land)) rotate(0deg)}}
+@keyframes cp-fall{from{opacity:0;transform:translate(var(--x),-26px) rotate(var(--rot))}20%{opacity:1}to{opacity:1;transform:translate(var(--x),var(--land)) rotate(0deg)}}
 @keyframes cp-sink{0%{opacity:1;transform:translateY(0) scale(1)}25%{opacity:1;transform:translateY(7px) scale(1.05,.9)}100%{opacity:0;transform:translateY(34px) scale(.55)}}
 @keyframes cp-ripple{from{opacity:.95;transform:scale(.35)}to{opacity:0;transform:scale(3.4,2.4)}}
 @keyframes cp-splash{0%{opacity:1;transform:translate(0,0)}45%{opacity:1;transform:translate(var(--dx),var(--dy))}100%{opacity:0;transform:translate(calc(var(--dx) * 1.5),6px)}}
