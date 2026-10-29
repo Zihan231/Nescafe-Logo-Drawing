@@ -25,7 +25,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getProfessionDoodles } from "@/lib/profession-doodles";
 import { composeFrame } from "@/lib/frame";
-import { PHOTO_SHAPES, DEFAULT_PHOTO_SHAPE, photoShape, shapedPhoto } from "@/lib/photo-shapes";
+import { PHOTO_SHAPES, DEFAULT_PHOTO_SHAPE, shapedPhoto } from "@/lib/photo-shapes";
 
 const W = 760;
 const H = 560;
@@ -226,19 +226,6 @@ const applyPoint = (m, pt) => ({
   x: m.cx + m.a * (pt.x - m.cx) + m.b * (pt.y - m.cy),
   y: m.cy + m.c * (pt.x - m.cx) + m.d * (pt.y - m.cy)
 });
-
-// Small outline of a photo shape for the menu ("No shape" is a dashed square).
-function PhotoShapeThumb({ shape }) {
-  return (
-    <svg className="photo-shape-thumb" viewBox="0 0 100 100" aria-hidden="true">
-      {shape.path ? (
-        <path d={shape.path} />
-      ) : (
-        <rect x="6" y="6" width="88" height="88" rx="6" fill="none" stroke="currentColor" strokeWidth="7" strokeDasharray="14 10" />
-      )}
-    </svg>
-  );
-}
 
 function DrawingCanvas({ canvasRef, color, tool, brush, size, shape, shapeFill, getCopies, onHistory, abortRef }) {
   const drawing = useRef(false);
@@ -715,10 +702,7 @@ export default function EditPage() {
   const trayStartRef = useRef({ x: 0, y: 0 });
   const trayTouchRef = useRef(null);
   const [sessionSelfie, setSessionSelfie] = useState(null);
-  const [photoShapeId, setPhotoShapeId] = useState(DEFAULT_PHOTO_SHAPE);
-  const [shapeMenuOpen, setShapeMenuOpen] = useState(false);
-  const rawPhotoRef = useRef(null); // the plain square photo from the capture page
-  const selfieDoodle = sessionSelfie ? { label: "Your photo", src: sessionSelfie, aspect: 1, alpha: true, photo: true } : null;
+  const [photoTiles, setPhotoTiles] = useState([]); // the captured photo cut into every shape, shown in YOUR PHOTO
   const professionDoodles = getProfessionDoodles(profession);
   const [collapsed, setCollapsed] = useState({ tools: false, doodles: false, ink: false, logo: false });
   // Everything in the side cards and colour plates scales with the window so the design never re-flows.
@@ -1008,18 +992,6 @@ export default function EditPage() {
     setSelectedStickerId(id);
   };
 
-  // Re-cuts the captured photo to another shape: the card tile and every photo already on the leaf follow.
-  const choosePhotoShape = (id) => {
-    setPhotoShapeId(id);
-    setShapeMenuOpen(false);
-    if (!rawPhotoRef.current) return;
-    const shaped = shapedPhoto(rawPhotoRef.current, id);
-    setSessionSelfie(shaped);
-    const next = stickersRef.current.map((item) => (item.photo ? { ...item, src: shaped } : item));
-    stickersRef.current = next;
-    setPlacedStickers(next);
-  };
-
   const remeasureAfterFont = (id, font) => {
     if (!document.fonts?.load) return;
     document.fonts.load(fontSpec(font, 48)).then(() => {
@@ -1058,8 +1030,9 @@ export default function EditPage() {
       if (!savedPhotoSource) return resolve(null);
       const image = new Image();
       image.onload = () => {
-        rawPhotoRef.current = image;
-        resolve(shapedPhoto(image, DEFAULT_PHOTO_SHAPE));
+        const tiles = PHOTO_SHAPES.map((shape) => ({ id: shape.id, label: shape.label, src: shapedPhoto(image, shape.id) }));
+        if (alive) setPhotoTiles(tiles);
+        resolve(tiles.find((tile) => tile.id === DEFAULT_PHOTO_SHAPE).src);
       };
       image.onerror = () => resolve(null);
       image.src = savedPhotoSource;
@@ -1511,6 +1484,7 @@ export default function EditPage() {
       sessionStorage.removeItem("nescafe_user_photo");
       sessionStorage.removeItem("nescafe_user_profession");
       setSessionSelfie(null);
+      setPhotoTiles([]);
       resetEditor();
       setProfession("");
       if (cardBlob) {
@@ -1875,53 +1849,29 @@ export default function EditPage() {
             </button>
           ))}
         </div>
-        {selfieDoodle && (
+        {photoTiles.length > 0 && (
           <div className="personal-photo-section">
             <span className="doodle-card-title">YOUR PHOTO</span>
-            <div className="photo-shape-picker">
-              <button
-                type="button"
-                className={`photo-shape-btn${shapeMenuOpen ? " is-open" : ""}`}
-                onClick={() => setShapeMenuOpen((open) => !open)}
-                aria-haspopup="listbox"
-                aria-expanded={shapeMenuOpen}
-              >
-                <PhotoShapeThumb shape={photoShape(photoShapeId)} />
-                <span>SHAPE: {photoShape(photoShapeId).label.toUpperCase()}</span>
-                <CaretDown size={13} weight="bold" className={shapeMenuOpen ? "is-open" : ""} aria-hidden="true" />
-              </button>
-              {shapeMenuOpen && (
-                <div className="photo-shape-menu" role="listbox" aria-label="Photo shape">
-                  {PHOTO_SHAPES.map((item) => (
-                    <button
-                      key={item.id}
-                      type="button"
-                      role="option"
-                      aria-selected={item.id === photoShapeId}
-                      className={`photo-shape-item${item.id === photoShapeId ? " is-selected" : ""}`}
-                      onClick={() => choosePhotoShape(item.id)}
-                    >
-                      <PhotoShapeThumb shape={item} />
-                      <span>{item.label}</span>
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
             <div className="doodle-grid">
-              <button
-                type="button"
-                className="doodle-tile"
-                onPointerDown={(event) => startTrayDrag(selfieDoodle, event)}
-                onPointerMove={moveTrayDrag}
-                onPointerUp={endTrayDrag}
-                onPointerCancel={endTrayDrag}
-              onContextMenu={(event) => event.preventDefault()}
-                title="Add your photo again"
-                aria-label="Click or drag your photo onto the leaf"
-              >
-                <img className="alpha-art" src={selfieDoodle.src} alt="Your captured photo" draggable={false} />
-              </button>
+              {photoTiles.map((tile) => {
+                const doodle = { label: `Your photo - ${tile.label}`, src: tile.src, aspect: 1, alpha: true, photo: true };
+                return (
+                  <button
+                    key={tile.id}
+                    type="button"
+                    className="doodle-tile"
+                    onPointerDown={(event) => startTrayDrag(doodle, event)}
+                    onPointerMove={moveTrayDrag}
+                    onPointerUp={endTrayDrag}
+                    onPointerCancel={endTrayDrag}
+                    onContextMenu={(event) => event.preventDefault()}
+                    title={`Your photo - ${tile.label}`}
+                    aria-label={`Click or drag your photo (${tile.label}) onto the leaf`}
+                  >
+                    <img className="alpha-art" src={tile.src} alt={`Your photo - ${tile.label}`} draggable={false} />
+                  </button>
+                );
+              })}
             </div>
           </div>
         )}

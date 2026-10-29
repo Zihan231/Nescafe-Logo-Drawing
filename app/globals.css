@@ -1068,15 +1068,7 @@ img,svg,canvas{-webkit-user-drag:none;user-drag:none}
 .shape-menu-item.is-selected .shape-thumb{color:#fff}
 @media(max-width:600px){.shape-menu{grid-template-columns:repeat(3,minmax(0,1fr))}}
 
-/* Photo shape menu in the editor's YOUR PHOTO section */
-.photo-shape-picker{display:flex;flex-direction:column;gap:8px;width:100%}
-.photo-shape-btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:8px 10px;border:1px solid rgba(255,255,255,.28);border-radius:12px;background:rgba(255,255,255,.08);color:#fff;font:800 9px 'Myriad Pro',Arial,sans-serif;letter-spacing:.14em;cursor:pointer;transition:background .15s ease,border-color .15s ease}
-.photo-shape-btn:hover,.photo-shape-btn.is-open{background:rgba(255,255,255,.18);border-color:#fff}
-.photo-shape-btn svg.is-open{transform:rotate(180deg)}
-.photo-shape-thumb{width:18px;height:18px;flex:none;fill:currentColor;color:#fff}
-.photo-shape-menu{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;max-height:190px;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;touch-action:pan-y;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.4) transparent;padding:6px;border:1px solid rgba(255,255,255,.2);border-radius:14px;background:rgba(255,255,255,.06)}
-.photo-shape-item{display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 2px 6px;border:1px solid rgba(255,255,255,.14);border-radius:10px;background:rgba(255,255,255,.06);color:#fff;font:800 7.5px 'Myriad Pro',Arial,sans-serif;letter-spacing:.04em;text-transform:uppercase;cursor:pointer;touch-action:pan-y;transition:background .15s ease,border-color .15s ease}
-.photo-shape-item .photo-shape-thumb{width:28px;height:28px}
-.photo-shape-item:hover{background:rgba(255,255,255,.18);border-color:rgba(255,255,255,.5)}
-.photo-shape-item.is-selected{background:#fff;color:#EB1C23;border-color:#fff}
-.photo-shape-item.is-selected .photo-shape-thumb{color:#EB1C23}
+/* YOUR PHOTO: the shaped photos sit straight on the card, no tile background */
+.personal-photo-section .doodle-tile{background:transparent;box-shadow:none}
+.personal-photo-section .doodle-tile:hover{background:rgba(255,255,255,.08)}
+.personal-photo-section .doodle-tile img{inset:3px;width:calc(100% - 6px);height:calc(100% - 6px);filter:drop-shadow(0 2px 4px rgba(0,0,0,.35))}
