@@ -1006,3 +1006,9 @@ img,svg,canvas{-webkit-user-drag:none;user-drag:none}
 .character-name{max-width:100%;font:800 8px 'Nescafe Sans','Myriad Pro',Arial,sans-serif;letter-spacing:0;text-transform:uppercase;line-height:1.1;text-align:center;white-space:nowrap}
 .character-picker[aria-invalid="true"]{outline:2px solid rgba(201,28,38,.5);outline-offset:4px;border-radius:14px}
 @media(max-width:600px){.character-picker{gap:5px}.character-name{font-size:7px}}
+
+/* Two-finger zoom of the drawing canvas (touch) */
+.studio{position:relative}
+.canvas-shell{touch-action:none;transform-origin:center center;will-change:transform}
+.zoom-reset-btn{position:absolute;left:50%;bottom:6px;z-index:12;transform:translateX(-50%);display:inline-flex;align-items:center;gap:6px;padding:9px 16px;border:1.5px solid rgba(255,255,255,.55);border-radius:999px;background:rgba(26,5,8,.86);color:#fff;font:800 10px 'Nescafe Sans','Myriad Pro',Arial,sans-serif;letter-spacing:.16em;cursor:pointer;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);box-shadow:0 10px 24px rgba(18,2,5,.45)}
+.zoom-reset-btn:active{transform:translateX(-50%) scale(.97)}

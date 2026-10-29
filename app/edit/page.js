@@ -9,6 +9,7 @@ import {
   CaretUp,
   CheckCircle,
   FlipHorizontal,
+  MagnifyingGlassMinus,
   PaintBucket,
   PaintBrush,
   PaperPlaneTilt,
@@ -197,8 +198,9 @@ const applyPoint = (m, pt) => ({
   y: m.cy + m.c * (pt.x - m.cx) + m.d * (pt.y - m.cy)
 });
 
-function DrawingCanvas({ canvasRef, color, tool, brush, size, shape, shapeFill, getCopies, onHistory }) {
+function DrawingCanvas({ canvasRef, color, tool, brush, size, shape, shapeFill, getCopies, onHistory, abortRef }) {
   const drawing = useRef(false);
+  const before = useRef(null); // canvas as it was when a touch stroke began, so a pinch can take it back
   const last = useRef(null);
   const origin = useRef(null);
   const path = useRef([]);
@@ -366,6 +368,17 @@ function DrawingCanvas({ canvasRef, color, tool, brush, size, shape, shapeFill, 
     ctx.restore();
   };
 
+  // Two fingers mean zoom, not draw: drop the stroke the first finger had started.
+  if (abortRef) {
+    abortRef.current = () => {
+      if (!drawing.current) return;
+      drawing.current = false;
+      base.current = null;
+      if (before.current) canvasRef.current.getContext("2d").putImageData(before.current, 0, 0);
+      before.current = null;
+    };
+  }
+
   const draw = (event) => {
     if (!drawing.current) return;
     const p = point(event);
@@ -387,6 +400,7 @@ function DrawingCanvas({ canvasRef, color, tool, brush, size, shape, shapeFill, 
       aria-label="Drawing canvas inside NESCAFÉ leaf"
       onPointerDown={(e) => {
         e.currentTarget.setPointerCapture(e.pointerId);
+        before.current = e.pointerType === "touch" ? canvasRef.current.getContext("2d").getImageData(0, 0, W, H) : null;
         drawing.current = true;
         copies.current = getCopies();
         const p = point(e);
@@ -403,6 +417,7 @@ function DrawingCanvas({ canvasRef, color, tool, brush, size, shape, shapeFill, 
         if (drawing.current) {
           drawing.current = false;
           base.current = null;
+          before.current = null;
           onHistory();
         }
       }}
@@ -622,6 +637,10 @@ export default function EditPage() {
   const router = useRouter();
   const canvasRef = useRef(null);
   const canvasShellRef = useRef(null);
+  const studioRef = useRef(null);
+  const abortStrokeRef = useRef(null);
+  const viewRef = useRef({ scale: 1, x: 0, y: 0 });
+  const [zoomed, setZoomed] = useState(false);
   const leafRef = useRef(null);
   const outlineRef = useRef(null);
   const historyRef = useRef({ stack: [], index: -1 });
@@ -667,6 +686,106 @@ export default function EditPage() {
     window.addEventListener("resize", fit);
     return () => window.removeEventListener("resize", fit);
   }, []);
+
+  // Two-finger zoom and pan of the drawing canvas for touch tablets. Pointer events are used so the
+  // first finger's stroke can be cancelled the moment the second finger lands.
+  const applyView = useCallback((animate = false) => {
+    const shell = canvasShellRef.current;
+    if (!shell) return;
+    const { scale, x, y } = viewRef.current;
+    shell.style.transition = animate ? "transform .25s ease" : "none";
+    shell.style.transform = scale === 1 && !x && !y ? "" : `translate(${x}px, ${y}px) scale(${scale})`;
+    setZoomed(scale > 1.001);
+  }, []);
+
+  const resetZoom = useCallback(() => {
+    viewRef.current = { scale: 1, x: 0, y: 0 };
+    applyView(true);
+  }, [applyView]);
+
+  useEffect(() => {
+    const area = studioRef.current;
+    if (!area) return undefined;
+    const touches = new Map();
+    let pinch = null;
+    const MAX_ZOOM = 3;
+
+    const startPinch = () => {
+      const shell = canvasShellRef.current;
+      const [a, b] = [...touches.values()];
+      const rect = shell.getBoundingClientRect();
+      const view = viewRef.current;
+      pinch = {
+        distance: Math.max(1, Math.hypot(b.x - a.x, b.y - a.y)),
+        mid: { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 },
+        view: { ...view },
+        centre: { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 },
+        baseW: rect.width / view.scale,
+        baseH: rect.height / view.scale
+      };
+    };
+
+    const onDown = (event) => {
+      if (event.pointerType !== "touch") return;
+      touches.set(event.pointerId, { x: event.clientX, y: event.clientY, sticker: Boolean(event.target.closest?.(".placed-sticker")) });
+      if (pinch) {
+        event.stopPropagation();
+        return;
+      }
+      // A pinch on a doodle still resizes that doodle; anywhere else it zooms the canvas.
+      if (touches.size === 2 && ![...touches.values()].some((touch) => touch.sticker)) {
+        abortStrokeRef.current?.();
+        startPinch();
+        event.stopPropagation();
+      }
+    };
+
+    const onMove = (event) => {
+      const touch = touches.get(event.pointerId);
+      if (!touch) return;
+      touch.x = event.clientX;
+      touch.y = event.clientY;
+      if (!pinch) return;
+      event.stopPropagation();
+      const [a, b] = [...touches.values()];
+      if (!b) return;
+      const distance = Math.hypot(b.x - a.x, b.y - a.y);
+      const mid = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
+      const scale = Math.min(MAX_ZOOM, Math.max(0.8, pinch.view.scale * (distance / pinch.distance)));
+      // Keep the spot between the fingers under the fingers while zooming and panning.
+      const qx = (pinch.mid.x - pinch.centre.x) / pinch.view.scale;
+      const qy = (pinch.mid.y - pinch.centre.y) / pinch.view.scale;
+      const limitX = ((scale - 1) * pinch.baseW) / 2 + pinch.baseW * 0.3;
+      const limitY = ((scale - 1) * pinch.baseH) / 2 + pinch.baseH * 0.3;
+      const x = Math.min(limitX, Math.max(-limitX, mid.x - qx * scale - pinch.centre.x + pinch.view.x));
+      const y = Math.min(limitY, Math.max(-limitY, mid.y - qy * scale - pinch.centre.y + pinch.view.y));
+      viewRef.current = { scale, x, y };
+      applyView();
+    };
+
+    const onUp = (event) => {
+      if (!touches.has(event.pointerId)) return;
+      touches.delete(event.pointerId);
+      if (!pinch) return;
+      event.stopPropagation();
+      if (touches.size < 2) {
+        pinch = null;
+        // Pinching in past the normal size just snaps back to it.
+        if (viewRef.current.scale <= 1.02) resetZoom();
+      }
+    };
+
+    area.addEventListener("pointerdown", onDown, true);
+    area.addEventListener("pointermove", onMove, true);
+    area.addEventListener("pointerup", onUp, true);
+    area.addEventListener("pointercancel", onUp, true);
+    return () => {
+      area.removeEventListener("pointerdown", onDown, true);
+      area.removeEventListener("pointermove", onMove, true);
+      area.removeEventListener("pointerup", onUp, true);
+      area.removeEventListener("pointercancel", onUp, true);
+    };
+  }, [applyView, resetZoom]);
 
   const toggleCard = (key) => setCollapsed((current) => ({ ...current, [key]: !current[key] }));
   const stickerGestureRef = useRef({ id: null, pointers: new Map(), lastX: 0, lastY: 0, startDistance: 0, start: { w: 112, fontSize: 30 } });
@@ -1357,11 +1476,11 @@ export default function EditPage() {
       <section className="editor-grid">
         <div className="toolbox-spacer" aria-hidden="true" />
 
-        <div className="studio">
+        <div className="studio" ref={studioRef}>
           <div ref={canvasShellRef} className="canvas-shell" onPointerDownCapture={(event) => {if(event.target.tagName === "CANVAS") setSelectedStickerId(null)}}>
             <img ref={leafRef} className="leaf-mask-source" src="/assets/nescafe-leaf.png" alt="" />
             <div className="leaf-image" style={{ backgroundColor: leafColor }} role="img" aria-label="NESCAFÉ leaf drawing canvas" />
-            <DrawingCanvas canvasRef={canvasRef} color={color} tool={tool} brush={brush} size={size} shape={shape} shapeFill={shapeFill} getCopies={getCopies} onHistory={() => commit(true)} />
+            <DrawingCanvas canvasRef={canvasRef} color={color} tool={tool} brush={brush} size={size} shape={shape} shapeFill={shapeFill} getCopies={getCopies} onHistory={() => commit(true)} abortRef={abortStrokeRef} />
             <div className="placed-stickers" style={{ "--selection-color": transformColors.outline, "--selection-ink": transformColors.ink }}>
               {placedStickers.map((sticker) => (
                 <div
@@ -1422,6 +1541,11 @@ export default function EditPage() {
             {symmetry !== "off" && <SymmetryGuides mode={symmetry} count={symmetryCount} geo={leafGeo || FALLBACK_GEO} />}
             <span className="canvas-hint">YOUR WORLD STARTS HERE</span>
           </div>
+          {zoomed && (
+            <button type="button" className="zoom-reset-btn" onClick={resetZoom} aria-label="Reset zoom">
+              <MagnifyingGlassMinus size={16} weight="bold" /> <span>RESET ZOOM</span>
+            </button>
+          )}
         </div>
 
         <div className="doodle-spacer" aria-hidden="true" />
