@@ -899,8 +899,8 @@ img,svg,canvas{-webkit-user-drag:none;user-drag:none}
 .cp-ripple{opacity:0;transform-origin:0 0;transform-box:view-box;animation:cp-ripple .95s ease-out var(--hit) forwards}
 .cp-ripple-2{animation-delay:calc(var(--hit) + .14s)}
 .cp-drop{opacity:0;animation:cp-splash .7s cubic-bezier(.2,.7,.4,1) var(--hit) forwards}
-@keyframes cp-collapse{to{height:calc(var(--cp-h) * .85)}}
-@keyframes cp-lift{to{margin-top:calc(var(--cp-h) * -.1212)}}
+@keyframes cp-collapse{to{height:calc(var(--cp-h) * .905)}}
+@keyframes cp-lift{to{margin-top:calc(var(--cp-h) * -.04)}}
 @keyframes cp-mug-in{from{opacity:0;transform:translateY(26px) scale(.94)}to{opacity:1;transform:none}}
 @keyframes cp-fade{from{opacity:0}to{opacity:1}}
 @keyframes cp-stream-in{from{transform:scaleY(0)}to{transform:scaleY(1)}}
@@ -921,8 +921,8 @@ img,svg,canvas{-webkit-user-drag:none;user-drag:none}
 @keyframes cp-ripple{from{opacity:.95;transform:scale(.35)}to{opacity:0;transform:scale(3.4,2.4)}}
 @keyframes cp-splash{0%{opacity:1;transform:translate(0,0)}45%{opacity:1;transform:translate(var(--dx),var(--dy))}100%{opacity:0;transform:translate(calc(var(--dx) * 1.5),6px)}}
 @media(prefers-reduced-motion:reduce){
-  .cp-wrap{animation:none;height:calc(var(--cp-h) * .85)}
-  .cp-scene{animation:none;margin-top:calc(var(--cp-h) * -.1212)}
+  .cp-wrap{animation:none;height:calc(var(--cp-h) * .905)}
+  .cp-scene{animation:none;margin-top:calc(var(--cp-h) * -.04)}
   .cp-wrap *{animation:none !important}
   .cp-token,.cp-impact,.cp-stream-wrap{display:none}
   .cp-steam path{opacity:.3}

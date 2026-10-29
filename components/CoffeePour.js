@@ -26,11 +26,14 @@ const levelAt = (t) => {
 
 // Smoke wisps start at the rim, each with its own width, speed, sway and drift so they never move together.
 const SMOKE = [
-  { d: "M118 112 C106 99 132 90 120 76 C110 63 128 53 121 39", width: 20, dur: 6.2, delay: 0, sway: 8, drift: -6 },
-  { d: "M146 112 C158 101 135 91 148 77 C158 66 140 55 150 39", width: 26, dur: 7.4, delay: 1.7, sway: -9, drift: 8 },
-  { d: "M174 112 C162 101 186 91 173 77 C165 66 181 55 175 41", width: 19, dur: 5.8, delay: 3.1, sway: 7, drift: 10 },
-  { d: "M132 112 C124 102 142 94 134 81 C128 71 140 62 135 49", width: 14, dur: 5.2, delay: 0.9, sway: -6, drift: -10 },
-  { d: "M160 112 C168 102 152 94 161 81 C167 71 155 62 160 49", width: 15, dur: 6.6, delay: 2.4, sway: 6, drift: 5 }
+  { d: "M118 112 C104 92 134 76 119 54 C107 34 130 20 121 2", width: 24, dur: 6.4, delay: 0, sway: 12, drift: -10 },
+  { d: "M146 112 C160 94 134 78 149 56 C160 38 138 22 151 2", width: 30, dur: 7.6, delay: 1.7, sway: -13, drift: 12 },
+  { d: "M174 112 C160 94 188 78 173 56 C164 38 183 22 176 4", width: 22, dur: 6, delay: 3.1, sway: 11, drift: 14 },
+  { d: "M132 112 C122 96 144 84 134 64 C127 48 141 32 135 14", width: 17, dur: 5.4, delay: 0.9, sway: -10, drift: -14 },
+  { d: "M160 112 C170 96 150 84 161 64 C168 48 154 32 160 14", width: 18, dur: 6.8, delay: 2.4, sway: 10, drift: 8 },
+  { d: "M104 112 C96 98 114 86 106 68 C100 54 112 40 107 24", width: 15, dur: 7.2, delay: 4, sway: -9, drift: -16 },
+  { d: "M188 112 C196 98 180 86 189 68 C195 54 183 40 188 24", width: 16, dur: 6.2, delay: 1.2, sway: 9, drift: 16 },
+  { d: "M140 112 C130 94 152 80 141 58 C133 40 148 26 142 6", width: 20, dur: 8.2, delay: 4.8, sway: 12, drift: 4 }
 ];
 
 const SPLASH = [
