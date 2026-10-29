@@ -1084,3 +1084,8 @@ img,svg,canvas{-webkit-user-drag:none;user-drag:none}
 .layer-btn:hover:not(:disabled){transform:scale(1.14)}
 .layer-btn:active:not(:disabled){transform:scale(.95)}
 .layer-btn:disabled{opacity:.35;cursor:default}
+
+/* The delete (X) button sits in the middle, right over the stem; rotate on its left, mirror on its right */
+.rotate-handle{left:calc(50% - 36px)}
+.delete-handle{left:50%}
+.flip-handle{left:calc(50% + 36px)}
