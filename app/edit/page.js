@@ -1695,7 +1695,7 @@ export default function EditPage() {
               {placedStickers.filter((sticker) => sticker.id === selectedStickerId).map((sticker) => (
                 <div
                   key={sticker.id}
-                  className="sticker-controls"
+                  className={`sticker-controls${sticker.kind === "text" ? " is-text" : ""}`}
                   onPointerDown={(event) => startPlacedDrag(sticker.id, event)}
                   onPointerMove={movePlacedDrag}
                   onPointerUp={endPlacedDrag}
@@ -1704,7 +1704,7 @@ export default function EditPage() {
                 >
                               {['nw','ne','sw','se'].map((corner) => <button key={corner} className={`transform-handle resize-handle ${corner}`} onPointerDown={(event)=>startResizeHandle(sticker,event)} onPointerMove={moveTransformHandle} onPointerUp={endTransformHandle} onPointerCancel={endTransformHandle} aria-label="Resize" />)}
                               <span className="rotate-stem" />
-                              <span className="rotate-bridge" style={sticker.kind === "text" ? { width: 36, left: "calc(50% - 18px)" } : { width: 72, left: "50%" }} />
+                              <span className="rotate-bridge" style={{ width: sticker.kind === "text" ? 36 : 72, left: "50%" }} />
                               <button
                                 type="button"
                                 className="transform-handle rotate-handle"

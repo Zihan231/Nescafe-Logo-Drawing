@@ -1119,3 +1119,7 @@ img,svg,canvas{-webkit-user-drag:none;user-drag:none}
 .editor .toolbox.text-editing .tool-panel.keep-open .tool-tabs{display:grid}
 /* Keep the tools card clear of the ink colour card below it: it scrolls inside instead of running underneath */
 @media(min-width:601px){.editor .toolbox{max-height:calc((100svh - 118px - 292px * var(--ui-zoom)) / var(--ui-zoom))}}
+
+/* Text has only two buttons: rotate and delete sit evenly either side of the stem */
+.sticker-controls.is-text .rotate-handle{left:calc(50% - 18px)}
+.sticker-controls.is-text .delete-handle{left:calc(50% + 18px)}
