@@ -3,6 +3,8 @@
 import { AnimatePresence, motion } from "framer-motion";
 import {
   ArrowCounterClockwise,
+  ArrowDown,
+  ArrowUp,
   ArrowLeft,
   ArrowClockwise,
   CaretDown,
@@ -927,6 +929,20 @@ export default function EditPage() {
     setSelectedStickerId(null);
   };
 
+  // Layers: the order of the list is the stacking order, so moving an item one place changes what covers what.
+  const moveLayer = (id, direction, event) => {
+    event?.preventDefault();
+    event?.stopPropagation();
+    setPlacedStickers((items) => {
+      const from = items.findIndex((item) => item.id === id);
+      const to = from + direction;
+      if (from < 0 || to < 0 || to >= items.length) return items;
+      const next = [...items];
+      [next[from], next[to]] = [next[to], next[from]];
+      return next;
+    });
+  };
+
   // Mirrors a doodle or photo left-to-right.
   const flipSticker = (id, event) => {
     event?.preventDefault();
@@ -1635,6 +1651,36 @@ export default function EditPage() {
                           <FlipHorizontal weight="bold" />
                         </button>
                       )}
+                      <div className="layer-buttons">
+                        <button
+                          type="button"
+                          className="layer-btn"
+                          onPointerDown={(event) => {
+                            event.preventDefault();
+                            event.stopPropagation();
+                          }}
+                          onClick={(event) => moveLayer(sticker.id, -1, event)}
+                          disabled={placedStickers.findIndex((item) => item.id === sticker.id) <= 0}
+                          aria-label="Send backward"
+                          title="Send backward"
+                        >
+                          <ArrowDown weight="bold" />
+                        </button>
+                        <button
+                          type="button"
+                          className="layer-btn"
+                          onPointerDown={(event) => {
+                            event.preventDefault();
+                            event.stopPropagation();
+                          }}
+                          onClick={(event) => moveLayer(sticker.id, 1, event)}
+                          disabled={placedStickers.findIndex((item) => item.id === sticker.id) >= placedStickers.length - 1}
+                          aria-label="Bring forward"
+                          title="Bring forward"
+                        >
+                          <ArrowUp weight="bold" />
+                        </button>
+                      </div>
                                     </div>
               ))}
             </div>
