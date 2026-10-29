@@ -911,9 +911,9 @@ img,svg,canvas{-webkit-user-drag:none;user-drag:none}
 @keyframes cp-wave{from{transform:translateX(0)}to{transform:translateX(-60px)}}
 @keyframes cp-smoke{
   0%{opacity:0;transform:translate(0,8px) scale(.5,.3)}
-  14%{opacity:.9}
-  48%{opacity:.62;transform:translate(var(--sway),-6px) scale(.95,.8)}
-  82%{opacity:.22}
+  14%{opacity:1}
+  48%{opacity:.85;transform:translate(var(--sway),-6px) scale(.95,.8)}
+  82%{opacity:.4}
   100%{opacity:0;transform:translate(calc(var(--sway) * -.6 + var(--drift)),-14px) scale(1.55,1.25)}
 }
 @keyframes cp-fall{from{transform:translate(var(--x),-80px) rotate(var(--rot))}to{transform:translate(var(--x),var(--land)) rotate(0deg)}}

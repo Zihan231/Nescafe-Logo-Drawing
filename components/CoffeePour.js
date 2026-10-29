@@ -26,11 +26,11 @@ const levelAt = (t) => {
 
 // Smoke wisps start at the rim, each with its own width, speed, sway and drift so they never move together.
 const SMOKE = [
-  { d: "M118 112 C106 99 132 90 120 76 C110 63 128 53 121 39", width: 12, dur: 6.2, delay: 0, sway: 8, drift: -6 },
-  { d: "M146 112 C158 101 135 91 148 77 C158 66 140 55 150 39", width: 15, dur: 7.4, delay: 1.7, sway: -9, drift: 8 },
-  { d: "M174 112 C162 101 186 91 173 77 C165 66 181 55 175 41", width: 11, dur: 5.8, delay: 3.1, sway: 7, drift: 10 },
-  { d: "M132 112 C124 102 142 94 134 81 C128 71 140 62 135 49", width: 8, dur: 5.2, delay: 0.9, sway: -6, drift: -10 },
-  { d: "M160 112 C168 102 152 94 161 81 C167 71 155 62 160 49", width: 9, dur: 6.6, delay: 2.4, sway: 6, drift: 5 }
+  { d: "M118 112 C106 99 132 90 120 76 C110 63 128 53 121 39", width: 20, dur: 6.2, delay: 0, sway: 8, drift: -6 },
+  { d: "M146 112 C158 101 135 91 148 77 C158 66 140 55 150 39", width: 26, dur: 7.4, delay: 1.7, sway: -9, drift: 8 },
+  { d: "M174 112 C162 101 186 91 173 77 C165 66 181 55 175 41", width: 19, dur: 5.8, delay: 3.1, sway: 7, drift: 10 },
+  { d: "M132 112 C124 102 142 94 134 81 C128 71 140 62 135 49", width: 14, dur: 5.2, delay: 0.9, sway: -6, drift: -10 },
+  { d: "M160 112 C168 102 152 94 161 81 C167 71 155 62 160 49", width: 15, dur: 6.6, delay: 2.4, sway: 6, drift: 5 }
 ];
 
 const SPLASH = [
@@ -98,18 +98,18 @@ export default function CoffeePour({ code, playSound = false }) {
             <feGaussianBlur stdDeviation="1.6" />
           </filter>
           <linearGradient id="cp-smoke-fade" x1="0" x2="0" y1="1" y2="0">
-            <stop offset="0" stopColor="#9c8678" stopOpacity="0" />
-            <stop offset=".14" stopColor="#9c8678" stopOpacity=".5" />
-            <stop offset=".6" stopColor="#b4a193" stopOpacity=".3" />
-            <stop offset="1" stopColor="#c9bbb0" stopOpacity="0" />
+            <stop offset="0" stopColor="#8a7366" stopOpacity=".15" />
+            <stop offset=".18" stopColor="#8a7366" stopOpacity=".9" />
+            <stop offset=".62" stopColor="#a08c80" stopOpacity=".6" />
+            <stop offset="1" stopColor="#b9a99d" stopOpacity="0" />
           </linearGradient>
           {/* the churning noise bends the wisps into soft, uneven curls instead of neat curves */}
           <filter id="cp-smoke" filterUnits="userSpaceOnUse" x="40" y="-30" width="220" height="160">
             <feTurbulence type="fractalNoise" baseFrequency="0.014 0.035" numOctaves="2" seed="7" result="noise">
               <animate attributeName="baseFrequency" dur="9s" values="0.014 0.035;0.021 0.028;0.014 0.035" repeatCount="indefinite" />
             </feTurbulence>
-            <feDisplacementMap in="SourceGraphic" in2="noise" scale="18" xChannelSelector="R" yChannelSelector="G" result="bent" />
-            <feGaussianBlur in="bent" stdDeviation="2.4" />
+            <feDisplacementMap in="SourceGraphic" in2="noise" scale="20" xChannelSelector="R" yChannelSelector="G" result="bent" />
+            <feGaussianBlur in="bent" stdDeviation="2" />
           </filter>
         </defs>
 
