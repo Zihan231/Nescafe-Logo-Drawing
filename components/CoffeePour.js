@@ -24,6 +24,15 @@ const levelAt = (t) => {
   return GLASS_BOTTOM - (GLASS_BOTTOM - SURFACE) * (1 - Math.pow(1 - p, 3));
 };
 
+// Smoke wisps start at the rim, each with its own width, speed, sway and drift so they never move together.
+const SMOKE = [
+  { d: "M118 112 C106 99 132 90 120 76 C110 63 128 53 121 39", width: 12, dur: 6.2, delay: 0, sway: 8, drift: -6 },
+  { d: "M146 112 C158 101 135 91 148 77 C158 66 140 55 150 39", width: 15, dur: 7.4, delay: 1.7, sway: -9, drift: 8 },
+  { d: "M174 112 C162 101 186 91 173 77 C165 66 181 55 175 41", width: 11, dur: 5.8, delay: 3.1, sway: 7, drift: 10 },
+  { d: "M132 112 C124 102 142 94 134 81 C128 71 140 62 135 49", width: 8, dur: 5.2, delay: 0.9, sway: -6, drift: -10 },
+  { d: "M160 112 C168 102 152 94 161 81 C167 71 155 62 160 49", width: 9, dur: 6.6, delay: 2.4, sway: 6, drift: 5 }
+];
+
 const SPLASH = [
   [-16, -26], [-9, -34], [-2, -38], [6, -33], [13, -27], [19, -20]
 ];
@@ -88,6 +97,20 @@ export default function CoffeePour({ code, playSound = false }) {
           <filter id="cp-blur" x="-30%" y="-30%" width="160%" height="160%">
             <feGaussianBlur stdDeviation="1.6" />
           </filter>
+          <linearGradient id="cp-smoke-fade" x1="0" x2="0" y1="1" y2="0">
+            <stop offset="0" stopColor="#9c8678" stopOpacity="0" />
+            <stop offset=".14" stopColor="#9c8678" stopOpacity=".5" />
+            <stop offset=".6" stopColor="#b4a193" stopOpacity=".3" />
+            <stop offset="1" stopColor="#c9bbb0" stopOpacity="0" />
+          </linearGradient>
+          {/* the churning noise bends the wisps into soft, uneven curls instead of neat curves */}
+          <filter id="cp-smoke" filterUnits="userSpaceOnUse" x="40" y="-30" width="220" height="160">
+            <feTurbulence type="fractalNoise" baseFrequency="0.014 0.035" numOctaves="2" seed="7" result="noise">
+              <animate attributeName="baseFrequency" dur="9s" values="0.014 0.035;0.021 0.028;0.014 0.035" repeatCount="indefinite" />
+            </feTurbulence>
+            <feDisplacementMap in="SourceGraphic" in2="noise" scale="18" xChannelSelector="R" yChannelSelector="G" result="bent" />
+            <feGaussianBlur in="bent" stdDeviation="2.4" />
+          </filter>
         </defs>
 
         {/* soft shadow under the mug */}
@@ -147,11 +170,16 @@ export default function CoffeePour({ code, playSound = false }) {
           </svg>
         </g>
 
-        {/* steam, after the pour */}
-        <g className="cp-steam" filter="url(#cp-blur)" style={{ "--steam-delay": `${POUR_END}s` }}>
-          <path className="cp-steam-1" d="M122 102 C115 94 129 88 122 78" fill="none" stroke="#fff" strokeWidth="6" strokeLinecap="round" />
-          <path className="cp-steam-2" d="M150 99 C143 91 157 85 150 74" fill="none" stroke="#fff" strokeWidth="6" strokeLinecap="round" />
-          <path className="cp-steam-3" d="M178 102 C171 94 185 88 178 78" fill="none" stroke="#fff" strokeWidth="6" strokeLinecap="round" />
+        {/* smoke rising off the hot coffee: several soft wisps drifting at different speeds */}
+        <g className="cp-steam" filter="url(#cp-smoke)">
+          {SMOKE.map((wisp, i) => (
+            <path
+              key={i}
+              d={wisp.d}
+              strokeWidth={wisp.width}
+              style={{ "--dur": `${wisp.dur}s`, "--delay": `${POUR_END - 1.2 + wisp.delay}s`, "--sway": `${wisp.sway}px`, "--drift": `${wisp.drift}px` }}
+            />
+          ))}
         </g>
 
         {/* code digits dropping in with the pour */}
