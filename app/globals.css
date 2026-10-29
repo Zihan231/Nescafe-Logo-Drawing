@@ -1070,3 +1070,9 @@ img,svg,canvas{-webkit-user-drag:none;user-drag:none}
 .camera-shape-wrap.has-photo{filter:none}
 
 .camera-video:not(.active){background:#0c0204}
+
+/* Mirror button next to the rotate and delete buttons */
+.flip-handle{position:absolute;z-index:6;left:calc(50% + 54px);top:-38px;width:28px;height:28px;transform:translate(-50%,-50%);display:grid;place-items:center;color:var(--selection-ink);background:var(--selection-color);border:2px solid var(--selection-ink);border-radius:50%;box-shadow:0 0 0 1px rgba(0,0,0,.38),0 2px 6px rgba(0,0,0,.55);cursor:pointer;touch-action:auto;transition:transform .15s ease}
+.flip-handle svg{font-size:15px;pointer-events:none}
+.flip-handle:hover{transform:translate(-50%,-50%) scale(1.14)}
+.flip-handle:active{transform:translate(-50%,-50%) scale(.95)}

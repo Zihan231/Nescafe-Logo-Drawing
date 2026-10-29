@@ -927,6 +927,13 @@ export default function EditPage() {
     setSelectedStickerId(null);
   };
 
+  // Mirrors a doodle or photo left-to-right.
+  const flipSticker = (id, event) => {
+    event?.preventDefault();
+    event?.stopPropagation();
+    setPlacedStickers((items) => items.map((item) => (item.id === id ? { ...item, flipX: !item.flipX } : item)));
+  };
+
   const requestDeleteSticker = (id, event) => {
     if (event) {
       event.preventDefault();
@@ -1401,6 +1408,7 @@ export default function EditPage() {
         outputCtx.textBaseline = "middle";
         outputCtx.fillText(item.text, 0, 0);
       } else {
+        if (item.flipX) outputCtx.scale(-1, 1);
         outputCtx.drawImage(stickerImages[index], -item.w / 2, -item.h / 2, item.w, item.h);
       }
       outputCtx.restore();
@@ -1567,7 +1575,7 @@ export default function EditPage() {
                       {sticker.text}
                     </span>
                   ) : (
-                    <img className={sticker.alpha ? "alpha-art" : undefined} src={sticker.src} alt={sticker.label} />
+                    <img className={sticker.alpha ? "alpha-art" : undefined} src={sticker.src} alt={sticker.label} style={sticker.flipX ? { transform: "scaleX(-1)" } : undefined} />
                   )}
                 </div>
               ))}
@@ -1586,7 +1594,7 @@ export default function EditPage() {
                 >
                               {['nw','ne','sw','se'].map((corner) => <button key={corner} className={`transform-handle resize-handle ${corner}`} onPointerDown={(event)=>startResizeHandle(sticker,event)} onPointerMove={moveTransformHandle} onPointerUp={endTransformHandle} onPointerCancel={endTransformHandle} aria-label="Resize" />)}
                               <span className="rotate-stem" />
-                              <span className="rotate-bridge" />
+                              <span className="rotate-bridge" style={sticker.kind !== "text" ? { width: 74, left: "calc(50% + 18px)" } : undefined} />
                               <button
                                 type="button"
                                 className="transform-handle rotate-handle"
@@ -1612,6 +1620,21 @@ export default function EditPage() {
                               >
                                 <X weight="bold" />
                               </button>
+                      {sticker.kind !== "text" && (
+                        <button
+                          type="button"
+                          className="transform-handle flip-handle"
+                          onPointerDown={(event) => {
+                            event.preventDefault();
+                            event.stopPropagation();
+                          }}
+                          onClick={(event) => flipSticker(sticker.id, event)}
+                          aria-label="Mirror doodle"
+                          title="Mirror doodle"
+                        >
+                          <FlipHorizontal weight="bold" />
+                        </button>
+                      )}
                                     </div>
               ))}
             </div>
