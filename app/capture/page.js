@@ -7,6 +7,7 @@ import {
   ArrowLeft,
   Camera,
   ArrowClockwise,
+  Check,
   WarningCircle,
   Sparkle
 } from "@phosphor-icons/react";
