@@ -29,6 +29,34 @@ import { composeFrame } from "@/lib/frame";
 const W = 760;
 const H = 560;
 const LEAF_SIZE = 560;
+// Everything is drawn in W x H units, but the canvas holds RENDER_SCALE times as many pixels so the
+// saved design stays sharp when it is shown big or zoomed in.
+const RENDER_SCALE = 3;
+
+// 2d context whose units are the logical W x H ones.
+function context2d(canvas) {
+  const ctx = canvas.getContext("2d");
+  ctx.setTransform(RENDER_SCALE, 0, 0, RENDER_SCALE, 0, 0);
+  return ctx;
+}
+
+// A cheap copy of the canvas (GPU to GPU) used instead of pixel read-back for previews and undoing a stroke.
+function snapshotCanvas(canvas) {
+  const copy = document.createElement("canvas");
+  copy.width = canvas.width;
+  copy.height = canvas.height;
+  copy.getContext("2d").drawImage(canvas, 0, 0);
+  return copy;
+}
+
+function restoreSnapshot(canvas, snapshot) {
+  const ctx = canvas.getContext("2d");
+  ctx.save();
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.drawImage(snapshot, 0, 0);
+  ctx.restore();
+}
 const LEAF_X = (W - LEAF_SIZE) / 2;
 const INK_COLORS = ["#ed1c2e", "#ffca28", "#52d19b", "#72b7ff", "#ffffff", "#140508"];
 const LEAF_COLORS = ["#ffffff", "#f5ebdf", "#ebd5bf", "#fce2db", "#e2ece9", "#dae8f5", "#EB1C23", "#5b1317", "#241215", "#1e3a5f"];
@@ -219,7 +247,7 @@ function DrawingCanvas({ canvasRef, color, tool, brush, size, shape, shapeFill, 
   const usesWholePath = tool === "pen" && Boolean(WHOLE_PATH_BRUSHES[activeBrush]);
 
   const drawWholePath = (ctx, settings) => {
-    ctx.putImageData(base.current, 0, 0);
+    restoreSnapshot(canvasRef.current, base.current);
     ctx.save();
     ctx.globalAlpha = settings.alpha;
     ctx.lineCap = settings.cap;
@@ -321,7 +349,7 @@ function DrawingCanvas({ canvasRef, color, tool, brush, size, shape, shapeFill, 
   };
 
   const drawSegment = (from, to) => {
-    const ctx = canvasRef.current.getContext("2d");
+    const ctx = context2d(canvasRef.current);
     if (usesWholePath) {
       drawWholePath(ctx, WHOLE_PATH_BRUSHES[activeBrush]);
       return;
@@ -331,8 +359,8 @@ function DrawingCanvas({ canvasRef, color, tool, brush, size, shape, shapeFill, 
 
   // Shapes are previewed live: restore the canvas, then draw the shape (and its mirrors).
   const drawShape = () => {
-    const ctx = canvasRef.current.getContext("2d");
-    ctx.putImageData(base.current, 0, 0);
+    const ctx = context2d(canvasRef.current);
+    restoreSnapshot(canvasRef.current, base.current);
     const a = origin.current;
     const b = last.current;
     let points;
@@ -374,7 +402,7 @@ function DrawingCanvas({ canvasRef, color, tool, brush, size, shape, shapeFill, 
       if (!drawing.current) return;
       drawing.current = false;
       base.current = null;
-      if (before.current) canvasRef.current.getContext("2d").putImageData(before.current, 0, 0);
+      if (before.current) restoreSnapshot(canvasRef.current, before.current);
       before.current = null;
     };
   }
@@ -395,12 +423,12 @@ function DrawingCanvas({ canvasRef, color, tool, brush, size, shape, shapeFill, 
   return (
     <canvas
       ref={canvasRef}
-      width={W}
-      height={H}
+      width={W * RENDER_SCALE}
+      height={H * RENDER_SCALE}
       aria-label="Drawing canvas inside NESCAFÉ leaf"
       onPointerDown={(e) => {
         e.currentTarget.setPointerCapture(e.pointerId);
-        before.current = e.pointerType === "touch" ? canvasRef.current.getContext("2d").getImageData(0, 0, W, H) : null;
+        before.current = e.pointerType === "touch" ? snapshotCanvas(canvasRef.current) : null;
         drawing.current = true;
         copies.current = getCopies();
         const p = point(e);
@@ -408,7 +436,7 @@ function DrawingCanvas({ canvasRef, color, tool, brush, size, shape, shapeFill, 
         origin.current = p;
         path.current = [p];
         const needsBase = tool === "shape" || usesWholePath;
-        base.current = needsBase ? canvasRef.current.getContext("2d").getImageData(0, 0, W, H) : null;
+        base.current = needsBase ? snapshotCanvas(canvasRef.current) : null;
         if (tool === "shape") drawShape();
         else drawSegment(p, p); // a single tap leaves a mark
       }}
@@ -847,9 +875,9 @@ export default function EditPage() {
     const img = new Image();
     img.onload = () => {
       if (token !== restoreTokenRef.current || !canvasRef.current) return;
-      const ctx = canvasRef.current.getContext("2d");
+      const ctx = context2d(canvasRef.current);
       ctx.clearRect(0, 0, W, H);
-      ctx.drawImage(img, 0, 0);
+      ctx.drawImage(img, 0, 0, W, H);
     };
     img.src = entry.canvas;
     stickersRef.current = entry.stickers;
@@ -880,7 +908,7 @@ export default function EditPage() {
   const canRedo = historyRef.current.index < historyRef.current.stack.length - 1;
 
   const clear = () => {
-    canvasRef.current.getContext("2d").clearRect(0, 0, W, H);
+    context2d(canvasRef.current).clearRect(0, 0, W, H);
     stickersRef.current = [];
     setPlacedStickers([]);
     setSelectedStickerId(null);
@@ -1315,23 +1343,24 @@ export default function EditPage() {
   const createSavedDesign = async () => {
     const mask = leafRef.current;
     const strokes = document.createElement("canvas");
-    strokes.width = W;
-    strokes.height = H;
-    const strokesCtx = strokes.getContext("2d");
-    strokesCtx.drawImage(canvasRef.current, 0, 0);
+    strokes.width = W * RENDER_SCALE;
+    strokes.height = H * RENDER_SCALE;
+    const strokesCtx = context2d(strokes);
+    strokesCtx.drawImage(canvasRef.current, 0, 0, W, H);
     strokesCtx.globalCompositeOperation = "destination-in";
     strokesCtx.drawImage(mask, LEAF_X, 0, LEAF_SIZE, LEAF_SIZE);
 
     const output = document.createElement("canvas");
-    output.width = W;
-    output.height = H;
-    const outputCtx = output.getContext("2d");
+    output.width = W * RENDER_SCALE;
+    output.height = H * RENDER_SCALE;
+    const outputCtx = context2d(output);
+    outputCtx.imageSmoothingQuality = "high";
     outputCtx.fillStyle = leafColor;
     outputCtx.fillRect(0, 0, W, H);
     outputCtx.globalCompositeOperation = "destination-in";
     outputCtx.drawImage(mask, LEAF_X, 0, LEAF_SIZE, LEAF_SIZE);
     outputCtx.globalCompositeOperation = "source-over";
-    outputCtx.drawImage(strokes, 0, 0);
+    outputCtx.drawImage(strokes, 0, 0, W, H);
     const stickerImages = await Promise.all(placedStickers.map((item) => (
       item.kind === "text" ? document.fonts.load(fontSpec(item.font, item.fontSize), item.text) : loadStickerImage(item.src, item.alpha)
     )));
@@ -1358,8 +1387,7 @@ export default function EditPage() {
 
   const resetEditor = () => {
     if (canvasRef.current) {
-      const ctx = canvasRef.current.getContext("2d");
-      ctx.clearRect(0, 0, W, H);
+      context2d(canvasRef.current).clearRect(0, 0, W, H);
     }
     setPlacedStickers([]);
     setSelectedStickerId(null);

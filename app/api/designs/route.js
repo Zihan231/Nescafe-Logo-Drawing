@@ -13,7 +13,7 @@ const globalForLimits = globalThis;
 const uploadLimits = globalForLimits.__nescafeUploadLimits || new Map();
 globalForLimits.__nescafeUploadLimits = uploadLimits;
 const uploadDirectory = () => process.env.UPLOAD_DIRECTORY || path.join(process.cwd(), "uploads");
-const maxUploadBytes = () => Number(process.env.MAX_UPLOAD_BYTES || 2 * 1024 * 1024);
+const maxUploadBytes = () => Number(process.env.MAX_UPLOAD_BYTES || 10 * 1024 * 1024);
 
 function clientIp(request) {
   return request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || request.headers.get("x-real-ip") || "local";
@@ -86,7 +86,7 @@ export async function POST(request) {
     const frame = formData.get("frame");
     let frameBuffer = null;
     if (frame instanceof File) {
-      if (frame.size <= 0 || frame.size > 4 * maxUploadBytes()) return NextResponse.json({ error: "Card image exceeds the upload limit" }, { status: 413 });
+      if (frame.size <= 0 || frame.size > maxUploadBytes()) return NextResponse.json({ error: "Card image exceeds the upload limit" }, { status: 413 });
       frameBuffer = Buffer.from(await frame.arrayBuffer());
       const frameSize = readPngDimensions(frameBuffer);
       if (!frameSize || frameSize.width > 4096 || frameSize.height > 4096) return NextResponse.json({ error: "Invalid card image" }, { status: 400 });
