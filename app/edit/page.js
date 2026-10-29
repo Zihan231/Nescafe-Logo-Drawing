@@ -707,7 +707,7 @@ export default function EditPage() {
   const [historyTick, setHistoryTick] = useState(0);
   const [color, setColor] = useState(INK_COLORS[0]);
   const [leafColor, setLeafColor] = useState("#ffffff");
-  const [tool, setTool] = useState("pen");
+  const [tool, setTool] = useState("none"); // nothing is drawing until the pen (or another tool) is picked
   const [brush, setBrush] = useState("pen");
   const toolMountedRef = useRef(false);
   const [toolTab, setToolTab] = useState("brushes");
@@ -1513,7 +1513,7 @@ export default function EditPage() {
     setSelectedStickerId(null);
     setLeafColor("#ffffff");
     setColor(INK_COLORS[0]);
-    setTool("pen");
+    setTool("none");
     setSize(4);
     clearTimeout(commitTimerRef.current);
     commitTimerRef.current = null;
