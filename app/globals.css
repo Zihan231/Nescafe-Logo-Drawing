@@ -1031,29 +1031,21 @@ img,svg,canvas{-webkit-user-drag:none;user-drag:none}
 .keepsake-side .modal-btn-confirm:disabled{opacity:.45;cursor:default;box-shadow:none}
 @media(prefers-reduced-motion:reduce){.keepsake-spinner{animation-duration:2.4s}}
 
-/* Skeleton placeholders while the card and QR code are being made */
-.sk{display:block;position:relative;overflow:hidden;background:rgba(255,255,255,.1)}
-.sk:after{content:"";position:absolute;inset:0;transform:translateX(-100%);background:linear-gradient(90deg,transparent,rgba(255,255,255,.28),transparent);animation:sk-shimmer 1.5s ease-in-out infinite}
-@keyframes sk-shimmer{to{transform:translateX(100%)}}
-.keepsake-card-skeleton{position:relative;width:100%;aspect-ratio:5/4;border-radius:22px;border:4px solid rgba(235,28,35,.55);background:#1c0609;box-shadow:0 18px 40px rgba(60,5,10,.38);overflow:hidden}
-.keepsake-card-skeleton .sk{position:absolute;border-radius:10px}
-.sk-name{left:7%;top:9%;width:42%;height:7.5%}
-.sk-role{left:7%;top:20%;width:22%;height:3.6%}
-.keepsake-card-skeleton .sk-leaf{left:9%;top:29%;width:62%;height:56%;border-radius:8% 70% 8% 80% / 8% 85% 8% 90%;background:rgba(255,255,255,.13)}
-.sk-word{right:6.5%;top:12%;width:11%;height:76%;border-radius:12px}
-.keepsake-card-skeleton .sk-dot{width:5%;aspect-ratio:1;border-radius:50%}
-.sk-dot-1{left:30%;top:10%;background:rgba(235,28,35,.35)}
-.sk-dot-2{left:78%;top:16%;background:rgba(255,255,255,.18)}
-.sk-dot-3{left:66%;top:84%;background:rgba(245,183,41,.3)}
-.sk-foot{left:7%;bottom:6%;width:24%;height:3.4%;border-radius:8px}
-.keepsake-qr-skeleton{display:flex;flex-direction:column;align-items:center;gap:10px;width:100%;margin:6px 0 16px}
-.keepsake-qr-skeleton .sk{background:rgba(235,28,35,.1);border-radius:14px}
-.keepsake-qr-skeleton .sk:after{background:linear-gradient(90deg,transparent,rgba(255,255,255,.85),transparent)}
-.sk-qr{width:min(100%,230px);aspect-ratio:1;border-radius:22px!important}
-.sk-line{height:11px;border-radius:6px!important}
-.sk-line-1{width:46%}
-.sk-line-2{width:68%}
-@media(prefers-reduced-motion:reduce){.sk:after{animation-duration:3.2s}}
+/* Skeleton placeholders while the card and QR code are being made. The card skeleton mirrors the real card
+   (1200 x 960 layout, expressed in percentages) so nothing jumps when the real one arrives. */
+.sk{display:block;background:linear-gradient(100deg,rgba(255,255,255,.1) 30%,rgba(255,255,255,.3) 50%,rgba(255,255,255,.1) 70%);background-size:250% 100%;animation:sk-shimmer 1.6s linear infinite}
+@keyframes sk-shimmer{from{background-position:130% 0}to{background-position:-130% 0}}
+.keepsake-card-skeleton{container-type:inline-size;position:relative;width:100%;aspect-ratio:5/4;box-sizing:border-box;border-radius:5.3cqw;border:.83cqw solid #EB1C23;background:radial-gradient(circle at 40% 50%,#2b0a0e,#0f0304 75%);box-shadow:0 18px 40px rgba(60,5,10,.38);overflow:hidden}
+.keepsake-card-skeleton .sk,.keepsake-card-skeleton .sk-leaf-outline{position:absolute}
+.sk-name{left:7%;top:9%;width:31.7%;height:5.8%;border-radius:1.2cqw}
+.sk-role{left:7.17%;top:17%;width:19.2%;height:2.9%;border-radius:.9cqw}
+.sk-leaf-outline{left:12.68%;top:21.46%;width:59.6%;height:66.98%;background:rgba(235,28,35,.55);-webkit-mask:url(/assets/leaf-shape.png) center/100% 100% no-repeat;mask:url(/assets/leaf-shape.png) center/100% 100% no-repeat}
+.sk-leaf{left:13.43%;top:22.4%;width:58.13%;height:65.1%;background-color:#3c2b2e;-webkit-mask:url(/assets/leaf-shape.png) center/100% 100% no-repeat;mask:url(/assets/leaf-shape.png) center/100% 100% no-repeat}
+.sk-word{left:60.83%;top:40%;width:56.67%;height:20%;transform:rotate(90deg);-webkit-mask:url(/assets/nescafe-wordmark.webp) center/100% 100% no-repeat;mask:url(/assets/nescafe-wordmark.webp) center/100% 100% no-repeat}
+.sk-shape{-webkit-mask-size:100% 100%;mask-size:100% 100%;-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat}
+.sk-foot-text{position:absolute;left:7.17%;bottom:3.6%;font:400 2.17cqw 'Myriad Pro',Arial,sans-serif;letter-spacing:.5cqw;color:rgba(255,255,255,.55)}
+.sk-qr-block{display:block;width:100%;height:100%;border-radius:12px;background-color:rgba(235,28,35,.12);background-image:linear-gradient(100deg,transparent 30%,rgba(255,255,255,.85) 50%,transparent 70%);background-size:250% 100%;animation:sk-shimmer 1.6s linear infinite}
+@media(prefers-reduced-motion:reduce){.sk,.sk-qr-block{animation-duration:3.4s}}
 
 /* Shape menu under the camera: a scrollable grid of shapes */
 .capture-camera-block{position:relative}

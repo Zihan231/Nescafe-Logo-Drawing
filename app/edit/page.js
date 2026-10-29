@@ -24,7 +24,7 @@ import { LuEraser } from "react-icons/lu";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getProfessionDoodles } from "@/lib/profession-doodles";
-import { composeFrame } from "@/lib/frame";
+import { composeFrame, CONFETTI, FRAME_W, FRAME_H } from "@/lib/frame";
 import { PHOTO_SHAPES, DEFAULT_PHOTO_SHAPE, shapedPhoto } from "@/lib/photo-shapes";
 
 const W = 760;
@@ -2167,35 +2167,42 @@ export default function EditPage() {
                     <img className="keepsake-card" src={keepsake.cardUrl} alt="Your NESCAFÉ card" draggable={false} />
                   ) : (
                     <div className="keepsake-card-skeleton" role="status" aria-label="Preparing your card">
+                      {/* same layout as the finished card: the logo shapes are drawn in skeleton grey,
+                          and the name, profession and your design are the parts being waited for */}
+                      {CONFETTI.map(([key, x, y, width], index) => (
+                        <span
+                          key={index}
+                          className="sk sk-shape"
+                          style={{
+                            left: `${(((x - width / 2) / FRAME_W) * 100).toFixed(2)}%`,
+                            top: `${(((y - width * 0.445) / FRAME_H) * 100).toFixed(2)}%`,
+                            width: `${((width / FRAME_W) * 100).toFixed(2)}%`,
+                            aspectRatio: "90 / 80",
+                            WebkitMaskImage: `url(/assets/leaves/leaf-${key}.webp)`,
+                            maskImage: `url(/assets/leaves/leaf-${key}.webp)`
+                          }}
+                        />
+                      ))}
                       <span className="sk sk-name" />
                       <span className="sk sk-role" />
+                      <span className="sk-leaf-outline" />
                       <span className="sk sk-leaf" />
                       <span className="sk sk-word" />
-                      <span className="sk sk-dot sk-dot-1" />
-                      <span className="sk sk-dot sk-dot-2" />
-                      <span className="sk sk-dot sk-dot-3" />
-                      <span className="sk sk-foot" />
+                      <span className="sk-foot-text">MAKE YOUR WORLD</span>
                     </div>
                   )}
                   <div className="keepsake-side">
                     <h3 className="modal-title-pacifico">{keepsake.qr ? "Flown to the World!" : "Sending to the world…"}</h3>
                     <p className="modal-subtitle">{keepsake.qr ? "Your design is now orbiting the Earth. Take your card home with you." : "Hang on a moment while your design takes off and your card is made."}</p>
-                    {!keepsake.qr && (
-                      <div className="keepsake-qr-skeleton" role="status" aria-label="Preparing your QR code">
-                        <span className="sk sk-qr" />
-                        <span className="sk sk-line sk-line-1" />
-                        <span className="sk sk-line sk-line-2" />
-                      </div>
-                    )}
-                    {keepsake.qr && (
-                      <>
-                        <div className="keepsake-qr">
-                          <img src={keepsake.qr} alt="QR code to download your card" draggable={false} />
-                        </div>
-                        <p className="keepsake-scan">SCAN TO DOWNLOAD</p>
-                        <p className="keepsake-note">Point your phone camera at the code to save your card.</p>
-                      </>
-                    )}
+                    <div className="keepsake-qr">
+                      {keepsake.qr ? (
+                        <img src={keepsake.qr} alt="QR code to download your card" draggable={false} />
+                      ) : (
+                        <span className="sk sk-qr-block" role="status" aria-label="Preparing your QR code" />
+                      )}
+                    </div>
+                    <p className="keepsake-scan">SCAN TO DOWNLOAD</p>
+                    <p className="keepsake-note">Point your phone camera at the code to save your card.</p>
                     <button type="button" className="modal-btn-confirm" onClick={handleDismissSuccess} disabled={!keepsake.qr}>
                       <span>DONE</span>
                       <CheckCircle weight="bold" size={17} />
