@@ -56,7 +56,7 @@ function resizedItem(item, ratio, start) {
     const fontSize = Math.max(12, Math.min(200, start.fontSize * ratio));
     return { ...item, fontSize, ...measureText(item.text, item.font, fontSize) };
   }
-  const w = Math.max(20, Math.min(230, start.w * ratio));
+  const w = Math.max(20, start.w * ratio); // no upper limit
   return { ...item, w, h: w * (item.aspect || STICKER_ASPECT) };
 }
 
