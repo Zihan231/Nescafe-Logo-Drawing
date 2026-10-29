@@ -889,8 +889,9 @@ img,svg,canvas{-webkit-user-drag:none;user-drag:none}
 .cp-stream-pinch{transform-box:view-box;transform-origin:150px 0;animation:cp-stream-out .5s ease-in var(--pour-end) forwards}
 .cp-stream-wobble{transform-box:view-box;transform-origin:150px 0;animation:cp-wobble .24s ease-in-out .9s infinite alternate}
 .cp-liquid{animation:cp-fill var(--fill-time) cubic-bezier(.215,.61,.355,1) var(--fill-delay) both}
-.cp-wave-slide{animation:cp-wave 2.4s linear infinite}
-.cp-wave-slide.cp-wave-back{animation-duration:3.1s;animation-direction:reverse}
+.cp-pour-ring{opacity:0;transform-box:fill-box;transform-origin:center;animation:cp-pour-ring .62s ease-out var(--fill-delay) 4 both}
+.cp-pour-ring-2{animation-delay:calc(var(--fill-delay) + .31s)}
+.cp-surface-sheen{animation:cp-sheen 5s ease-in-out calc(var(--pour-end) + .6s) infinite alternate}
 .cp-foam{animation:cp-fade .9s ease-out var(--pour-end) both}
 .cp-steam path{fill:none;stroke:url(#cp-smoke-fade);stroke-linecap:round;opacity:0;transform-box:fill-box;transform-origin:50% 100%;animation:cp-smoke var(--dur) cubic-bezier(.3,.2,.5,1) var(--delay) infinite both}
 .cp-token{opacity:0;transform:translate(var(--x),-26px);animation:cp-fall var(--fall) cubic-bezier(.5,0,.9,.55) var(--delay) both}
@@ -908,7 +909,8 @@ img,svg,canvas{-webkit-user-drag:none;user-drag:none}
 @keyframes cp-stream-out{0%{transform:scaleX(1) translateY(0);opacity:1}45%{transform:scaleX(.35) translateY(0);opacity:1}100%{transform:scaleX(.2) translateY(300px);opacity:0}}
 @keyframes cp-wobble{from{transform:scaleX(.9)}to{transform:scaleX(1.08)}}
 @keyframes cp-fill{from{transform:translateY(134px)}to{transform:translateY(0)}}
-@keyframes cp-wave{from{transform:translateX(0)}to{transform:translateX(-60px)}}
+@keyframes cp-pour-ring{0%{opacity:.8;transform:scale(.35)}100%{opacity:0;transform:scale(4.2,3)}}
+@keyframes cp-sheen{from{transform:translateX(-5px);opacity:.12}to{transform:translateX(6px);opacity:.2}}
 @keyframes cp-smoke{
   0%{opacity:0;transform:translate(0,8px) scale(.5,.3)}
   14%{opacity:1}

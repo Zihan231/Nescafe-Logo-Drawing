@@ -83,7 +83,6 @@ export default function CoffeePour({ code, playSound = false }) {
   }, [playSound]);
 
   const digits = String(code).split("").slice(0, 4);
-  const wave = "M20 0 q15 -6 30 0 t30 0 t30 0 t30 0 t30 0 t30 0 t30 0 t30 0 t30 0 t30 0 V200 H20 Z";
 
   return (
     <div className="cp-wrap" aria-hidden="true" style={{ "--pour-end": `${POUR_END}s`, "--reveal": `${REVEAL_AT}s`, "--fill-delay": `${FILL_DELAY}s`, "--fill-time": `${FILL_TIME}s` }}>
@@ -103,6 +102,11 @@ export default function CoffeePour({ code, playSound = false }) {
             <stop offset=".16" stopColor="#5e3219" />
             <stop offset="1" stopColor="#2a1309" />
           </linearGradient>
+          <radialGradient id="cp-surface" cx=".5" cy=".42" r=".62">
+            <stop offset="0" stopColor="#d49a63" />
+            <stop offset=".65" stopColor="#a8693a" />
+            <stop offset="1" stopColor="#7c4a26" />
+          </radialGradient>
           <linearGradient id="cp-crema" x1="0" x2="0" y1="0" y2="1">
             <stop offset="0" stopColor="#d9a06a" />
             <stop offset="1" stopColor="#a8693a" />
@@ -150,18 +154,17 @@ export default function CoffeePour({ code, playSound = false }) {
           <path d="M224 142 C264 138 272 178 264 208 C257 234 238 242 219 240" fill="none" stroke="rgba(110,145,162,.55)" strokeWidth="13" strokeLinecap="round" />
           <path d="M224 142 C262 139 269 178 262 207 C255 232 238 239 220 237" fill="none" stroke="rgba(255,255,255,.55)" strokeWidth="2.2" strokeLinecap="round" />
 
-          {/* coffee, clipped to the inside of the glass */}
+          {/* coffee, clipped to the inside of the glass. The surface is a flat ellipse seen slightly from above (no waves);
+              only small rings spread from where the stream lands, and they stop when the pour does. */}
           <g clipPath="url(#cp-inside)">
             <g className="cp-liquid">
-              <g transform="translate(0 134)">
-                <g className="cp-wave-slide cp-wave-back">
-                  <path d={wave} fill="url(#cp-crema)" opacity=".9" />
-                </g>
-              </g>
-              <g transform="translate(0 138)">
-                <g className="cp-wave-slide cp-wave-front">
-                  <path d={wave} fill="url(#cp-coffee)" />
-                </g>
+              <rect x="60" y="138" width="170" height="200" fill="url(#cp-coffee)" />
+              <ellipse cx="144" cy="138" rx="80" ry="7" fill="url(#cp-surface)" />
+              <ellipse cx="144" cy="138" rx="79" ry="6.4" fill="none" stroke="#4a2410" strokeOpacity=".4" strokeWidth="1" />
+              <ellipse className="cp-surface-sheen" cx="132" cy="136.6" rx="38" ry="2.4" fill="#fff" opacity=".16" />
+              <g className="cp-pour-rings" transform="translate(150 138.5)">
+                <ellipse className="cp-pour-ring" rx="10" ry="1.8" fill="none" stroke="#f1d4aa" strokeWidth="1.4" />
+                <ellipse className="cp-pour-ring cp-pour-ring-2" rx="10" ry="1.8" fill="none" stroke="#f1d4aa" strokeWidth="1.1" />
               </g>
             </g>
           </g>
@@ -180,7 +183,6 @@ export default function CoffeePour({ code, playSound = false }) {
 
           {/* crema on the finished coffee: a thin film plus small, soft bubbles */}
           <g className="cp-foam" clipPath="url(#cp-inside)">
-            <path d="M76 139 Q144 134 212 139 L212 143 Q144 148 76 143 Z" fill="#c98d57" opacity=".35" />
             {BUBBLES.map(([x, y, r, o], i) => (
               <g key={i} opacity={o}>
                 <circle cx={x} cy={y} r={r} fill="url(#cp-bubble)" />
