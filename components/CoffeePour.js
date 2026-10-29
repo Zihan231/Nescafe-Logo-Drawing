@@ -46,10 +46,29 @@ const SUGAR_GRAINS = [
   [-2, -17, .8, 1], [8, -16, .7, 0], [17, -13, .7, 1], [19, -4, .7, 0], [18, 4, .8, 1], [17, 12, .6, 0], [-6, -15.5, .6, 0], [14, -17, .6, 0]
 ];
 
-const BUBBLES = [
-  [84, 140, 4], [96, 137, 3], [108, 141, 5], [121, 136, 3], [133, 140, 4], [146, 137, 5], [158, 141, 3],
-  [170, 137, 4], [182, 140, 3], [194, 137, 5], [204, 141, 3], [90, 144, 2.5], [115, 145, 2.5], [176, 145, 2.5], [200, 145, 2]
-];
+// Crema bubbles: like real coffee they cling to the glass and thin out towards the middle, are mostly tiny,
+// and only a few are bigger. Seeded, so the server and the browser draw the same ones.
+const BUBBLES = (() => {
+  let seed = 11;
+  const rand = () => {
+    seed = (seed * 16807) % 2147483647;
+    return seed / 2147483647;
+  };
+  const bubbles = [];
+  for (let i = 0; i < 130; i++) {
+    const fromWall = Math.pow(rand(), 2.4) * 64;
+    const left = rand() < 0.5;
+    const x = left ? 79 + fromWall : 209 - fromWall;
+    const near = 1 - fromWall / 64; // 1 at the wall, 0 in the middle
+    const y = 138 + (rand() - 0.5) * 5 - near * 2;
+    const r = 0.55 + rand() * (0.8 + near * 1.5);
+    bubbles.push([x, y, r, 0.5 + rand() * 0.4]);
+  }
+  for (let i = 0; i < 9; i++) {
+    bubbles.push([92 + rand() * 104, 137.5 + (rand() - 0.5) * 4, 1.9 + rand() * 1.1, 0.75]);
+  }
+  return bubbles.sort((a, b) => a[2] - b[2]);
+})();
 
 export default function CoffeePour({ code, playSound = false }) {
   // Sound effects follow the same timeline as the animation (see lib/coffee-sounds.js).
@@ -100,6 +119,11 @@ export default function CoffeePour({ code, playSound = false }) {
           <filter id="cp-blur" x="-30%" y="-30%" width="160%" height="160%">
             <feGaussianBlur stdDeviation="1.6" />
           </filter>
+          <radialGradient id="cp-bubble" cx=".4" cy=".35" r=".75">
+            <stop offset="0" stopColor="#f8e8cc" />
+            <stop offset=".55" stopColor="#e2b985" />
+            <stop offset="1" stopColor="#b98350" />
+          </radialGradient>
           <linearGradient id="cp-smoke-fade" x1="0" x2="0" y1="1" y2="0">
             <stop offset="0" stopColor="#f6f0e8" stopOpacity=".2" />
             <stop offset=".18" stopColor="#f6f0e8" stopOpacity="1" />
@@ -154,10 +178,14 @@ export default function CoffeePour({ code, playSound = false }) {
             </g>
           </g>
 
-          {/* foam bubbles on the finished coffee */}
+          {/* crema on the finished coffee: a thin film plus small, soft bubbles */}
           <g className="cp-foam" clipPath="url(#cp-inside)">
-            {BUBBLES.map(([x, y, r], i) => (
-              <circle key={i} cx={x} cy={y} r={r} fill="#e6b883" stroke="#fff" strokeOpacity=".35" strokeWidth=".8" />
+            <path d="M76 139 Q144 134 212 139 L212 143 Q144 148 76 143 Z" fill="#c98d57" opacity=".35" />
+            {BUBBLES.map(([x, y, r, o], i) => (
+              <g key={i} opacity={o}>
+                <circle cx={x} cy={y} r={r} fill="url(#cp-bubble)" />
+                {r > 1.4 && <circle cx={x - r * 0.3} cy={y - r * 0.35} r={r * 0.25} fill="#fff" opacity=".75" />}
+              </g>
             ))}
           </g>
 

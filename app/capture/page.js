@@ -7,26 +7,12 @@ import {
   ArrowLeft,
   Camera,
   ArrowClockwise,
-  CaretDown,
   Check,
   WarningCircle,
   Sparkle
 } from "@phosphor-icons/react";
 import { CHARACTERS } from "@/lib/professions";
-import { PHOTO_SHAPES, DEFAULT_PHOTO_SHAPE, photoShape, shapedPhoto } from "@/lib/photo-shapes";
-
-// Small outline of a shape for the menu ("No shape" is a dashed square).
-function ShapeThumb({ shape }) {
-  return (
-    <svg className="shape-thumb" viewBox="0 0 100 100" aria-hidden="true">
-      {shape.path ? (
-        <path d={shape.path} />
-      ) : (
-        <rect x="6" y="6" width="88" height="88" rx="6" fill="none" stroke="currentColor" strokeWidth="7" strokeDasharray="14 10" />
-      )}
-    </svg>
-  );
-}
+import { DEFAULT_PHOTO_SHAPE, photoShape, shapedPhoto } from "@/lib/photo-shapes";
 
 export default function CapturePage() {
   const router = useRouter();
@@ -39,13 +25,12 @@ export default function CapturePage() {
   const [capturedPhoto, setCapturedPhoto] = useState(null);
   const [processing, setProcessing] = useState(false);
   const [flash, setFlash] = useState(false);
-  const [shapeId, setShapeId] = useState(DEFAULT_PHOTO_SHAPE);
-  const [shapeMenuOpen, setShapeMenuOpen] = useState(false);
-  const shape = photoShape(shapeId);
+  // The photo is previewed in a circle here; the shape can be changed afterwards in the editor ("Your photo").
+  const shape = photoShape(DEFAULT_PHOTO_SHAPE);
 
   const videoRef = useRef(null);
   const streamRef = useRef(null);
-  const rawShotRef = useRef(null); // the uncut square photo, so the shape can be changed after the snap
+  const rawShotRef = useRef(null); // the plain square photo; the editor cuts it to whatever shape is chosen
 
   // Stop camera tracks helper
   const stopCamera = useCallback(() => {
@@ -148,16 +133,8 @@ export default function CapturePage() {
     ctx.drawImage(video, (vWidth - size) / 2, (vHeight - size) / 2, size, size, 0, 0, 512, 512);
 
     rawShotRef.current = raw;
-    setCapturedPhoto(shapedPhoto(raw, shapeId));
-    setShapeMenuOpen(false);
+    setCapturedPhoto(shapedPhoto(raw, DEFAULT_PHOTO_SHAPE));
     stopCamera();
-  };
-
-  // Picking another shape re-cuts the photo that was already taken.
-  const chooseShape = (id) => {
-    setShapeId(id);
-    setShapeMenuOpen(false);
-    if (rawShotRef.current) setCapturedPhoto(shapedPhoto(rawShotRef.current, id));
   };
 
   // Retake photo
@@ -175,15 +152,17 @@ export default function CapturePage() {
     setProcessing(true);
 
     try {
-      let photoUrl = capturedPhoto;
+      // The editor gets the plain square photo so it can offer every shape.
+      const squarePhoto = rawShotRef.current ? rawShotRef.current.toDataURL("image/png") : capturedPhoto;
+      let photoUrl = squarePhoto;
 
       // Upload file to server endpoint if a photo was captured
-      if (capturedPhoto) {
+      if (squarePhoto) {
         try {
           const res = await fetch("/api/selfie", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ image: capturedPhoto })
+            body: JSON.stringify({ image: squarePhoto })
           });
           if (res.ok) {
             const data = await res.json();
@@ -282,14 +261,12 @@ export default function CapturePage() {
 
           {/* Step 2: Camera & Selfie Framing */}
           <div className="capture-camera-block">
-            {/* clip paths shared by the live preview: one per shape */}
+            {/* clip path for the circular preview */}
             <svg width="0" height="0" style={{ position: "absolute" }} aria-hidden="true" focusable="false">
               <defs>
-                {PHOTO_SHAPES.filter((item) => item.path).map((item) => (
-                  <clipPath key={item.id} id={`photo-clip-${item.id}`} clipPathUnits="objectBoundingBox">
-                    <path d={item.path} transform="scale(0.01)" />
-                  </clipPath>
-                ))}
+                <clipPath id={`photo-clip-${shape.id}`} clipPathUnits="objectBoundingBox">
+                  <path d={shape.path} transform="scale(0.01)" />
+                </clipPath>
               </defs>
             </svg>
 
@@ -339,38 +316,6 @@ export default function CapturePage() {
                   </div>
                 )}
               </div>
-            </div>
-
-            {/* Shape menu */}
-            <div className="shape-picker">
-              <button
-                type="button"
-                className={`shape-picker-btn${shapeMenuOpen ? " is-open" : ""}`}
-                onClick={() => setShapeMenuOpen((open) => !open)}
-                aria-haspopup="listbox"
-                aria-expanded={shapeMenuOpen}
-              >
-                <ShapeThumb shape={shape} />
-                <span>SHAPE: {shape.label.toUpperCase()}</span>
-                <CaretDown size={14} weight="bold" className={shapeMenuOpen ? "is-open" : ""} aria-hidden="true" />
-              </button>
-              {shapeMenuOpen && (
-                <div className="shape-menu" role="listbox" aria-label="Photo shape">
-                  {PHOTO_SHAPES.map((item) => (
-                    <button
-                      key={item.id}
-                      type="button"
-                      role="option"
-                      aria-selected={item.id === shapeId}
-                      className={`shape-menu-item${item.id === shapeId ? " is-selected" : ""}`}
-                      onClick={() => chooseShape(item.id)}
-                    >
-                      <ShapeThumb shape={item} />
-                      <span>{item.label}</span>
-                    </button>
-                  ))}
-                </div>
-              )}
             </div>
 
             {/* Camera Actions */}

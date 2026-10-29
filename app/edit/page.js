@@ -25,6 +25,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getProfessionDoodles } from "@/lib/profession-doodles";
 import { composeFrame } from "@/lib/frame";
+import { PHOTO_SHAPES, DEFAULT_PHOTO_SHAPE, photoShape, shapedPhoto } from "@/lib/photo-shapes";
 
 const W = 760;
 const H = 560;
@@ -225,6 +226,19 @@ const applyPoint = (m, pt) => ({
   x: m.cx + m.a * (pt.x - m.cx) + m.b * (pt.y - m.cy),
   y: m.cy + m.c * (pt.x - m.cx) + m.d * (pt.y - m.cy)
 });
+
+// Small outline of a photo shape for the menu ("No shape" is a dashed square).
+function PhotoShapeThumb({ shape }) {
+  return (
+    <svg className="photo-shape-thumb" viewBox="0 0 100 100" aria-hidden="true">
+      {shape.path ? (
+        <path d={shape.path} />
+      ) : (
+        <rect x="6" y="6" width="88" height="88" rx="6" fill="none" stroke="currentColor" strokeWidth="7" strokeDasharray="14 10" />
+      )}
+    </svg>
+  );
+}
 
 function DrawingCanvas({ canvasRef, color, tool, brush, size, shape, shapeFill, getCopies, onHistory, abortRef }) {
   const drawing = useRef(false);
@@ -701,7 +715,10 @@ export default function EditPage() {
   const trayStartRef = useRef({ x: 0, y: 0 });
   const trayTouchRef = useRef(null);
   const [sessionSelfie, setSessionSelfie] = useState(null);
-  const selfieDoodle = sessionSelfie ? { label: "Your photo", src: sessionSelfie, aspect: 1, alpha: true } : null;
+  const [photoShapeId, setPhotoShapeId] = useState(DEFAULT_PHOTO_SHAPE);
+  const [shapeMenuOpen, setShapeMenuOpen] = useState(false);
+  const rawPhotoRef = useRef(null); // the plain square photo from the capture page
+  const selfieDoodle = sessionSelfie ? { label: "Your photo", src: sessionSelfie, aspect: 1, alpha: true, photo: true } : null;
   const professionDoodles = getProfessionDoodles(profession);
   const [collapsed, setCollapsed] = useState({ tools: false, doodles: false, ink: false, logo: false });
   // Everything in the side cards and colour plates scales with the window so the design never re-flows.
@@ -985,10 +1002,22 @@ export default function EditPage() {
   const addSticker = (sticker, x, y) => {
     const id = crypto.randomUUID();
     setPlacedStickers((items) => [...items, {
-      id, src: sticker.src, label: sticker.label, aspect: sticker.aspect || STICKER_ASPECT, alpha: Boolean(sticker.alpha),
+      id, src: sticker.src, label: sticker.label, aspect: sticker.aspect || STICKER_ASPECT, alpha: Boolean(sticker.alpha), photo: Boolean(sticker.photo),
       x, y, w: 112, h: 112 * (sticker.aspect || STICKER_ASPECT), rotation: 0
     }]);
     setSelectedStickerId(id);
+  };
+
+  // Re-cuts the captured photo to another shape: the card tile and every photo already on the leaf follow.
+  const choosePhotoShape = (id) => {
+    setPhotoShapeId(id);
+    setShapeMenuOpen(false);
+    if (!rawPhotoRef.current) return;
+    const shaped = shapedPhoto(rawPhotoRef.current, id);
+    setSessionSelfie(shaped);
+    const next = stickersRef.current.map((item) => (item.photo ? { ...item, src: shaped } : item));
+    stickersRef.current = next;
+    setPlacedStickers(next);
   };
 
   const remeasureAfterFont = (id, font) => {
@@ -1017,14 +1046,29 @@ export default function EditPage() {
   }, [router]);
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
-    const savedPhoto = sessionStorage.getItem("nescafe_user_photo");
-    setSessionSelfie(savedPhoto);
+    if (typeof window === "undefined") return undefined;
+    let alive = true;
+    const savedPhotoSource = sessionStorage.getItem("nescafe_user_photo");
     const savedName = sessionStorage.getItem("nescafe_user_name");
     const savedProfession = sessionStorage.getItem("nescafe_user_profession");
     if (savedProfession) setProfession(savedProfession);
 
-    const initializeProfile = () => {
+    // Loads the plain captured photo and cuts it to the current shape (a circle to begin with).
+    const loadPhoto = () => new Promise((resolve) => {
+      if (!savedPhotoSource) return resolve(null);
+      const image = new Image();
+      image.onload = () => {
+        rawPhotoRef.current = image;
+        resolve(shapedPhoto(image, DEFAULT_PHOTO_SHAPE));
+      };
+      image.onerror = () => resolve(null);
+      image.src = savedPhotoSource;
+    });
+
+    const initializeProfile = async () => {
+      const savedPhoto = await loadPhoto();
+      if (!alive) return;
+      setSessionSelfie(savedPhoto);
       // Photo and name are placed as one group centred on the leaf: photo a little above the middle, name below it.
       const photoSpot = leafCenterSpot(savedPhoto && savedName?.trim() ? -26 : 0);
       const nameSpot = leafCenterSpot(savedPhoto ? 62 : 0);
@@ -1036,6 +1080,7 @@ export default function EditPage() {
           label: "My Selfie",
           aspect: 1,
           alpha: true,
+          photo: true,
           x: photoSpot.x,
           y: photoSpot.y,
           w: 110,
@@ -1073,7 +1118,10 @@ export default function EditPage() {
     const mask = leafRef.current;
     if (mask?.complete && mask.naturalWidth) initializeProfile();
     else mask?.addEventListener("load", initializeProfile, { once: true });
-    return () => mask?.removeEventListener("load", initializeProfile);
+    return () => {
+      alive = false;
+      mask?.removeEventListener("load", initializeProfile);
+    };
   }, []);
 
   // The leaf is slanted, so its middle is not the middle of the canvas: find it from the mask.
@@ -1830,6 +1878,36 @@ export default function EditPage() {
         {selfieDoodle && (
           <div className="personal-photo-section">
             <span className="doodle-card-title">YOUR PHOTO</span>
+            <div className="photo-shape-picker">
+              <button
+                type="button"
+                className={`photo-shape-btn${shapeMenuOpen ? " is-open" : ""}`}
+                onClick={() => setShapeMenuOpen((open) => !open)}
+                aria-haspopup="listbox"
+                aria-expanded={shapeMenuOpen}
+              >
+                <PhotoShapeThumb shape={photoShape(photoShapeId)} />
+                <span>SHAPE: {photoShape(photoShapeId).label.toUpperCase()}</span>
+                <CaretDown size={13} weight="bold" className={shapeMenuOpen ? "is-open" : ""} aria-hidden="true" />
+              </button>
+              {shapeMenuOpen && (
+                <div className="photo-shape-menu" role="listbox" aria-label="Photo shape">
+                  {PHOTO_SHAPES.map((item) => (
+                    <button
+                      key={item.id}
+                      type="button"
+                      role="option"
+                      aria-selected={item.id === photoShapeId}
+                      className={`photo-shape-item${item.id === photoShapeId ? " is-selected" : ""}`}
+                      onClick={() => choosePhotoShape(item.id)}
+                    >
+                      <PhotoShapeThumb shape={item} />
+                      <span>{item.label}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
             <div className="doodle-grid">
               <button
                 type="button"
