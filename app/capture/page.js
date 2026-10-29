@@ -7,20 +7,16 @@ import {
   ArrowLeft,
   Camera,
   ArrowClockwise,
-  CaretDown,
-  Check,
   WarningCircle,
   Sparkle
 } from "@phosphor-icons/react";
-import { PROFESSIONS } from "@/lib/professions";
+import { CHARACTERS } from "@/lib/professions";
 
 export default function CapturePage() {
   const router = useRouter();
   const [gate, setGate] = useState("checking"); // "checking" | "locked" | "open"
   const [userName, setUserName] = useState("");
   const [profession, setProfession] = useState("");
-  const [professionOpen, setProfessionOpen] = useState(false);
-  const [professionActiveIndex, setProfessionActiveIndex] = useState(0);
   const [submitAttempted, setSubmitAttempted] = useState(false);
   const [cameraActive, setCameraActive] = useState(false);
   const [cameraError, setCameraError] = useState(null);
@@ -30,8 +26,6 @@ export default function CapturePage() {
 
   const videoRef = useRef(null);
   const streamRef = useRef(null);
-  const professionControlRef = useRef(null);
-  const professionOptionRefs = useRef([]);
 
   // Stop camera tracks helper
   const stopCamera = useCallback(() => {
@@ -110,54 +104,6 @@ export default function CapturePage() {
       stopCamera();
     };
   }, [gate, startCamera, stopCamera]);
-
-  useEffect(() => {
-    if (!professionOpen) return;
-    professionOptionRefs.current[professionActiveIndex]?.scrollIntoView({ block: "nearest" });
-  }, [professionOpen, professionActiveIndex]);
-
-  useEffect(() => {
-    if (!professionOpen) return;
-    const closeOnOutsideClick = (event) => {
-      if (!professionControlRef.current?.contains(event.target)) setProfessionOpen(false);
-    };
-    document.addEventListener("pointerdown", closeOnOutsideClick);
-    return () => document.removeEventListener("pointerdown", closeOnOutsideClick);
-  }, [professionOpen]);
-
-  const handleProfessionKeyDown = (event) => {
-    const currentIndex = PROFESSIONS.indexOf(profession);
-    if (event.key === "ArrowDown") {
-      event.preventDefault();
-      if (!professionOpen) {
-        setProfessionActiveIndex(currentIndex >= 0 ? currentIndex : 0);
-        setProfessionOpen(true);
-      } else {
-        setProfessionActiveIndex((index) => Math.min(index + 1, PROFESSIONS.length - 1));
-      }
-    } else if (event.key === "ArrowUp") {
-      event.preventDefault();
-      if (!professionOpen) {
-        setProfessionActiveIndex(currentIndex >= 0 ? currentIndex : PROFESSIONS.length - 1);
-        setProfessionOpen(true);
-      } else {
-        setProfessionActiveIndex((index) => Math.max(index - 1, 0));
-      }
-    } else if ((event.key === "Enter" || event.key === " ") && professionOpen) {
-      event.preventDefault();
-      setProfession(PROFESSIONS[professionActiveIndex]);
-      setProfessionOpen(false);
-    } else if (event.key === "Escape" && professionOpen) {
-      event.preventDefault();
-      setProfessionOpen(false);
-    } else if (event.key === "Home" && professionOpen) {
-      event.preventDefault();
-      setProfessionActiveIndex(0);
-    } else if (event.key === "End" && professionOpen) {
-      event.preventDefault();
-      setProfessionActiveIndex(PROFESSIONS.length - 1);
-    }
-  };
 
   // Capture current frame from video into a circular PNG
   const handleSnap = () => {
@@ -283,59 +229,36 @@ export default function CapturePage() {
           animate={{ scale: 1, opacity: 1, y: 0 }}
           transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
         >
-          {/* Step 1: User's Profession (the name comes from registration) */}
+          {/* Step 1: pick your NESCAFÉ character (the name comes from registration) */}
           <div className="capture-profession-block">
-            <label id="profession-label" htmlFor="profession-select" className="capture-label">
-              <span>YOUR PROFESSION <span className="capture-required-mark" aria-hidden="true">*</span></span>
-            </label>
-            <div className="capture-profession-control" ref={professionControlRef}>
-              <button
-                type="button"
-                id="profession-select"
-                className={`capture-profession-trigger${professionOpen ? " is-open" : ""}`}
-                role="combobox"
-                aria-labelledby="profession-label"
-                aria-haspopup="listbox"
-                aria-expanded={professionOpen}
-                aria-controls="profession-options"
-                aria-activedescendant={professionOpen ? `profession-option-${professionActiveIndex}` : undefined}
-                aria-invalid={submitAttempted && !profession}
-                aria-describedby={submitAttempted && !profession ? "profession-error" : undefined}
-                onClick={() => {
-                  const currentIndex = PROFESSIONS.indexOf(profession);
-                  setProfessionActiveIndex(currentIndex >= 0 ? currentIndex : 0);
-                  setProfessionOpen((open) => !open);
-                }}
-                onKeyDown={handleProfessionKeyDown}
-              >
-                <span className={profession ? "" : "capture-profession-placeholder"}>{profession || "Select your profession"}</span>
-                <CaretDown className={`capture-profession-icon${professionOpen ? " is-open" : ""}`} size={17} weight="bold" aria-hidden="true" />
-              </button>
-              {professionOpen && (
-                <div className="capture-profession-list" id="profession-options" role="listbox" aria-labelledby="profession-label">
-                  {PROFESSIONS.map((option, index) => (
-                    <div
-                      key={option}
-                      ref={(element) => { professionOptionRefs.current[index] = element; }}
-                      id={`profession-option-${index}`}
-                      className={`capture-profession-option${professionActiveIndex === index ? " is-active" : ""}${profession === option ? " is-selected" : ""}`}
-                      role="option"
-                      aria-selected={profession === option}
-                      onMouseEnter={() => setProfessionActiveIndex(index)}
-                      onClick={() => {
-                        setProfession(option);
-                        setProfessionOpen(false);
-                      }}
-                    >
-                      <span>{option}</span>
-                      {profession === option && <Check size={16} weight="bold" aria-hidden="true" />}
-                    </div>
-                  ))}
-                </div>
-              )}
+            <span id="profession-label" className="capture-label">
+              <span>PICK YOUR CHARACTER <span className="capture-required-mark" aria-hidden="true">*</span></span>
+            </span>
+            <div
+              className="character-picker"
+              role="radiogroup"
+              aria-labelledby="profession-label"
+              aria-invalid={submitAttempted && !profession}
+              aria-describedby={submitAttempted && !profession ? "profession-error" : undefined}
+            >
+              {CHARACTERS.map((character) => (
+                <button
+                  key={character.slug}
+                  type="button"
+                  role="radio"
+                  aria-checked={profession === character.name}
+                  className={`character-option${profession === character.name ? " is-selected" : ""}`}
+                  onClick={() => setProfession(character.name)}
+                >
+                  <span className="character-art">
+                    <img src={character.src} alt="" draggable={false} />
+                  </span>
+                  <span className="character-name">{character.name}</span>
+                </button>
+              ))}
             </div>
             {submitAttempted && !profession && (
-              <span className="capture-field-error" id="profession-error" role="alert">Please choose a profession to continue.</span>
+              <span className="capture-field-error" id="profession-error" role="alert">Please pick a character to continue.</span>
             )}
           </div>
 

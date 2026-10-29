@@ -630,8 +630,8 @@
 
 .camera-viewport {
   position: relative;
-  width: clamp(210px, 32vh, 290px);
-  height: clamp(210px, 32vh, 290px);
+  width: clamp(190px, 28vh, 290px);
+  height: clamp(190px, 28vh, 290px);
   border-radius: 50%;
   overflow: hidden;
   background: #0c0204;
@@ -993,3 +993,16 @@ img,svg,canvas{-webkit-user-drag:none;user-drag:none}
 }
 @media(max-width:600px){.featured-design{width:clamp(280px,80vw,380px)}}
 @media(prefers-reduced-motion:reduce){.featured-design{animation-duration:16s!important}}
+
+/* ===== Capture: pick one of the ten NESCAFÉ characters ===== */
+.character-picker{width:100%;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px}
+.character-option{position:relative;display:flex;flex-direction:column;align-items:center;gap:4px;padding:6px 2px 7px;border:1.5px solid rgba(162,31,37,.2);border-radius:16px;background:#fff7f7;color:#5c1115;cursor:pointer;transition:background .18s ease,border-color .18s ease,transform .18s ease,box-shadow .18s ease}
+.character-option:hover{background:#fdeaea;border-color:rgba(235,28,35,.5);transform:translateY(-2px)}
+.character-option:focus-visible{outline:none;box-shadow:0 0 0 3px rgba(235,28,35,.25)}
+.character-option.is-selected{background:#EB1C23;border-color:#EB1C23;color:#fff;box-shadow:0 10px 22px rgba(235,28,35,.38);transform:translateY(-2px)}
+.character-art{display:grid;place-items:end center;width:100%;aspect-ratio:4/5;overflow:hidden;border-radius:11px;background:linear-gradient(180deg,rgba(235,28,35,.08),rgba(235,28,35,.02))}
+.character-option.is-selected .character-art{background:rgba(255,255,255,.16)}
+.character-art img{display:block;width:92%;height:94%;object-fit:contain;object-position:bottom;pointer-events:none;-webkit-user-drag:none}
+.character-name{max-width:100%;font:800 8px 'Nescafe Sans','Myriad Pro',Arial,sans-serif;letter-spacing:0;text-transform:uppercase;line-height:1.1;text-align:center;white-space:nowrap}
+.character-picker[aria-invalid="true"]{outline:2px solid rgba(201,28,38,.5);outline-offset:4px;border-radius:14px}
+@media(max-width:600px){.character-picker{gap:5px}.character-name{font-size:7px}}
