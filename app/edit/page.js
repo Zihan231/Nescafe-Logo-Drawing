@@ -1382,7 +1382,10 @@ export default function EditPage() {
     outputCtx.globalCompositeOperation = "destination-in";
     outputCtx.drawImage(mask, LEAF_X, 0, LEAF_SIZE, LEAF_SIZE);
     outputCtx.globalCompositeOperation = "source-over";
-    return output.toDataURL("image/png");
+    // toBlob encodes off the main thread, which keeps a slow tablet responsive while the PNG is made.
+    return new Promise((resolve, reject) => {
+      output.toBlob((blob) => (blob ? resolve(blob) : reject(new Error("Could not save your design"))), "image/png");
+    });
   };
 
   const resetEditor = () => {
@@ -1425,9 +1428,14 @@ export default function EditPage() {
   const handleConfirmSend = async () => {
     setShowConfirm(false);
     setSending(true);
+    // Show the "sending" window straight away so a slow tablet never looks frozen.
+    setKeepsake({ pending: true });
+    setSentMessage(true);
+    let designUrl = null;
     try {
-      const image = await createSavedDesign();
-      const blob = await fetch(image).then((response) => response.blob());
+      const qrModule = import("qrcode"); // load the QR library while the image is being made
+      const blob = await createSavedDesign();
+      designUrl = URL.createObjectURL(blob);
       const formData = new FormData();
       formData.append("image", blob, `nescafe-${Date.now()}.png`);
       const professionName = profession || sessionStorage.getItem("nescafe_user_profession") || "";
@@ -1435,7 +1443,7 @@ export default function EditPage() {
       const personName = sessionStorage.getItem("nescafe_user_name") || "";
       let cardBlob = null;
       try {
-        cardBlob = await composeFrame({ design: image, name: personName, profession: professionName });
+        cardBlob = await composeFrame({ design: designUrl, name: personName, profession: professionName });
         formData.append("frame", cardBlob, `nescafe-card-${Date.now()}.png`);
       } catch {
         // The design still goes out; only the take-home card is skipped.
@@ -1457,21 +1465,25 @@ export default function EditPage() {
       setSessionSelfie(null);
       resetEditor();
       setProfession("");
-      setKeepsake(cardBlob ? { pending: true } : null);
-      setSentMessage(true);
       if (cardBlob) {
         const base = process.env.NEXT_PUBLIC_SITE_URL || window.location.origin;
         const link = `${base.replace(/\/$/, "")}/d/${result.id}`;
-        const { default: QRCode } = await import("qrcode");
+        const { default: QRCode } = await qrModule;
         const qr = await QRCode.toDataURL(link, { width: 520, margin: 1, errorCorrectionLevel: "M", color: { dark: "#3a0a0e", light: "#ffffff" } });
         setKeepsake({ cardUrl: URL.createObjectURL(cardBlob), qr, link });
+      } else {
+        setKeepsake(null);
       }
       // With a card the visitor stays here until they tap Done; without one the old short message closes itself.
       if (successTimerRef.current) clearTimeout(successTimerRef.current);
       if (!cardBlob) successTimerRef.current = setTimeout(handleDismissSuccess, 2500);
     } catch (error) {
       window.alert(error.message || "Unable to send your design. Please try again.");
+      setSentMessage(false);
+      setKeepsake(null);
       setSending(false);
+    } finally {
+      if (designUrl) URL.revokeObjectURL(designUrl);
     }
   };
 
@@ -2129,8 +2141,9 @@ export default function EditPage() {
                     <div className="keepsake-card-wait">PREPARING YOUR CARD…</div>
                   )}
                   <div className="keepsake-side">
-                    <h3 className="modal-title-pacifico">Flown to the World!</h3>
-                    <p className="modal-subtitle">Your design is now orbiting the Earth. Take your card home with you.</p>
+                    <h3 className="modal-title-pacifico">{keepsake.qr ? "Flown to the World!" : "Sending to the world…"}</h3>
+                    <p className="modal-subtitle">{keepsake.qr ? "Your design is now orbiting the Earth. Take your card home with you." : "Hang on a moment while your design takes off and your card is made."}</p>
+                    {!keepsake.qr && <div className="keepsake-spinner" role="status" aria-label="Sending" />}
                     {keepsake.qr && (
                       <>
                         <div className="keepsake-qr">
@@ -2140,7 +2153,7 @@ export default function EditPage() {
                         <p className="keepsake-note">Point your phone camera at the code to save your card.</p>
                       </>
                     )}
-                    <button type="button" className="modal-btn-confirm" onClick={handleDismissSuccess}>
+                    <button type="button" className="modal-btn-confirm" onClick={handleDismissSuccess} disabled={!keepsake.qr}>
                       <span>DONE</span>
                       <CheckCircle weight="bold" size={17} />
                     </button>

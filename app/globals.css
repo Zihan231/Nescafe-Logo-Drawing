@@ -1022,3 +1022,9 @@ img,svg,canvas{-webkit-user-drag:none;user-drag:none}
 .sticker-controls:active{cursor:grabbing}
 .sticker-controls:after{content:"";position:absolute;inset:0;border:2px solid var(--selection-color);border-radius:5px;filter:drop-shadow(0 2px 3px rgba(0,0,0,.55));pointer-events:none}
 .placed-sticker.selected:after{display:none}
+
+/* "Sending to the world" wait state in the post-send window */
+.keepsake-spinner{width:54px;height:54px;margin:10px 0 18px;border-radius:50%;border:5px solid rgba(235,28,35,.18);border-top-color:#EB1C23;animation:keepsake-spin .9s linear infinite}
+@keyframes keepsake-spin{to{transform:rotate(360deg)}}
+.keepsake-side .modal-btn-confirm:disabled{opacity:.45;cursor:default;box-shadow:none}
+@media(prefers-reduced-motion:reduce){.keepsake-spinner{animation-duration:2.4s}}
