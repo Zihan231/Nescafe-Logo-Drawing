@@ -101,10 +101,10 @@ export default function CoffeePour({ code, playSound = false }) {
             <feGaussianBlur stdDeviation="1.6" />
           </filter>
           <linearGradient id="cp-smoke-fade" x1="0" x2="0" y1="1" y2="0">
-            <stop offset="0" stopColor="#8a7366" stopOpacity=".15" />
-            <stop offset=".18" stopColor="#8a7366" stopOpacity=".9" />
-            <stop offset=".62" stopColor="#a08c80" stopOpacity=".6" />
-            <stop offset="1" stopColor="#b9a99d" stopOpacity="0" />
+            <stop offset="0" stopColor="#f6f0e8" stopOpacity=".2" />
+            <stop offset=".18" stopColor="#f6f0e8" stopOpacity="1" />
+            <stop offset=".62" stopColor="#f3ece3" stopOpacity=".85" />
+            <stop offset="1" stopColor="#f3ece3" stopOpacity="0" />
           </linearGradient>
           {/* the churning noise bends the wisps into soft, uneven curls instead of neat curves */}
           <filter id="cp-smoke" filterUnits="userSpaceOnUse" x="40" y="-30" width="220" height="160">
@@ -112,7 +112,9 @@ export default function CoffeePour({ code, playSound = false }) {
               <animate attributeName="baseFrequency" dur="9s" values="0.014 0.035;0.021 0.028;0.014 0.035" repeatCount="indefinite" />
             </feTurbulence>
             <feDisplacementMap in="SourceGraphic" in2="noise" scale="20" xChannelSelector="R" yChannelSelector="G" result="bent" />
-            <feGaussianBlur in="bent" stdDeviation="2" />
+            <feGaussianBlur in="bent" stdDeviation="2" result="soft" />
+            {/* a faint warm-grey halo keeps the off-white smoke readable on the white card */}
+            <feDropShadow in="soft" dx="0" dy="0" stdDeviation="3" floodColor="#76645a" floodOpacity=".7" />
           </filter>
         </defs>
 
