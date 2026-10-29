@@ -628,15 +628,16 @@
   width: 100%;
 }
 
+.camera-shape-wrap {
+  filter: drop-shadow(0 14px 26px rgba(0, 0, 0, .42));
+}
+
 .camera-viewport {
   position: relative;
   width: clamp(190px, 28vh, 290px);
   height: clamp(190px, 28vh, 290px);
-  border-radius: 50%;
   overflow: hidden;
   background: #0c0204;
-  border: 3px solid rgba(255, 255, 255, .38);
-  box-shadow: 0 16px 36px rgba(0, 0, 0, .5), inset 0 0 24px rgba(0, 0, 0, .5);
 }
 
 .camera-viewport.flash {
@@ -663,18 +664,17 @@
   display: block;
 }
 
-.camera-circle-overlay {
+.camera-shape-guide {
   position: absolute;
   inset: 0;
-  border-radius: 50%;
+  width: 100%;
+  height: 100%;
   pointer-events: none;
-  border: 2px dashed rgba(255, 255, 255, .45);
 }
 
 .camera-fallback-overlay {
   position: absolute;
   inset: 0;
-  border-radius: 50%;
   background: rgba(18, 3, 5, .92);
   display: flex;
   flex-direction: column;
@@ -1052,3 +1052,18 @@ img,svg,canvas{-webkit-user-drag:none;user-drag:none}
 .sk-line-1{width:46%}
 .sk-line-2{width:68%}
 @media(prefers-reduced-motion:reduce){.sk:after{animation-duration:3.2s}}
+
+/* Shape menu under the camera: a scrollable grid of shapes */
+.capture-camera-block{position:relative}
+.shape-picker{position:relative;width:100%;display:flex;flex-direction:column;align-items:center}
+.shape-picker-btn{display:inline-flex;align-items:center;gap:9px;padding:8px 14px;border:1.5px solid rgba(162,31,37,.28);border-radius:999px;background:#fff7f7;color:#5c1115;font:800 10px 'Nescafe Sans','Myriad Pro',Arial,sans-serif;letter-spacing:.12em;cursor:pointer;transition:background .15s ease,border-color .15s ease}
+.shape-picker-btn:hover,.shape-picker-btn.is-open{background:#fdeaea;border-color:#EB1C23}
+.shape-picker-btn svg.is-open{transform:rotate(180deg)}
+.shape-thumb{width:20px;height:20px;flex:none;fill:currentColor;color:#EB1C23}
+.shape-menu{position:absolute;left:50%;bottom:calc(100% + 8px);z-index:20;transform:translateX(-50%);width:min(340px,100%);max-height:min(230px,38vh);overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;touch-action:pan-y;scrollbar-width:thin;scrollbar-color:rgba(162,31,37,.4) transparent;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;padding:10px;border:1.5px solid rgba(162,31,37,.22);border-radius:18px;background:#fff;box-shadow:0 18px 40px rgba(18,2,5,.35)}
+.shape-menu-item{display:flex;flex-direction:column;align-items:center;gap:5px;padding:9px 2px 7px;border:1.5px solid transparent;border-radius:12px;background:#fff7f7;color:#5c1115;font:800 8.5px 'Nescafe Sans','Myriad Pro',Arial,sans-serif;letter-spacing:.04em;text-transform:uppercase;cursor:pointer;touch-action:pan-y;transition:background .15s ease,border-color .15s ease}
+.shape-menu-item .shape-thumb{width:34px;height:34px}
+.shape-menu-item:hover{background:#fdeaea;border-color:rgba(235,28,35,.45)}
+.shape-menu-item.is-selected{background:#EB1C23;color:#fff;border-color:#EB1C23}
+.shape-menu-item.is-selected .shape-thumb{color:#fff}
+@media(max-width:600px){.shape-menu{grid-template-columns:repeat(3,minmax(0,1fr))}}

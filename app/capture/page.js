@@ -7,11 +7,26 @@ import {
   ArrowLeft,
   Camera,
   ArrowClockwise,
+  CaretDown,
   Check,
   WarningCircle,
   Sparkle
 } from "@phosphor-icons/react";
 import { CHARACTERS } from "@/lib/professions";
+import { PHOTO_SHAPES, DEFAULT_PHOTO_SHAPE, photoShape, shapedPhoto } from "@/lib/photo-shapes";
+
+// Small outline of a shape for the menu ("No shape" is a dashed square).
+function ShapeThumb({ shape }) {
+  return (
+    <svg className="shape-thumb" viewBox="0 0 100 100" aria-hidden="true">
+      {shape.path ? (
+        <path d={shape.path} />
+      ) : (
+        <rect x="6" y="6" width="88" height="88" rx="6" fill="none" stroke="currentColor" strokeWidth="7" strokeDasharray="14 10" />
+      )}
+    </svg>
+  );
+}
 
 export default function CapturePage() {
   const router = useRouter();
@@ -24,9 +39,13 @@ export default function CapturePage() {
   const [capturedPhoto, setCapturedPhoto] = useState(null);
   const [processing, setProcessing] = useState(false);
   const [flash, setFlash] = useState(false);
+  const [shapeId, setShapeId] = useState(DEFAULT_PHOTO_SHAPE);
+  const [shapeMenuOpen, setShapeMenuOpen] = useState(false);
+  const shape = photoShape(shapeId);
 
   const videoRef = useRef(null);
   const streamRef = useRef(null);
+  const rawShotRef = useRef(null); // the uncut square photo, so the shape can be changed after the snap
 
   // Stop camera tracks helper
   const stopCamera = useCallback(() => {
@@ -106,7 +125,7 @@ export default function CapturePage() {
     };
   }, [gate, startCamera, stopCamera]);
 
-  // Capture current frame from video into a circular PNG
+  // Capture the current frame as a square, then cut it to the chosen shape.
   const handleSnap = () => {
     const video = videoRef.current;
     if (!video || !cameraActive) return;
@@ -118,34 +137,32 @@ export default function CapturePage() {
     const vHeight = video.videoHeight || 640;
     const size = Math.min(vWidth, vHeight);
 
-    const canvas = document.createElement("canvas");
-    canvas.width = 512;
-    canvas.height = 512;
-    const ctx = canvas.getContext("2d");
-
-    // Clip canvas into a perfect circle
-    ctx.beginPath();
-    ctx.arc(256, 256, 256, 0, Math.PI * 2, true);
-    ctx.closePath();
-    ctx.clip();
+    const raw = document.createElement("canvas");
+    raw.width = 512;
+    raw.height = 512;
+    const ctx = raw.getContext("2d");
 
     // Mirror horizontally for front-camera selfie
-    ctx.save();
     ctx.translate(512, 0);
     ctx.scale(-1, 1);
+    ctx.drawImage(video, (vWidth - size) / 2, (vHeight - size) / 2, size, size, 0, 0, 512, 512);
 
-    const sx = (vWidth - size) / 2;
-    const sy = (vHeight - size) / 2;
-    ctx.drawImage(video, sx, sy, size, size, 0, 0, 512, 512);
-    ctx.restore();
-
-    const dataUrl = canvas.toDataURL("image/png");
-    setCapturedPhoto(dataUrl);
+    rawShotRef.current = raw;
+    setCapturedPhoto(shapedPhoto(raw, shapeId));
+    setShapeMenuOpen(false);
     stopCamera();
+  };
+
+  // Picking another shape re-cuts the photo that was already taken.
+  const chooseShape = (id) => {
+    setShapeId(id);
+    setShapeMenuOpen(false);
+    if (rawShotRef.current) setCapturedPhoto(shapedPhoto(rawShotRef.current, id));
   };
 
   // Retake photo
   const handleRetake = () => {
+    rawShotRef.current = null;
     setCapturedPhoto(null);
     startCamera();
   };
@@ -265,45 +282,93 @@ export default function CapturePage() {
 
           {/* Step 2: Camera & Selfie Framing */}
           <div className="capture-camera-block">
-            <div className={`camera-viewport${flash ? " flash" : ""}`}>
-              {/* Live Video */}
-              {!capturedPhoto && (
-                <video
-                  ref={videoRef}
-                  className={`camera-video${cameraActive ? " active" : ""}`}
-                  autoPlay
-                  playsInline
-                  muted
-                />
-              )}
+            {/* clip paths shared by the live preview: one per shape */}
+            <svg width="0" height="0" style={{ position: "absolute" }} aria-hidden="true" focusable="false">
+              <defs>
+                {PHOTO_SHAPES.filter((item) => item.path).map((item) => (
+                  <clipPath key={item.id} id={`photo-clip-${item.id}`} clipPathUnits="objectBoundingBox">
+                    <path d={item.path} transform="scale(0.01)" />
+                  </clipPath>
+                ))}
+              </defs>
+            </svg>
 
-              {/* Captured Photo Preview */}
-              {capturedPhoto && (
-                <img
-                  src={capturedPhoto}
-                  alt="Your Selfie"
-                  className="camera-preview-photo"
-                />
-              )}
+            <div className="camera-shape-wrap">
+              <div
+                className={`camera-viewport${flash ? " flash" : ""}`}
+                style={shape.path ? { clipPath: `url(#photo-clip-${shape.id})` } : undefined}
+              >
+                {/* Live Video */}
+                {!capturedPhoto && (
+                  <video
+                    ref={videoRef}
+                    className={`camera-video${cameraActive ? " active" : ""}`}
+                    autoPlay
+                    playsInline
+                    muted
+                  />
+                )}
 
-              {/* Circular guide ring */}
-              <div className="camera-circle-overlay" aria-hidden="true">
-                <div className="camera-circle-guide" />
+                {/* Captured Photo Preview */}
+                {capturedPhoto && (
+                  <img
+                    src={capturedPhoto}
+                    alt="Your Selfie"
+                    className="camera-preview-photo"
+                  />
+                )}
+
+                {/* Dashed outline of the chosen shape */}
+                <svg className="camera-shape-guide" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+                  <path d={shape.path || "M0 0H100V100H0Z"} fill="none" stroke="rgba(255,255,255,.7)" strokeWidth="2" strokeDasharray="7 6" vectorEffect="non-scaling-stroke" />
+                </svg>
+
+                {/* Error overlay if camera is blocked */}
+                {cameraError && !capturedPhoto && (
+                  <div className="camera-fallback-overlay">
+                    <WarningCircle size={40} weight="duotone" color="#ffca28" />
+                    <p>{cameraError}</p>
+                    <button
+                      type="button"
+                      className="capture-retry-btn"
+                      onClick={startCamera}
+                    >
+                      <ArrowClockwise weight="bold" />
+                      <span>Retry Camera</span>
+                    </button>
+                  </div>
+                )}
               </div>
+            </div>
 
-              {/* Error overlay if camera is blocked */}
-              {cameraError && !capturedPhoto && (
-                <div className="camera-fallback-overlay">
-                  <WarningCircle size={40} weight="duotone" color="#ffca28" />
-                  <p>{cameraError}</p>
-                  <button
-                    type="button"
-                    className="capture-retry-btn"
-                    onClick={startCamera}
-                  >
-                    <ArrowClockwise weight="bold" />
-                    <span>Retry Camera</span>
-                  </button>
+            {/* Shape menu */}
+            <div className="shape-picker">
+              <button
+                type="button"
+                className={`shape-picker-btn${shapeMenuOpen ? " is-open" : ""}`}
+                onClick={() => setShapeMenuOpen((open) => !open)}
+                aria-haspopup="listbox"
+                aria-expanded={shapeMenuOpen}
+              >
+                <ShapeThumb shape={shape} />
+                <span>SHAPE: {shape.label.toUpperCase()}</span>
+                <CaretDown size={14} weight="bold" className={shapeMenuOpen ? "is-open" : ""} aria-hidden="true" />
+              </button>
+              {shapeMenuOpen && (
+                <div className="shape-menu" role="listbox" aria-label="Photo shape">
+                  {PHOTO_SHAPES.map((item) => (
+                    <button
+                      key={item.id}
+                      type="button"
+                      role="option"
+                      aria-selected={item.id === shapeId}
+                      className={`shape-menu-item${item.id === shapeId ? " is-selected" : ""}`}
+                      onClick={() => chooseShape(item.id)}
+                    >
+                      <ShapeThumb shape={item} />
+                      <span>{item.label}</span>
+                    </button>
+                  ))}
                 </div>
               )}
             </div>
