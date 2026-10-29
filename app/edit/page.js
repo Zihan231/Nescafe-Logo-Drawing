@@ -427,7 +427,9 @@ function DrawingCanvas({ canvasRef, color, tool, brush, size, shape, shapeFill, 
       width={W * RENDER_SCALE}
       height={H * RENDER_SCALE}
       aria-label="Drawing canvas inside NESCAFÉ leaf"
+      style={tool === "none" ? { cursor: "default" } : undefined}
       onPointerDown={(e) => {
+        if (tool === "none") return; // a doodle or text is being used: tap the pen again to draw
         e.currentTarget.setPointerCapture(e.pointerId);
         before.current = e.pointerType === "touch" ? snapshotCanvas(canvasRef.current) : null;
         drawing.current = true;
@@ -984,6 +986,7 @@ export default function EditPage() {
   }, [selectedStickerId]);
 
   const addSticker = (sticker, x, y) => {
+    setTool("none");
     const id = crypto.randomUUID();
     setPlacedStickers((items) => [...items, {
       id, src: sticker.src, label: sticker.label, aspect: sticker.aspect || STICKER_ASPECT, alpha: Boolean(sticker.alpha), photo: Boolean(sticker.photo),
@@ -1132,6 +1135,7 @@ export default function EditPage() {
   };
 
   const addText = () => {
+    setTool("none");
     const id = crypto.randomUUID();
     const spot = leafCenterSpot();
     const text = "Your text";
@@ -1250,6 +1254,7 @@ export default function EditPage() {
     event.preventDefault();
     event.stopPropagation();
     event.currentTarget.setPointerCapture(event.pointerId);
+    setTool("none");
     setSelectedStickerId(id);
     const gesture = stickerGestureRef.current;
     if (gesture.id !== id) gesture.pointers.clear();
@@ -1754,9 +1759,9 @@ export default function EditPage() {
                 <button
                   type="button"
                   role="radio"
-                  aria-checked={tool !== "shape"}
+                  aria-checked={tool === "pen"}
                   title="No shape (draw freely)"
-                  className={`shape-tile${tool !== "shape" ? " selected" : ""}`}
+                  className={`shape-tile${tool === "pen" ? " selected" : ""}`}
                   onClick={() => setTool("pen")}
                 >
                   <svg className="shape-icon" viewBox="-1.25 -1.25 2.5 2.5" aria-hidden="true">
