@@ -1089,3 +1089,9 @@ img,svg,canvas{-webkit-user-drag:none;user-drag:none}
 .rotate-handle{left:calc(50% - 36px)}
 .delete-handle{left:50%}
 .flip-handle{left:calc(50% + 36px)}
+
+/* Doodles can sit under the drawing: a second sticker layer below the canvas (z-index 2) */
+.placed-stickers.placed-under{z-index:1}
+/* While a drawing tool is on, strokes go through doodles; the Select tool brings them back */
+.placed-stickers.is-drawing .placed-sticker{pointer-events:none}
+.sticker-controls-layer.is-drawing .sticker-controls{pointer-events:none}

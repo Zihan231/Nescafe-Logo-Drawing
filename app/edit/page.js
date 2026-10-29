@@ -4,6 +4,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import {
   ArrowCounterClockwise,
   ArrowDown,
+  Cursor,
   ArrowUp,
   ArrowLeft,
   ArrowClockwise,
@@ -229,8 +230,10 @@ const applyPoint = (m, pt) => ({
   y: m.cy + m.c * (pt.x - m.cx) + m.d * (pt.y - m.cy)
 });
 
-function DrawingCanvas({ canvasRef, color, tool, brush, size, shape, shapeFill, getCopies, onHistory, abortRef }) {
+function DrawingCanvas({ canvasRef, color, tool, brush, size, shape, shapeFill, getCopies, onHistory, abortRef, onTap, onStrokeStart }) {
   const drawing = useRef(false);
+  const strokeAnnounced = useRef(false);
+  const downAt = useRef(null); // where and when the pointer went down, to tell a tap from a stroke
   const before = useRef(null); // canvas as it was when a touch stroke began, so a pinch can take it back
   const last = useRef(null);
   const origin = useRef(null);
@@ -412,6 +415,17 @@ function DrawingCanvas({ canvasRef, color, tool, brush, size, shape, shapeFill, 
 
   const draw = (event) => {
     if (!drawing.current) return;
+    // The stroke has really started (not a tap): doodles under it go beneath the drawing, so it shows on top of them.
+    if (!strokeAnnounced.current) {
+      const down = downAt.current;
+      if (down && Math.hypot(event.clientX - down.x, event.clientY - down.y) < 10) return drawStroke(event);
+      strokeAnnounced.current = true;
+      onStrokeStart?.();
+    }
+    drawStroke(event);
+  };
+
+  const drawStroke = (event) => {
     const p = point(event);
     if (tool === "shape") {
       last.current = p;
@@ -429,11 +443,13 @@ function DrawingCanvas({ canvasRef, color, tool, brush, size, shape, shapeFill, 
       width={W * RENDER_SCALE}
       height={H * RENDER_SCALE}
       aria-label="Drawing canvas inside NESCAFÉ leaf"
-      style={tool === "none" ? { cursor: "default" } : undefined}
+      style={tool === "none" ? { cursor: "default", pointerEvents: "none" } : undefined}
       onPointerDown={(e) => {
         if (tool === "none") return; // a doodle or text is being used: tap the pen again to draw
         e.currentTarget.setPointerCapture(e.pointerId);
-        before.current = e.pointerType === "touch" ? snapshotCanvas(canvasRef.current) : null;
+        strokeAnnounced.current = false;
+        before.current = snapshotCanvas(canvasRef.current);
+        downAt.current = { x: e.clientX, y: e.clientY, time: performance.now() };
         drawing.current = true;
         copies.current = getCopies();
         const p = point(e);
@@ -446,10 +462,18 @@ function DrawingCanvas({ canvasRef, color, tool, brush, size, shape, shapeFill, 
         else drawSegment(p, p); // a single tap leaves a mark
       }}
       onPointerMove={draw}
-      onPointerUp={() => {
+      onPointerUp={(e) => {
         if (drawing.current) {
           drawing.current = false;
           base.current = null;
+          // A quick tap on a doodle selects it instead of leaving a dot: take the dot back.
+          const down = downAt.current;
+          const isTap = down && Math.hypot(e.clientX - down.x, e.clientY - down.y) < 10 && performance.now() - down.time < 500;
+          if (isTap && before.current && onTap?.(e.clientX, e.clientY)) {
+            restoreSnapshot(canvasRef.current, before.current);
+            before.current = null;
+            return;
+          }
           before.current = null;
           onHistory();
         }
@@ -684,7 +708,16 @@ export default function EditPage() {
   const [leafColor, setLeafColor] = useState("#ffffff");
   const [tool, setTool] = useState("pen");
   const [brush, setBrush] = useState("pen");
+  const toolMountedRef = useRef(false);
   const [toolTab, setToolTab] = useState("brushes");
+  // Picking a drawing tool puts the doodles out of the way: nothing stays selected, strokes go through them.
+  useEffect(() => {
+    if (!toolMountedRef.current) {
+      toolMountedRef.current = true;
+      return;
+    }
+    if (tool !== "none") setSelectedStickerId(null);
+  }, [tool]);
   const [shape, setShape] = useState("circle");
   const [shapeFill, setShapeFill] = useState(false);
   const [symmetry, setSymmetry] = useState("off");
@@ -870,6 +903,10 @@ export default function EditPage() {
 
   // Doodle, text and leaf-color changes settle into one entry after a short pause.
   useEffect(() => {
+    if (pushedUnderRef.current) {
+      pushedUnderRef.current = false; // doodles slipping under a new stroke are saved with the stroke itself
+      return undefined;
+    }
     clearTimeout(commitTimerRef.current);
     commitTimerRef.current = setTimeout(() => commit(false), 400);
     return () => clearTimeout(commitTimerRef.current);
@@ -929,17 +966,41 @@ export default function EditPage() {
     setSelectedStickerId(null);
   };
 
-  // Layers: the order of the list is the stacking order, so moving an item one place changes what covers what.
+  // Strokes land on top of the doodles and photos that are already there. Text stays above the drawing, and
+  // anything the user deliberately brought forward past the drawing ("pinned") is left alone.
+  const pushedUnderRef = useRef(false);
+  const pushItemsUnderDrawing = () => {
+    const movable = (item) => item.kind !== "text" && !item.under && !item.pinned;
+    const items = stickersRef.current;
+    if (!items.some(movable)) return;
+    const next = items.map((item) => (movable(item) ? { ...item, under: true } : item));
+    pushedUnderRef.current = true; // part of the stroke's own undo step, not a separate one
+    stickersRef.current = next;
+    setPlacedStickers(next);
+  };
+
+  // Layers, bottom to top: doodles under the drawing, the drawing itself, doodles over the drawing.
+  // Moving a doodle past the drawing layer is what makes pen strokes cover it (or hides them behind it).
+  const layerStack = (items) => [...items.filter((item) => item.under), null, ...items.filter((item) => !item.under)];
+
+  const layerPosition = (id) => {
+    const stack = layerStack(placedStickers);
+    return { index: stack.findIndex((item) => item && item.id === id), length: stack.length };
+  };
+
   const moveLayer = (id, direction, event) => {
     event?.preventDefault();
     event?.stopPropagation();
     setPlacedStickers((items) => {
-      const from = items.findIndex((item) => item.id === id);
+      const stack = layerStack(items);
+      const from = stack.findIndex((item) => item && item.id === id);
       const to = from + direction;
-      if (from < 0 || to < 0 || to >= items.length) return items;
-      const next = [...items];
-      [next[from], next[to]] = [next[to], next[from]];
-      return next;
+      if (from < 0 || to < 0 || to >= stack.length) return items;
+      [stack[from], stack[to]] = [stack[to], stack[from]];
+      const drawingAt = stack.indexOf(null);
+      return stack
+        .map((item, index) => (item ? { ...item, under: index < drawingAt, pinned: item.id === id ? index > drawingAt : item.pinned } : null))
+        .filter(Boolean);
     });
   };
 
@@ -1409,26 +1470,31 @@ export default function EditPage() {
     outputCtx.globalCompositeOperation = "destination-in";
     outputCtx.drawImage(mask, LEAF_X, 0, LEAF_SIZE, LEAF_SIZE);
     outputCtx.globalCompositeOperation = "source-over";
-    outputCtx.drawImage(strokes, 0, 0, W, H);
     const stickerImages = await Promise.all(placedStickers.map((item) => (
       item.kind === "text" ? document.fonts.load(fontSpec(item.font, item.fontSize), item.text) : loadStickerImage(item.src, item.alpha)
     )));
-    placedStickers.forEach((item, index) => {
-      outputCtx.save();
-      outputCtx.translate(item.x, item.y);
-      outputCtx.rotate((item.rotation * Math.PI) / 180);
-      if (item.kind === "text") {
-        outputCtx.font = fontSpec(item.font, item.fontSize);
-        outputCtx.fillStyle = item.color;
-        outputCtx.textAlign = "center";
-        outputCtx.textBaseline = "middle";
-        outputCtx.fillText(item.text, 0, 0);
-      } else {
-        if (item.flipX) outputCtx.scale(-1, 1);
-        outputCtx.drawImage(stickerImages[index], -item.w / 2, -item.h / 2, item.w, item.h);
-      }
-      outputCtx.restore();
-    });
+    const drawItems = (wanted) => {
+      placedStickers.forEach((item, index) => {
+        if (Boolean(item.under) !== wanted) return;
+        outputCtx.save();
+        outputCtx.translate(item.x, item.y);
+        outputCtx.rotate((item.rotation * Math.PI) / 180);
+        if (item.kind === "text") {
+          outputCtx.font = fontSpec(item.font, item.fontSize);
+          outputCtx.fillStyle = item.color;
+          outputCtx.textAlign = "center";
+          outputCtx.textBaseline = "middle";
+          outputCtx.fillText(item.text, 0, 0);
+        } else {
+          if (item.flipX) outputCtx.scale(-1, 1);
+          outputCtx.drawImage(stickerImages[index], -item.w / 2, -item.h / 2, item.w, item.h);
+        }
+        outputCtx.restore();
+      });
+    };
+    drawItems(true); // doodles sent behind the drawing
+    outputCtx.drawImage(strokes, 0, 0, W, H);
+    drawItems(false); // doodles in front of the drawing
     outputCtx.globalCompositeOperation = "destination-in";
     outputCtx.drawImage(mask, LEAF_X, 0, LEAF_SIZE, LEAF_SIZE);
     outputCtx.globalCompositeOperation = "source-over";
@@ -1538,6 +1604,51 @@ export default function EditPage() {
     }
   };
 
+  // Tapping a doodle with a drawing tool on selects it (and switches to Select); dragging still draws over it.
+  const selectStickerAt = (clientX, clientY) => {
+    const rect = canvasRef.current.getBoundingClientRect();
+    const x = ((clientX - rect.left) * W) / rect.width;
+    const y = ((clientY - rect.top) * H) / rect.height;
+    const items = stickersRef.current;
+    const topDown = [...items.filter((item) => !item.under).reverse(), ...items.filter((item) => item.under).reverse()];
+    const hit = topDown.find((item) => {
+      const angle = ((item.rotation || 0) * Math.PI) / 180;
+      const dx = x - item.x;
+      const dy = y - item.y;
+      const localX = dx * Math.cos(angle) + dy * Math.sin(angle);
+      const localY = -dx * Math.sin(angle) + dy * Math.cos(angle);
+      return Math.abs(localX) <= item.w / 2 && Math.abs(localY) <= item.h / 2;
+    });
+    if (!hit) return false;
+    setTool("none");
+    setSelectedStickerId(hit.id);
+    return true;
+  };
+
+  const renderPlacedSticker = (sticker) => (
+                <div
+                  key={sticker.id}
+                  className={`placed-sticker${selectedStickerId === sticker.id ? " selected" : ""}`}
+                  onPointerDown={(event) => startPlacedDrag(sticker.id, event)}
+                  onPointerMove={movePlacedDrag}
+                  onPointerUp={endPlacedDrag}
+                  onPointerCancel={endPlacedDrag}
+                  style={{ left: `${(sticker.x / W) * 100}%`, top: `${(sticker.y / H) * 100}%`, width: `${(sticker.w / W) * 100}%`, height: `${(sticker.h / H) * 100}%`, transform: `translate(-50%,-50%) rotate(${sticker.rotation}deg)` }}
+                >
+                  {sticker.kind === "text" ? (
+                    <span
+                      className="placed-text"
+                      style={{ fontFamily: `"${sticker.font}"`, fontWeight: TEXT_FONTS.find((f) => f.id === sticker.font)?.weight ?? 400, color: sticker.color, fontSize: `${(sticker.fontSize / W) * 100}cqw` }}
+                    >
+                      {sticker.text}
+                    </span>
+                  ) : (
+                    <img className={sticker.alpha ? "alpha-art" : undefined} src={sticker.src} alt={sticker.label} style={sticker.flipX ? { transform: "scaleX(-1)" } : undefined} />
+                  )}
+                </div>
+              
+  );
+
   const selectedSticker = placedStickers.find((item) => item.id === selectedStickerId);
   const transformColors = controlColors(leafColor);
 
@@ -1568,36 +1679,18 @@ export default function EditPage() {
         <div className="toolbox-spacer" aria-hidden="true" />
 
         <div className="studio" ref={studioRef}>
-          <div ref={canvasShellRef} className="canvas-shell" onPointerDownCapture={(event) => {if(event.target.tagName === "CANVAS") setSelectedStickerId(null)}}>
+          <div ref={canvasShellRef} className="canvas-shell" onPointerDownCapture={(event) => {if (!event.target.closest?.(".placed-sticker, .sticker-controls, button")) setSelectedStickerId(null)}}>
             <img ref={leafRef} className="leaf-mask-source" src="/assets/nescafe-leaf.png" alt="" />
             <div className="leaf-image" style={{ backgroundColor: leafColor }} role="img" aria-label="NESCAFÉ leaf drawing canvas" />
-            <DrawingCanvas canvasRef={canvasRef} color={color} tool={tool} brush={brush} size={size} shape={shape} shapeFill={shapeFill} getCopies={getCopies} onHistory={() => commit(true)} abortRef={abortStrokeRef} />
-            <div className="placed-stickers" style={{ "--selection-color": transformColors.outline, "--selection-ink": transformColors.ink }}>
-              {placedStickers.map((sticker) => (
-                <div
-                  key={sticker.id}
-                  className={`placed-sticker${selectedStickerId === sticker.id ? " selected" : ""}`}
-                  onPointerDown={(event) => startPlacedDrag(sticker.id, event)}
-                  onPointerMove={movePlacedDrag}
-                  onPointerUp={endPlacedDrag}
-                  onPointerCancel={endPlacedDrag}
-                  style={{ left: `${(sticker.x / W) * 100}%`, top: `${(sticker.y / H) * 100}%`, width: `${(sticker.w / W) * 100}%`, height: `${(sticker.h / H) * 100}%`, transform: `translate(-50%,-50%) rotate(${sticker.rotation}deg)` }}
-                >
-                  {sticker.kind === "text" ? (
-                    <span
-                      className="placed-text"
-                      style={{ fontFamily: `"${sticker.font}"`, fontWeight: TEXT_FONTS.find((f) => f.id === sticker.font)?.weight ?? 400, color: sticker.color, fontSize: `${(sticker.fontSize / W) * 100}cqw` }}
-                    >
-                      {sticker.text}
-                    </span>
-                  ) : (
-                    <img className={sticker.alpha ? "alpha-art" : undefined} src={sticker.src} alt={sticker.label} style={sticker.flipX ? { transform: "scaleX(-1)" } : undefined} />
-                  )}
-                </div>
-              ))}
+            <DrawingCanvas canvasRef={canvasRef} color={color} tool={tool} brush={brush} size={size} shape={shape} shapeFill={shapeFill} getCopies={getCopies} onHistory={() => commit(true)} abortRef={abortStrokeRef} onTap={selectStickerAt} onStrokeStart={pushItemsUnderDrawing} />
+            <div className={`placed-stickers placed-under${tool === "none" ? "" : " is-drawing"}`} style={{ "--selection-color": transformColors.outline, "--selection-ink": transformColors.ink }}>
+              {placedStickers.filter((sticker) => sticker.under).map(renderPlacedSticker)}
+            </div>
+            <div className={`placed-stickers${tool === "none" ? "" : " is-drawing"}`} style={{ "--selection-color": transformColors.outline, "--selection-ink": transformColors.ink }}>
+              {placedStickers.filter((sticker) => !sticker.under).map(renderPlacedSticker)}
             </div>
             {/* Handles live outside the leaf-shaped mask so they stay visible when a doodle is moved past the edge */}
-            <div className="sticker-controls-layer" style={{ "--selection-color": transformColors.outline, "--selection-ink": transformColors.ink }}>
+            <div className={`sticker-controls-layer${tool === "none" ? "" : " is-drawing"}`} style={{ "--selection-color": transformColors.outline, "--selection-ink": transformColors.ink }}>
               {placedStickers.filter((sticker) => sticker.id === selectedStickerId).map((sticker) => (
                 <div
                   key={sticker.id}
@@ -1660,7 +1753,7 @@ export default function EditPage() {
                             event.stopPropagation();
                           }}
                           onClick={(event) => moveLayer(sticker.id, -1, event)}
-                          disabled={placedStickers.findIndex((item) => item.id === sticker.id) <= 0}
+                          disabled={layerPosition(sticker.id).index <= 0}
                           aria-label="Send backward"
                           title="Send backward"
                         >
@@ -1674,7 +1767,7 @@ export default function EditPage() {
                             event.stopPropagation();
                           }}
                           onClick={(event) => moveLayer(sticker.id, 1, event)}
-                          disabled={placedStickers.findIndex((item) => item.id === sticker.id) >= placedStickers.length - 1}
+                          disabled={layerPosition(sticker.id).index >= layerPosition(sticker.id).length - 1}
                           aria-label="Bring forward"
                           title="Bring forward"
                         >
@@ -1709,6 +1802,9 @@ export default function EditPage() {
         <CollapseButton collapsed={collapsed.tools} onClick={() => toggleCard("tools")} label="drawing tools" />
         <span className="tool-card-title">DRAW TOOLS</span>
         <div className="tool-row">
+        <button className={tool === "none" ? "active" : ""} onClick={() => setTool("none")} aria-label="Select and move" title="Select and move doodles">
+          <Cursor />
+        </button>
         <button className={tool === "pen" ? "active" : ""} onClick={() => setTool("pen")} aria-label="Pen">
           <PencilSimple />
         </button>
