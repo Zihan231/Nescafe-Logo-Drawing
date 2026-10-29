@@ -970,11 +970,11 @@ img,svg,canvas{-webkit-user-drag:none;user-drag:none}
 @media(max-width:760px){.keepsake-modal{grid-template-columns:1fr;max-height:96svh;overflow-y:auto;gap:18px}.keepsake-card{max-height:none}}
 
 /* Download page (opened from the QR code on a phone) */
-.dl-page{position:fixed;inset:0;overflow-y:auto;-webkit-user-select:auto;user-select:auto;display:flex;flex-direction:column;align-items:center;gap:18px;padding:28px 20px 40px;background:radial-gradient(circle at 70% 10%,#ea2639 0,#b70d21 28%,#6d0715 62%,#21060b 100%);text-align:center}
+.dl-page{position:fixed;inset:0;overflow-y:auto;-webkit-user-select:auto;user-select:auto;display:flex;flex-direction:column;align-items:center;gap:18px;padding:28px 20px 40px;background:#a21f25;text-align:center}
 .dl-logo{width:130px;height:auto;flex:none}
 .dl-title{margin:4px 0 0;font:700 clamp(22px,6vw,30px)/1.15 'Nescafe Sans',Arial,sans-serif;letter-spacing:.06em;text-transform:uppercase}
 .dl-card{width:min(100%,560px);height:auto;border-radius:22px;box-shadow:0 22px 50px rgba(10,0,0,.5);-webkit-touch-callout:default}
-.dl-btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;padding:15px 38px;border-radius:24px 4px 18px 4px;background:#fff;color:#EB1C23;font:700 14px 'Nescafe Sans',Arial,sans-serif;letter-spacing:.18em;text-decoration:none;box-shadow:0 12px 30px rgba(10,0,0,.4)}
+.dl-btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;padding:15px 38px;border-radius:24px 4px 18px 4px;background:#fff;color:#a21f25;font:700 14px 'Nescafe Sans',Arial,sans-serif;letter-spacing:.18em;text-decoration:none;box-shadow:0 12px 30px rgba(10,0,0,.4)}
 .dl-btn:active{transform:scale(.98)}
 .dl-hint{max-width:420px;margin:0;font-size:13px;line-height:1.5;color:rgba(255,255,255,.78)}
 .keepsake-side .modal-btn-confirm{background:#EB1C23;box-shadow:0 10px 26px rgba(235,28,35,.4)}
