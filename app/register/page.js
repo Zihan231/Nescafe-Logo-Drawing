@@ -43,6 +43,16 @@ export default function RegisterPage() {
   const [soundOn, setSoundOn] = useState(true);
   const reduceMotion = useReducedMotion();
   const revealAt = reduceMotion ? 0 : REVEAL_AT; // when the pouring is done and the code shows
+  // The code, copy button and note only exist once the pour is done, so they take no (empty) room before that.
+  const [codeShown, setCodeShown] = useState(false);
+  useEffect(() => {
+    if (!result) {
+      setCodeShown(false);
+      return undefined;
+    }
+    const timer = setTimeout(() => setCodeShown(true), revealAt * 1000);
+    return () => clearTimeout(timer);
+  }, [result, revealAt]);
 
   // Confetti celebrates a new registration the moment the code appears, then clears itself.
   useEffect(() => {
@@ -282,6 +292,8 @@ export default function RegisterPage() {
 
               <CoffeePour code={result.code} playSound={!reduceMotion} />
 
+              {codeShown && (
+              <>
               <div className="code-display">
                 <div className="code-digits" aria-label={`Your code is ${result.code.split("").join(" ")}`}>
                   {result.code.split("").map((digit, index) => (
@@ -291,7 +303,7 @@ export default function RegisterPage() {
                       aria-hidden="true"
                       initial={{ opacity: 0, y: 22, scale: 0.5 }}
                       animate={{ opacity: 1, y: 0, scale: 1 }}
-                      transition={{ delay: revealAt + index * 0.12, type: "spring", stiffness: 320, damping: 14 }}
+                      transition={{ delay: index * 0.12, type: "spring", stiffness: 320, damping: 14 }}
                     >
                       {digit}
                     </motion.span>
@@ -305,7 +317,7 @@ export default function RegisterPage() {
                   title={copied ? "Copied!" : "Copy code"}
                   initial={{ opacity: 0, scale: 0.6 }}
                   animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: revealAt + 0.5, type: "spring", stiffness: 300, damping: 16 }}
+                  transition={{ delay: 0.5, type: "spring", stiffness: 300, damping: 16 }}
                 >
                   {copied ? <Check size={22} weight="bold" /> : <Copy size={22} weight="bold" />}
                 </motion.button>
@@ -315,7 +327,7 @@ export default function RegisterPage() {
                 aria-live="polite"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                transition={{ delay: revealAt + 0.6 }}
+                transition={{ delay: 0.6 }}
               >
                 {copied ? "Copied to clipboard" : "Tap the icon to copy"}
               </motion.span>
@@ -324,10 +336,12 @@ export default function RegisterPage() {
                 className="register-next"
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: revealAt + 0.7 }}
+                transition={{ delay: 0.7 }}
               >
                 Now go back to the big screen and type this code to start.
               </motion.p>
+              </>
+              )}
             </div>
           )}
         </motion.div>
