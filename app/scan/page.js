@@ -129,25 +129,99 @@ export default function ScanPage() {
             <div className="scan-ground" aria-hidden="true" />
 
             <motion.div className="scan-board-wrap" {...rise(0.25)}>
-              <div className="scan-board">
-                <div className="scan-board-lamps" aria-hidden="true"><i /><i /><i /></div>
-                <div className="scan-board-face">
-                  <div className="scan-board-brand">
+              <div className="scan-bb">
+                {/* the structure: frame, gooseneck lamps, posts, bracing and concrete footings */}
+                <svg className="scan-bb-art" viewBox="0 0 800 1000" aria-hidden="true" focusable="false">
+                  <defs>
+                    <linearGradient id="bb-steel" x1="0" x2="1" y1="0" y2="0">
+                      <stop offset="0" stopColor="#3b3634" />
+                      <stop offset=".42" stopColor="#9a918c" />
+                      <stop offset=".62" stopColor="#6a625e" />
+                      <stop offset="1" stopColor="#332e2c" />
+                    </linearGradient>
+                    <linearGradient id="bb-frame" x1="0" x2="0" y1="0" y2="1">
+                      <stop offset="0" stopColor="#58504d" />
+                      <stop offset=".08" stopColor="#2d2827" />
+                      <stop offset="1" stopColor="#1d1918" />
+                    </linearGradient>
+                    <linearGradient id="bb-concrete" x1="0" x2="0" y1="0" y2="1">
+                      <stop offset="0" stopColor="#b3aca6" />
+                      <stop offset="1" stopColor="#7d7771" />
+                    </linearGradient>
+                    <radialGradient id="bb-shadow" cx=".5" cy=".5" r=".5">
+                      <stop offset="0" stopColor="#3a0008" stopOpacity=".55" />
+                      <stop offset="1" stopColor="#3a0008" stopOpacity="0" />
+                    </radialGradient>
+                  </defs>
+
+                  <ellipse cx="400" cy="978" rx="400" ry="22" fill="url(#bb-shadow)" />
+
+                  {/* posts with cross bracing */}
+                  <g>
+                    <path d="M290 842 L510 932 M510 842 L290 932" stroke="#463f3c" strokeWidth="9" strokeLinecap="round" />
+                    <rect x="282" y="878" width="236" height="10" fill="#4f4845" />
+                    <rect x="262" y="820" width="44" height="140" fill="url(#bb-steel)" />
+                    <rect x="494" y="820" width="44" height="140" fill="url(#bb-steel)" />
+                    <rect x="262" y="820" width="44" height="140" fill="none" stroke="rgba(0,0,0,.35)" strokeWidth="2" />
+                    <rect x="494" y="820" width="44" height="140" fill="none" stroke="rgba(0,0,0,.35)" strokeWidth="2" />
+                    {[284, 516].map((x) => (
+                      <g key={x}>
+                        <rect x={x - 38} y="952" width="76" height="12" rx="2" fill="#2d2827" />
+                        <circle cx={x - 28} cy="958" r="3.4" fill="#8f8782" />
+                        <circle cx={x + 28} cy="958" r="3.4" fill="#8f8782" />
+                        <path d={`M${x - 56} 964 H${x + 56} L${x + 64} 978 H${x - 64} Z`} fill="url(#bb-concrete)" />
+                      </g>
+                    ))}
+                    {/* brackets from the posts to the frame */}
+                    <path d="M262 822 L206 812 H330 L306 822 Z M494 822 L470 812 H594 L538 822 Z" fill="#2d2827" />
+                  </g>
+
+                  {/* frame */}
+                  <rect x="40" y="95" width="720" height="722" rx="12" fill="url(#bb-frame)" />
+                  <rect x="40" y="95" width="720" height="722" rx="12" fill="none" stroke="rgba(255,255,255,.22)" strokeWidth="2" />
+                  <rect x="40" y="800" width="720" height="22" rx="4" fill="#26211f" />
+                  <rect x="40" y="800" width="720" height="4" fill="rgba(255,255,255,.18)" />
+
+                  {/* gooseneck lamps */}
+                  {[170, 400, 630].map((x) => (
+                    <g key={x}>
+                      <rect x={x - 14} y="86" width="28" height="12" rx="3" fill="#2d2827" />
+                      <path d={`M${x} 88 L${x} 56 Q${x} 18 ${x + 40} 18`} fill="none" stroke="#5b5350" strokeWidth="9" strokeLinecap="round" />
+                      <path d={`M${x + 22} 14 H${x + 84} L${x + 74} 44 H${x + 32} Z`} fill="#3a3432" stroke="#6b625e" strokeWidth="2" />
+                      <rect x={x + 36} y="42" width="34" height="6" rx="3" fill="#fff3cf" />
+                    </g>
+                  ))}
+                </svg>
+
+                <div className="scan-bb-face">
+                  <div className="scan-bb-brand">
                     <img src="/assets/nescafe-wordmark.webp" alt="NESCAFÉ" draggable={false} />
                   </div>
                   <div className="scan-qr">
                     {qr ? <img src={qr} alt="QR code that opens the NESCAFÉ registration page" draggable={false} /> : <span className="sk sk-qr-block" role="status" aria-label="Preparing the QR code" />}
                   </div>
-                  <span className="scan-board-label">SCAN ME</span>
-                  {link && <span className="scan-board-link">{link.replace(/^https?:\/\//, "")}</span>}
+                  <span className="scan-bb-label">SCAN ME</span>
+                  {link && <span className="scan-bb-link">{link.replace(/^https?:\/\//, "")}</span>}
                 </div>
-                <div className="scan-board-posts" aria-hidden="true"><i /><i /></div>
+
+                {/* warm light from the lamps, over the top of the poster only */}
+                <svg className="scan-bb-light" viewBox="0 0 800 1000" aria-hidden="true" focusable="false">
+                  <defs>
+                    <linearGradient id="bb-cone" x1="0" x2="0" y1="0" y2="1">
+                      <stop offset="0" stopColor="#fff1c9" stopOpacity=".5" />
+                      <stop offset="1" stopColor="#fff1c9" stopOpacity="0" />
+                    </linearGradient>
+                  </defs>
+                  {[170, 400, 630].map((x) => (
+                    <polygon key={x} points={`${x + 50},48 ${x - 110},330 ${x + 210},330`} fill="url(#bb-cone)" />
+                  ))}
+                </svg>
               </div>
             </motion.div>
 
             {/* leaning on the left edge of the board */}
             <motion.div className="scan-man-wrap" {...(reduceMotion ? {} : { initial: { opacity: 0 }, animate: { opacity: 1 }, transition: { delay: 0.5, duration: 0.7 } })}>
-              <img className="scan-man" src="/assets/characters/young-man.webp" alt="" draggable={false} />
+              <img className="scan-man" src="/assets/characters/boy.webp" alt="" draggable={false} />
             </motion.div>
           </div>
         </div>
