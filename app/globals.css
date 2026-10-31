@@ -1317,3 +1317,33 @@ img,svg,canvas{-webkit-user-drag:none;user-drag:none}
   .editor-ribbon.ribbon-centered strong{margin-left:0;padding-right:0;font-size:clamp(12px,3.7vw,15px);letter-spacing:.06em;text-align:center}
   .editor-ribbon.ribbon-centered img{right:4%;width:54px;height:42px}
 }
+
+/* ===== Register page (phones first): the woman holds the form; photo and form show together ===== */
+.register-screen{overflow:hidden}
+.reg-scroll{flex:1;min-height:0;overflow-x:hidden;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;display:flex;justify-content:center;align-items:flex-start;padding:0 0 28px;position:relative;z-index:2}
+.reg-stage{--cw:max(min(82vw,440px,calc((100svh - 540px) / .8)),min(82vw,280px));position:relative;width:var(--cw);margin:calc(var(--cw) * .8 + 10px) 0 0;flex:none}
+.reg-stage.is-done{--cw:min(94vw,520px);margin-top:18px}
+.reg-stage .register-card{width:100%;max-width:none;position:relative;z-index:3;padding-left:clamp(16px,5vw,28px);padding-right:clamp(16px,5vw,28px)}
+.reg-stage.is-done .register-card{max-height:none}
+.reg-figure,.reg-figure-skeleton{position:absolute;left:50%;top:calc(var(--cw) * -.8 - 6px);width:calc(var(--cw) * 1.25);transform:translateX(-50%);z-index:1;pointer-events:none}
+.reg-figure img{display:block;width:100%;height:auto;filter:drop-shadow(0 14px 16px rgba(70,0,8,.4));-webkit-user-drag:none}
+/* fists grip the card's top corners: nudge the card up under them */
+.reg-stage .register-card{margin-top:0}
+
+/* skeleton while the photo and the form load */
+.reg-figure-skeleton{height:calc(var(--cw) * .85)}
+.reg-figure-skeleton .sk{position:absolute;background-color:rgba(255,255,255,.18)}
+.sk-head{left:36%;top:4%;width:28%;aspect-ratio:1;border-radius:50%}
+.sk-body{left:30%;top:36%;width:40%;height:62%;border-radius:20px 20px 0 0}
+.sk-arm{top:30%;width:26%;height:12%;border-radius:999px}
+.sk-arm-l{left:4%;transform:rotate(22deg)}
+.sk-arm-r{right:4%;transform:rotate(-22deg)}
+.reg-card-skeleton{display:flex;flex-direction:column;align-items:stretch;gap:14px;padding-top:28px;padding-bottom:28px}
+.reg-card-skeleton .sk{background-color:rgba(235,28,35,.1);background-image:linear-gradient(100deg,transparent 30%,rgba(255,255,255,.9) 50%,transparent 70%);background-size:250% 100%;animation:sk-shimmer 1.6s linear infinite;border-radius:14px}
+.sk-title{align-self:center;width:42%;height:26px}
+.sk-sub{align-self:center;width:78%;height:14px}
+.sk-field{height:48px}
+.sk-btn{align-self:center;width:62%;height:46px;border-radius:24px 4px 16px 4px!important}
+@media(prefers-reduced-motion:reduce){.reg-card-skeleton .sk{animation:none}}
+.reg-figure{height:calc(var(--cw) * .8 + 44px);overflow:hidden}
+.reg-figure{-webkit-mask-image:linear-gradient(180deg,#000 0,#000 calc(100% - 40px),transparent 100%);mask-image:linear-gradient(180deg,#000 0,#000 calc(100% - 40px),transparent 100%)}
