@@ -1311,3 +1311,9 @@ img,svg,canvas{-webkit-user-drag:none;user-drag:none}
   .editor-ribbon.ribbon-centered strong{margin-left:7%;padding-right:0;font-size:clamp(14px,4.2vw,17px);letter-spacing:.07em;text-align:left}
   .editor-ribbon.ribbon-centered img{right:6%;width:72px;height:54px}
 }
+/* phones, no back button: title truly centred, a smaller logo tucked at the right edge */
+@media(max-width:520px){
+  .editor-ribbon.ribbon-centered{justify-content:center}
+  .editor-ribbon.ribbon-centered strong{margin-left:0;padding-right:0;font-size:clamp(12px,3.7vw,15px);letter-spacing:.06em;text-align:center}
+  .editor-ribbon.ribbon-centered img{right:4%;width:54px;height:42px}
+}
