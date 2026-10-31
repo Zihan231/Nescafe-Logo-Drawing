@@ -1290,3 +1290,8 @@ img,svg,canvas{-webkit-user-drag:none;user-drag:none}
 @media(max-width:860px),(max-aspect-ratio:1/1){.scan-billboard-stage{--stage-h:min(56vh,calc(100cqw / 1.12))}}
 @media(max-width:520px){.scan-billboard-stage{--stage-h:min(54svh,calc(100cqw * 1.22))}}
 @media(max-width:520px){.scan-bb-face .scan-qr{height:70%;width:auto}}
+
+/* the boy leans into the board: shoulders pressed against the frame, feet out, with a contact shadow */
+.scan-man-wrap{left:calc(var(--stage-h) * .035);z-index:4}
+.scan-man{transform-origin:50% 100%;transform:rotate(3deg)}
+.scan-board-wrap:before{content:"";position:absolute;left:1%;top:14%;width:7%;height:62%;background:linear-gradient(90deg,rgba(30,0,4,.5),rgba(30,0,4,0));filter:blur(4px);z-index:5;pointer-events:none}

@@ -3,12 +3,11 @@
 import { motion, useReducedMotion } from "framer-motion";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, ArrowRight } from "@phosphor-icons/react";
+import { ArrowLeft } from "@phosphor-icons/react";
 
 const STEPS = [
   { title: "Scan the code", text: "Point your phone camera at the QR code." },
-  { title: "Register on your phone", text: "Add your name and number to get your 4-digit code." },
-  { title: "Enter it here", text: "Come back to this screen and type your code." }
+  { title: "Register on your phone", text: "Add your name and number to get your 4-digit code." }
 ];
 
 // Leaves fall from the top of the screen like leaves off a tree: each drops at its own speed, swings from
@@ -112,16 +111,6 @@ export default function ScanPage() {
               </li>
             ))}
           </ol>
-          <motion.button
-            type="button"
-            className="capture-confirm-btn scan-have-code"
-            onClick={() => router.push("/capture")}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-          >
-            <span>I HAVE MY CODE</span>
-            <ArrowRight weight="bold" size={20} />
-          </motion.button>
         </motion.div>
 
         <div className="scan-stage-col">
@@ -204,18 +193,6 @@ export default function ScanPage() {
                   {link && <span className="scan-bb-link">{link.replace(/^https?:\/\//, "")}</span>}
                 </div>
 
-                {/* warm light from the lamps, over the top of the poster only */}
-                <svg className="scan-bb-light" viewBox="0 0 800 1000" aria-hidden="true" focusable="false">
-                  <defs>
-                    <linearGradient id="bb-cone" x1="0" x2="0" y1="0" y2="1">
-                      <stop offset="0" stopColor="#fff1c9" stopOpacity=".5" />
-                      <stop offset="1" stopColor="#fff1c9" stopOpacity="0" />
-                    </linearGradient>
-                  </defs>
-                  {[170, 400, 630].map((x) => (
-                    <polygon key={x} points={`${x + 50},48 ${x - 110},330 ${x + 210},330`} fill="url(#bb-cone)" />
-                  ))}
-                </svg>
               </div>
             </motion.div>
 
