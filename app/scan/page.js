@@ -125,29 +125,31 @@ export default function ScanPage() {
         </motion.div>
 
         <div className="scan-stage-col">
-        <div className="scan-stage">
+          <div className="scan-stage scan-billboard-stage">
+            <div className="scan-ground" aria-hidden="true" />
 
-          <motion.div className="scan-char-wrap scan-char-left" {...slide(-70, 0.55)}>
-            <img className="scan-char scan-sway-a" src="/assets/characters/influencer.webp" alt="" draggable={false} />
-          </motion.div>
-
-          <motion.div className="scan-pack-wrap" {...rise(0.25)}>
-            <div className="scan-pack">
-              <div className="scan-pack-brand">
-                <img src="/assets/nescafe-wordmark.webp" alt="NESCAFÉ" draggable={false} />
+            <motion.div className="scan-board-wrap" {...rise(0.25)}>
+              <div className="scan-board">
+                <div className="scan-board-lamps" aria-hidden="true"><i /><i /><i /></div>
+                <div className="scan-board-face">
+                  <div className="scan-board-brand">
+                    <img src="/assets/nescafe-wordmark.webp" alt="NESCAFÉ" draggable={false} />
+                  </div>
+                  <div className="scan-qr">
+                    {qr ? <img src={qr} alt="QR code that opens the NESCAFÉ registration page" draggable={false} /> : <span className="sk sk-qr-block" role="status" aria-label="Preparing the QR code" />}
+                  </div>
+                  <span className="scan-board-label">SCAN ME</span>
+                  {link && <span className="scan-board-link">{link.replace(/^https?:\/\//, "")}</span>}
+                </div>
+                <div className="scan-board-posts" aria-hidden="true"><i /><i /></div>
               </div>
-              <div className="scan-qr">
-                {qr ? <img src={qr} alt="QR code that opens the NESCAFÉ registration page" draggable={false} /> : <span className="sk sk-qr-block" role="status" aria-label="Preparing the QR code" />}
-              </div>
-              <span className="scan-pack-label">SCAN ME</span>
-              {link && <span className="scan-pack-link">{link.replace(/^https?:\/\//, "")}</span>}
-            </div>
-          </motion.div>
+            </motion.div>
 
-          <motion.div className="scan-char-wrap scan-char-right" {...slide(70, 0.7)}>
-            <img className="scan-char scan-sway-b" src="/assets/characters/gamer.webp" alt="" draggable={false} />
-          </motion.div>
-        </div>
+            {/* leaning on the left edge of the board */}
+            <motion.div className="scan-man-wrap" {...(reduceMotion ? {} : { initial: { opacity: 0 }, animate: { opacity: 1 }, transition: { delay: 0.5, duration: 0.7 } })}>
+              <img className="scan-man" src="/assets/characters/young-man.webp" alt="" draggable={false} />
+            </motion.div>
+          </div>
         </div>
       </div>
     </motion.main>
