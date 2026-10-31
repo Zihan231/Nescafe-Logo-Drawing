@@ -2,8 +2,6 @@
 
 import { motion, useReducedMotion } from "framer-motion";
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { ArrowLeft } from "@phosphor-icons/react";
 
 const STEPS = [
   { title: "Scan the code", text: "Point your phone camera at the QR code." },
@@ -40,7 +38,6 @@ const LEAVES = (() => {
 // types the code they were given on this screen. The QR code is the hero, printed on a NESCAFÉ pack
 // with two of the characters standing beside it.
 export default function ScanPage() {
-  const router = useRouter();
   const reduceMotion = useReducedMotion();
   const [qr, setQr] = useState(null);
   const [link, setLink] = useState("");
@@ -72,9 +69,7 @@ export default function ScanPage() {
     >
       <header className="editor-head">
         <div className="editor-ribbon">
-          <button className="nav-back" onClick={() => router.push("/capture")} aria-label="Back to the code screen">
-            <ArrowLeft weight="bold" /> <span>BACK</span>
-          </button>
+
           <strong>LET&apos;S MAKE YOUR WORLD</strong>
           <img src="/assets/nescafe-logo-trimmed.png" alt="NESCAFÉ — Make your world" />
         </div>
