@@ -35,7 +35,13 @@ export default function Home() {
         />
         <motion.button
           className="start-btn landing-start"
-          onClick={() => router.push("/register")}
+          onClick={async () => {
+            // A new visitor always starts at the code screen, even if the last visit was left unfinished.
+            try {
+              await fetch("/api/session", { method: "DELETE" });
+            } catch {}
+            router.push("/capture");
+          }}
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
         >

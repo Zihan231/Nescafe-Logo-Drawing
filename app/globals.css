@@ -1123,3 +1123,43 @@ img,svg,canvas{-webkit-user-drag:none;user-drag:none}
 /* Text has only two buttons: rotate and delete sit evenly either side of the stem */
 .sticker-controls.is-text .rotate-handle{left:calc(50% - 18px)}
 .sticker-controls.is-text .delete-handle{left:calc(50% + 18px)}
+
+/* ===== QR page (/scan): the visitor scans with their own phone to register ===== */
+.scan-card{width:min(900px,94vw);display:grid;grid-template-columns:minmax(0,300px) minmax(0,1fr);gap:clamp(20px,4vw,44px);align-items:center;text-align:left;padding:clamp(22px,3.4vh,38px) clamp(22px,4vw,48px)}
+.scan-qr-side{display:flex;flex-direction:column;align-items:center;gap:10px;min-width:0}
+.scan-qr{width:min(100%,280px);aspect-ratio:1;padding:12px;border-radius:24px;background:#fff;border:2px solid rgba(235,28,35,.28);box-shadow:0 12px 30px rgba(162,31,37,.22)}
+.scan-qr img{display:block;width:100%;height:100%;image-rendering:pixelated}
+.scan-scan-label{font:800 11px 'Nescafe Sans','Myriad Pro',Arial,sans-serif;letter-spacing:.2em;color:#EB1C23;text-align:center}
+.scan-link{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:600 11px 'Myriad Pro',Arial,sans-serif;color:#8e5b57}
+.scan-text-side{display:flex;flex-direction:column;align-items:flex-start;gap:12px;min-width:0}
+.scan-text-side .register-title,.scan-text-side .register-lead{text-align:left}
+.scan-steps{list-style:none;margin:4px 0 6px;padding:0;display:flex;flex-direction:column;gap:12px;width:100%}
+.scan-steps li{display:flex;align-items:flex-start;gap:12px}
+.scan-step-number{flex:none;display:grid;place-items:center;width:30px;height:30px;border-radius:50%;background:#EB1C23;color:#fff;font:800 14px 'Nescafe Sans',Arial,sans-serif;box-shadow:0 6px 14px rgba(235,28,35,.32)}
+.scan-step-copy{display:flex;flex-direction:column;gap:2px;color:#5c1115;font:500 14px/1.35 'Myriad Pro',Arial,sans-serif}
+.scan-step-copy strong{font:800 12px 'Nescafe Sans','Myriad Pro',Arial,sans-serif;letter-spacing:.08em;text-transform:uppercase;color:#3b1014}
+.scan-have-code{align-self:flex-start}
+@media(max-width:760px){
+  .scan-card{grid-template-columns:1fr;text-align:center;justify-items:center}
+  .scan-text-side{align-items:center}
+  .scan-text-side .register-title,.scan-text-side .register-lead{text-align:center}
+  .scan-steps{max-width:420px}
+  .scan-have-code{align-self:center}
+}
+/* the phone page has nothing to go back to */
+.nav-back-hidden{visibility:hidden;pointer-events:none}
+.register-next{margin:6px 0 0;max-width:340px;text-align:center;font:700 13px/1.45 'Myriad Pro',Arial,sans-serif;color:#a21f25}
+
+/* Phones: a lighter header so the title clears the logo, and no fullscreen button */
+@media(max-width:520px){
+  .editor-ribbon strong{font-size:clamp(13px,4vw,16px);letter-spacing:.08em;white-space:nowrap}
+  .editor-ribbon .nav-back span{display:none}
+  .editor-ribbon img{width:92px;height:auto}
+  .fullscreen-toggle-btn{display:none}
+}
+.register-next{margin-bottom:44px}
+@media(max-width:520px){
+  .editor-ribbon{justify-content:flex-start}
+  .editor-ribbon strong{margin-left:52px;font-size:12.5px;letter-spacing:.06em}
+  .editor-ribbon img{width:64px;height:48px;right:3%}
+}

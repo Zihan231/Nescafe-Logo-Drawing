@@ -119,7 +119,7 @@ export default function CodeGate({ checking, onVerified }) {
       </div>
       <h1 className="register-title">Enter your code</h1>
       <p className="register-lead">
-        {checking ? "Checking your session..." : "Type or paste the 4-digit code you got when you registered."}
+        {checking ? "Checking your session..." : "Type the 4-digit code you got when you registered on your phone."}
       </p>
 
       <div className="code-boxes" role="group" aria-label="4-digit code" onPaste={handlePaste}>
@@ -163,8 +163,8 @@ export default function CodeGate({ checking, onVerified }) {
         </motion.button>
       </div>
 
-      <button type="button" className="code-gate-link" onClick={() => router.push("/register")}>
-        Don&apos;t have a code yet? Register
+      <button type="button" className="code-gate-link" onClick={() => router.push("/scan")}>
+        Don&apos;t have a code yet? Get one with your phone
       </button>
     </motion.div>
   );

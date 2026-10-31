@@ -154,9 +154,9 @@ export default function RegisterPage() {
 
       <header className="editor-head">
         <div className="editor-ribbon">
-          <button className="nav-back" onClick={() => router.push("/")} aria-label="Back to home page">
+          <span className="nav-back nav-back-hidden" aria-hidden="true">
             <ArrowLeft weight="bold" /> <span>BACK</span>
-          </button>
+          </span>
           <strong>LET&apos;S MAKE YOUR WORLD</strong>
           <img src="/assets/nescafe-logo-trimmed.png" alt="NESCAFÉ — Make your world" />
         </div>
@@ -279,7 +279,7 @@ export default function RegisterPage() {
               >
                 {result.returning
                   ? "This phone number is already registered, so here is your code again."
-                  : "You're registered! Here is your code. Keep it safe, you'll enter it on the next screen."}
+                  : "You're registered! Here is your code. Keep it safe, you'll type it on the big screen."}
               </motion.p>
 
               <CoffeePour code={result.code} playSound={!reduceMotion} />
@@ -322,19 +322,14 @@ export default function RegisterPage() {
                 {copied ? "Copied to clipboard" : "Tap the icon to copy"}
               </motion.span>
 
-              <motion.button
-                type="button"
-                className="capture-confirm-btn"
-                onClick={() => router.push("/capture")}
+              <motion.p
+                className="register-next"
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: revealAt + 0.7 }}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
               >
-                <span>CONTINUE</span>
-                <ArrowRight weight="bold" size={20} />
-              </motion.button>
+                Now go back to the big screen and type this code to start.
+              </motion.p>
             </div>
           )}
         </motion.div>
