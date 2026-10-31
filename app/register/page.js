@@ -3,7 +3,7 @@
 import { motion, useReducedMotion } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, ArrowRight, Check, Copy, SpeakerHigh, SpeakerSlash, WarningCircle } from "@phosphor-icons/react";
+import { ArrowRight, Check, Copy, SpeakerHigh, SpeakerSlash, WarningCircle } from "@phosphor-icons/react";
 import CoffeePour, { REVEAL_AT } from "@/components/CoffeePour";
 import { setMuted, unlockAudio } from "@/lib/coffee-sounds";
 
@@ -153,11 +153,8 @@ export default function RegisterPage() {
       )}
 
       <header className="editor-head">
-        <div className="editor-ribbon">
-          <span className="nav-back nav-back-hidden" aria-hidden="true">
-            <ArrowLeft weight="bold" /> <span>BACK</span>
-          </span>
-          <strong>LET&apos;S MAKE YOUR WORLD</strong>
+        <div className="editor-ribbon ribbon-centered">
+          <strong>MAKE YOUR WORLD</strong>
           <img src="/assets/nescafe-logo-trimmed.png" alt="NESCAFÉ — Make your world" />
         </div>
       </header>

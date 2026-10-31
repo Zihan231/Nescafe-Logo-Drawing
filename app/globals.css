@@ -1299,3 +1299,15 @@ img,svg,canvas{-webkit-user-drag:none;user-drag:none}
 .scan-bb-light{mix-blend-mode:normal;filter:blur(7px);opacity:.55}
 .scan-man-wrap{left:calc(var(--stage-h) * .005)}
 .scan-man{transform:rotate(2deg)}
+
+/* pages with no back button: the title stays centred in the ribbon at every width */
+@media(max-width:520px){
+  .editor-ribbon.ribbon-centered{justify-content:center}
+  .editor-ribbon.ribbon-centered strong{margin-left:0;padding-right:40px;font-size:clamp(13px,4vw,16px)}
+}
+/* phones, no back button: title on the left, logo on the right, so the two don't crowd the middle */
+@media(max-width:520px){
+  .editor-ribbon.ribbon-centered{justify-content:flex-start}
+  .editor-ribbon.ribbon-centered strong{margin-left:7%;padding-right:0;font-size:clamp(14px,4.2vw,17px);letter-spacing:.07em;text-align:left}
+  .editor-ribbon.ribbon-centered img{right:6%;width:72px;height:54px}
+}
