@@ -11,15 +11,31 @@ const STEPS = [
   { title: "Enter it here", text: "Come back to this screen and type your code." }
 ];
 
-// Little leaves that drift up behind the pack: [colour, left %, size px, seconds, delay seconds]
-const LEAVES = [
-  ["yellow", 6, 34, 11, 0],
-  ["white", 20, 26, 13, 3.2],
-  ["blue", 33, 30, 12, 6.1],
-  ["red", 66, 28, 14, 1.4],
-  ["yellow", 80, 32, 12, 4.8],
-  ["white", 92, 24, 15, 7.5]
-];
+// Leaves fall from the top of the screen like leaves off a tree: each drops at its own speed, swings from
+// side to side and tumbles as it goes. Seeded, so the server and the browser draw the same ones.
+const LEAVES = (() => {
+  let seed = 23;
+  const rand = () => {
+    seed = (seed * 16807) % 2147483647;
+    return seed / 2147483647;
+  };
+  const colours = ["yellow", "white", "red", "blue", "yellow", "white"];
+  return Array.from({ length: 26 }, (_, index) => {
+    const fall = 9 + rand() * 9; // seconds to fall the whole screen
+    return {
+      colour: colours[index % colours.length],
+      left: rand() * 98,
+      size: 20 + rand() * 26,
+      fall,
+      delay: -rand() * fall, // negative, so the screen is already full of falling leaves on arrival
+      sway: 22 + rand() * 60, // how far it swings sideways (px)
+      swayTime: 2.8 + rand() * 3.4,
+      tumbleTime: 2.2 + rand() * 3,
+      tilt: 25 + rand() * 45,
+      flip: rand() > 0.35
+    };
+  });
+})();
 
 // Shown from the code screen: the visitor scans this with their own phone, registers there, and then
 // types the code they were given on this screen. The QR code is the hero, printed on a NESCAFÉ pack
@@ -65,6 +81,22 @@ export default function ScanPage() {
         </div>
       </header>
 
+      <div className="scan-leaves" aria-hidden="true">
+        {LEAVES.map((leaf, index) => (
+          <span key={index} className="scan-leaf-fall" style={{ left: `${leaf.left.toFixed(1)}%`, animationDuration: `${leaf.fall.toFixed(2)}s`, animationDelay: `${leaf.delay.toFixed(2)}s` }}>
+            <span className="scan-leaf-sway" style={{ "--amp": `${leaf.sway.toFixed(0)}px`, animationDuration: `${leaf.swayTime.toFixed(2)}s` }}>
+              <img
+                className={`scan-leaf-tumble${leaf.flip ? " is-flipping" : ""}`}
+                src={`/assets/leaves/leaf-${leaf.colour}.webp`}
+                alt=""
+                draggable={false}
+                style={{ width: leaf.size, "--tilt": `${leaf.tilt.toFixed(0)}deg`, animationDuration: `${leaf.tumbleTime.toFixed(2)}s` }}
+              />
+            </span>
+          </span>
+        ))}
+      </div>
+
       <div className="scan-layout">
         <motion.div className="scan-info" initial={reduceMotion ? false : { opacity: 0, x: -24 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.15, duration: 0.6 }}>
           <h1 className="scan-title">Get your code</h1>
@@ -94,11 +126,6 @@ export default function ScanPage() {
 
         <div className="scan-stage-col">
         <div className="scan-stage">
-          <div className="scan-leaves" aria-hidden="true">
-            {LEAVES.map(([colour, left, size, seconds, delay], index) => (
-              <img key={index} className="scan-leaf" src={`/assets/leaves/leaf-${colour}.webp`} alt="" draggable={false} style={{ left: `${left}%`, width: size, animationDuration: `${seconds}s`, animationDelay: `${delay}s` }} />
-            ))}
-          </div>
 
           <motion.div className="scan-char-wrap scan-char-left" {...slide(-70, 0.55)}>
             <img className="scan-char scan-sway-a" src="/assets/characters/influencer.webp" alt="" draggable={false} />

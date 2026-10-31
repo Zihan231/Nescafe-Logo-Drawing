@@ -1235,3 +1235,19 @@ img,svg,canvas{-webkit-user-drag:none;user-drag:none}
 @media(max-width:520px){
   .scan-stage{--stage-h:min(52svh,calc(100cqw * 1.3))}
 }
+
+/* Falling leaves over the whole QR page (they pass behind the pack, the text and the header) */
+.scan-leaves{position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:1}
+.scan-leaf-fall{position:absolute;top:-8vh;animation:scan-fall linear infinite}
+.scan-leaf-sway{display:block;perspective:260px;animation:scan-swing ease-in-out infinite alternate}
+.scan-leaf-tumble{display:block;height:auto;transform-origin:50% 50%;filter:drop-shadow(0 4px 5px rgba(70,0,8,.3));animation:scan-tumble ease-in-out infinite alternate;-webkit-user-drag:none}
+.scan-leaf-tumble.is-flipping{animation-name:scan-tumble-flip}
+@keyframes scan-fall{from{transform:translateY(0)}to{transform:translateY(118vh)}}
+@keyframes scan-swing{from{transform:translateX(calc(var(--amp) * -1))}to{transform:translateX(var(--amp))}}
+@keyframes scan-tumble{from{transform:rotate(calc(var(--tilt) * -1))}to{transform:rotate(var(--tilt))}}
+@keyframes scan-tumble-flip{from{transform:rotate(calc(var(--tilt) * -1)) rotateY(0deg)}to{transform:rotate(var(--tilt)) rotateY(180deg)}}
+@media(prefers-reduced-motion:reduce){
+  .scan-leaf-fall,.scan-leaf-sway,.scan-leaf-tumble{animation:none}
+  .scan-leaf-fall{top:calc(var(--i, 0) * 1%)}
+  .scan-leaves{opacity:.35}
+}
