@@ -1336,3 +1336,12 @@ img,svg,canvas{-webkit-user-drag:none;user-drag:none}
 .register-success{padding-bottom:0}
 
 .code-gate-note{margin:2px 0 0;max-width:320px;text-align:center;font:700 12px/1.4 'Myriad Pro',Arial,sans-serif;letter-spacing:.04em;color:#a21f25}
+
+/* ===== On-screen keyboard: full-screen pages follow the visible height, and form pages can scroll ===== */
+.capture-screen{height:var(--app-h,100dvh);max-height:var(--app-h,100dvh)}
+.capture-container{overflow-y:auto;overscroll-behavior:contain;align-items:safe center;-webkit-overflow-scrolling:touch}
+html.keyboard-open .capture-container{align-items:flex-start;padding-top:6px}
+html.keyboard-open .capture-screen .editor-head{display:none}
+html.keyboard-open .capture-screen{height:var(--app-h);max-height:var(--app-h)}
+/* editor: while typing text, the tools card slides to the top of the visible area, above the keyboard */
+@media(min-width:601px){html.keyboard-open .editor .toolbox{top:calc(8px / var(--ui-zoom,1));max-height:calc((var(--app-h) - 16px) / var(--ui-zoom,1));overflow-y:auto;z-index:60}}
