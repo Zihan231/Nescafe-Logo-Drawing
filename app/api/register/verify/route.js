@@ -6,7 +6,7 @@ import { findUserByCode, markVerified } from "@/lib/user-store";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-// A 4-digit code is easy to guess, so wrong attempts are counted per IP address.
+// A short code can be guessed, so wrong attempts are counted per IP address.
 const FAILURE_WINDOW_MS = 5 * 60_000;
 const FAILURE_MAX = 15;
 const noStore = { "Cache-Control": "no-store" };
@@ -24,9 +24,9 @@ export async function POST(request) {
     return NextResponse.json({ error: "Invalid request" }, { status: 400, headers: noStore });
   }
 
-  const code = typeof body?.code === "string" ? body.code.trim() : "";
-  if (!/^\d{4}$/.test(code)) {
-    return NextResponse.json({ error: "Enter the 4-digit code." }, { status: 400, headers: noStore });
+  const code = typeof body?.code === "string" ? body.code.trim().toLowerCase() : "";
+  if (!/^[0-9a-z]{4}$/.test(code)) {
+    return NextResponse.json({ error: "Enter the 4-character code." }, { status: 400, headers: noStore });
   }
 
   try {

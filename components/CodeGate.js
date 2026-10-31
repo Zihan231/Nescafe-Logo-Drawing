@@ -21,7 +21,7 @@ export default function CodeGate({ checking, onVerified }) {
   }, [checking]);
 
   const fill = (text, startAt = 0) => {
-    const incoming = text.replace(/\D/g, "").slice(0, LENGTH - startAt).split("");
+    const incoming = text.toLowerCase().replace(/[^0-9a-z]/g, "").slice(0, LENGTH - startAt).split("");
     if (!incoming.length) return;
     setError("");
     setDigits((current) => {
@@ -33,7 +33,7 @@ export default function CodeGate({ checking, onVerified }) {
   };
 
   const handleChange = (index, event) => {
-    const value = event.target.value.replace(/\D/g, "");
+    const value = event.target.value.toLowerCase().replace(/[^0-9a-z]/g, "");
     if (!value) {
       setDigits((current) => current.map((digit, i) => (i === index ? "" : digit)));
       return;
@@ -68,7 +68,7 @@ export default function CodeGate({ checking, onVerified }) {
   const pasteFromClipboard = async () => {
     try {
       const text = await navigator.clipboard.readText();
-      if (!text.replace(/\D/g, "")) {
+      if (!text.toLowerCase().replace(/[^0-9a-z]/g, "")) {
         setError("There is no code on your clipboard yet.");
         return;
       }
@@ -117,23 +117,25 @@ export default function CodeGate({ checking, onVerified }) {
       </div>
       <h1 className="register-title">Enter your code</h1>
       <p className="register-lead">
-        {checking ? "Checking your session..." : "Type the 4-digit code you got when you registered on your phone."}
+        {checking ? "Checking your session..." : "Type the 4-character code you got when you registered on your phone."}
       </p>
 
-      <div className="code-boxes" role="group" aria-label="4-digit code" onPaste={handlePaste}>
+      <div className="code-boxes" role="group" aria-label="4-character code" onPaste={handlePaste}>
         {digits.map((digit, index) => (
           <input
             key={index}
             ref={(element) => { boxes.current[index] = element; }}
             className={`code-box${error ? " has-error" : ""}`}
             type="text"
-            inputMode="numeric"
-            pattern="[0-9]*"
+            inputMode="text"
+            autoCapitalize="none"
+            autoCorrect="off"
+            spellCheck={false}
             autoComplete={index === 0 ? "one-time-code" : "off"}
             maxLength={LENGTH}
             value={digit}
             disabled={checking || busy}
-            aria-label={`Digit ${index + 1} of ${LENGTH}`}
+            aria-label={`Character ${index + 1} of ${LENGTH}`}
             aria-invalid={Boolean(error)}
             onChange={(event) => handleChange(index, event)}
             onKeyDown={(event) => handleKeyDown(index, event)}

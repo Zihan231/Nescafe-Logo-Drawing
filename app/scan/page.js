@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 
 const STEPS = [
   { title: "Scan the code", text: "Point your phone camera at the QR code." },
-  { title: "Register on your phone", text: "Add your name and number to get your 4-digit code." }
+  { title: "Register on your phone", text: "Add your name and number to get your 4-character code." }
 ];
 
 // Leaves fall from the top of the screen like leaves off a tree: each drops at its own speed, swings from

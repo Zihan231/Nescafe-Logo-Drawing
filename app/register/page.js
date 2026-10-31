@@ -277,7 +277,7 @@ export default function RegisterPage() {
               >
                 {result.returning
                   ? "This phone number is already registered, so here is your code again."
-                  : "You're registered! Here is your code. Keep it safe, you'll type it on the big screen."}
+                  : "You're registered! Here is your code. Keep it safe, you'll use it on the tab."}
               </motion.p>
 
               <CoffeePour code={result.code} playSound={!reduceMotion} />
@@ -328,7 +328,7 @@ export default function RegisterPage() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.7 }}
               >
-                Now go back to the big screen and type this code to start.
+                Remember this code and use it to draw on the tab.
               </motion.p>
               </>
               )}
