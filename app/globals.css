@@ -1295,3 +1295,7 @@ img,svg,canvas{-webkit-user-drag:none;user-drag:none}
 .scan-man-wrap{left:calc(var(--stage-h) * .035);z-index:4}
 .scan-man{transform-origin:50% 100%;transform:rotate(3deg)}
 .scan-board-wrap:before{content:"";position:absolute;left:1%;top:14%;width:7%;height:62%;background:linear-gradient(90deg,rgba(30,0,4,.5),rgba(30,0,4,0));filter:blur(4px);z-index:5;pointer-events:none}
+
+.scan-bb-light{mix-blend-mode:normal;filter:blur(7px);opacity:.55}
+.scan-man-wrap{left:calc(var(--stage-h) * .005)}
+.scan-man{transform:rotate(2deg)}

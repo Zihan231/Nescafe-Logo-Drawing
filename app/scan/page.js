@@ -193,6 +193,27 @@ export default function ScanPage() {
                   {link && <span className="scan-bb-link">{link.replace(/^https?:\/\//, "")}</span>}
                 </div>
 
+                {/* a soft beam from each lamp, fading out well before the middle of the poster */}
+                <svg className="scan-bb-light" viewBox="0 0 800 1000" aria-hidden="true" focusable="false">
+                  <defs>
+                    <linearGradient id="bb-beam" x1="0" x2="0" y1="0" y2="1">
+                      <stop offset="0" stopColor="#fff4d2" stopOpacity=".75" />
+                      <stop offset=".5" stopColor="#fff4d2" stopOpacity=".22" />
+                      <stop offset="1" stopColor="#fff4d2" stopOpacity="0" />
+                    </linearGradient>
+                    <radialGradient id="bb-bulb" cx=".5" cy=".5" r=".5">
+                      <stop offset="0" stopColor="#fff8e0" stopOpacity=".95" />
+                      <stop offset="1" stopColor="#fff8e0" stopOpacity="0" />
+                    </radialGradient>
+                  </defs>
+                  {[170, 400, 630].map((x) => (
+                    <g key={x}>
+                      <circle cx={x + 53} cy="48" r="26" fill="url(#bb-bulb)" />
+                      <polygon points={`${x + 40},48 ${x + 66},48 ${x + 150},290 ${x - 44},290`} fill="url(#bb-beam)" />
+                    </g>
+                  ))}
+                </svg>
+
               </div>
             </motion.div>
 
