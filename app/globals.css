@@ -1331,3 +1331,6 @@ img,svg,canvas{-webkit-user-drag:none;user-drag:none}
 
 /* the sound switch sits in the corner of the screen, outside the code card */
 .cp-sound-btn.cp-sound-corner{position:fixed;right:max(14px,env(safe-area-inset-right));bottom:max(14px,env(safe-area-inset-bottom));top:auto;left:auto;z-index:20;box-shadow:0 8px 20px rgba(60,0,8,.35)}
+/* the sound button moved out of the card, so no room is kept for it at the bottom */
+.register-next{margin-bottom:0}
+.register-success{padding-bottom:0}
