@@ -1334,3 +1334,5 @@ img,svg,canvas{-webkit-user-drag:none;user-drag:none}
 /* the sound button moved out of the card, so no room is kept for it at the bottom */
 .register-next{margin-bottom:0}
 .register-success{padding-bottom:0}
+
+.code-gate-note{margin:2px 0 0;max-width:320px;text-align:center;font:700 12px/1.4 'Myriad Pro',Arial,sans-serif;letter-spacing:.04em;color:#a21f25}

@@ -2,7 +2,6 @@
 
 import { motion } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
 import { ClipboardText, LockKey, ShieldCheck } from "@phosphor-icons/react";
 
 const LENGTH = 4;
@@ -11,7 +10,6 @@ const EMPTY = Array(LENGTH).fill("");
 // Four boxes for the registration code. Typing moves on by itself, and a pasted code
 // (from the Paste button or Ctrl+V in any box) fills all four boxes at once.
 export default function CodeGate({ checking, onVerified }) {
-  const router = useRouter();
   const [digits, setDigits] = useState(EMPTY);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
@@ -163,9 +161,7 @@ export default function CodeGate({ checking, onVerified }) {
         </motion.button>
       </div>
 
-      <button type="button" className="code-gate-link" onClick={() => router.push("/scan")}>
-        Don&apos;t have a code yet? Get one with your phone
-      </button>
+      <p className="code-gate-note">Scan the QR code to register and get your code.</p>
     </motion.div>
   );
 }
