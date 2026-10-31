@@ -42,23 +42,6 @@ export default function RegisterPage() {
   const [confetti, setConfetti] = useState([]);
   const [soundOn, setSoundOn] = useState(true);
   const reduceMotion = useReducedMotion();
-  // The photo and the form appear together: until the artwork and the fonts are ready, both show as skeletons.
-  const [ready, setReady] = useState(false);
-  useEffect(() => {
-    let alive = true;
-    const done = () => alive && setReady(true);
-    const image = new Image();
-    const loaded = new Promise((resolve) => {
-      image.onload = resolve;
-      image.onerror = resolve;
-      image.src = "/assets/characters/woman.webp";
-    });
-    const fonts = document.fonts?.ready || Promise.resolve();
-    Promise.race([Promise.all([loaded, fonts]), new Promise((resolve) => setTimeout(resolve, 6000))]).then(done);
-    return () => {
-      alive = false;
-    };
-  }, []);
   const revealAt = reduceMotion ? 0 : REVEAL_AT; // when the pouring is done and the code shows
 
   // Confetti celebrates a new registration the moment the code appears, then clears itself.
@@ -177,205 +160,177 @@ export default function RegisterPage() {
       </header>
 
       <div className="reg-scroll">
-        <div className={`reg-stage${result ? " is-done" : ""}`}>
-          {!ready ? (
-            <>
-              <div className="reg-figure-skeleton" aria-hidden="true">
-                <span className="sk sk-head" />
-                <span className="sk sk-arm sk-arm-l" />
-                <span className="sk sk-arm sk-arm-r" />
-                <span className="sk sk-body" />
+        <div className="reg-stage">
+        <motion.div
+          className="capture-card register-card"
+          initial={{ scale: 0.95, opacity: 0, y: 16 }}
+          animate={{ scale: 1, opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+        >
+          {!result ? (
+            <form className="register-form" onSubmit={handleSubmit} noValidate>
+              <h1 className="register-title">Register</h1>
+              <p className="register-lead">Tell us who you are and we&apos;ll give you a code to start.</p>
+
+              <div className="capture-name-block">
+                <label htmlFor="register-name" className="capture-label">
+                  <span>YOUR NAME <span className="capture-required-mark" aria-hidden="true">*</span></span>
+                </label>
+                <input
+                  id="register-name"
+                  type="text"
+                  className="capture-name-input"
+                  placeholder="Enter your name"
+                  value={name}
+                  maxLength={40}
+                  autoComplete="name"
+                  aria-invalid={Boolean(errors.name)}
+                  aria-describedby={errors.name ? "register-name-error" : undefined}
+                  onChange={(event) => setName(event.target.value)}
+                />
+                {errors.name && <span className="capture-field-error" id="register-name-error" role="alert">{errors.name}</span>}
               </div>
-              <div className="capture-card register-card reg-card-skeleton" role="status" aria-label="Loading the form">
-                <span className="sk sk-line sk-title" />
-                <span className="sk sk-line sk-sub" />
-                <span className="sk sk-field" />
-                <span className="sk sk-field" />
-                <span className="sk sk-field" />
-                <span className="sk sk-btn" />
+
+              <div className="capture-name-block">
+                <label htmlFor="register-phone" className="capture-label">
+                  <span>PHONE NUMBER <span className="capture-required-mark" aria-hidden="true">*</span></span>
+                </label>
+                <input
+                  id="register-phone"
+                  type="tel"
+                  inputMode="tel"
+                  className="capture-name-input"
+                  placeholder="e.g. 01712 345678"
+                  value={phone}
+                  maxLength={20}
+                  autoComplete="tel"
+                  aria-invalid={Boolean(errors.phone)}
+                  aria-describedby={errors.phone ? "register-phone-error" : undefined}
+                  onChange={(event) => setPhone(event.target.value)}
+                />
+                {errors.phone && <span className="capture-field-error" id="register-phone-error" role="alert">{errors.phone}</span>}
               </div>
-            </>
+
+              <div className="capture-name-block">
+                <label htmlFor="register-email" className="capture-label">
+                  <span>EMAIL <span className="register-optional">(optional)</span></span>
+                </label>
+                <input
+                  id="register-email"
+                  type="email"
+                  inputMode="email"
+                  className="capture-name-input"
+                  placeholder="you@example.com"
+                  value={email}
+                  maxLength={190}
+                  autoComplete="email"
+                  aria-invalid={Boolean(errors.email)}
+                  aria-describedby={errors.email ? "register-email-error" : undefined}
+                  onChange={(event) => setEmail(event.target.value)}
+                />
+                {errors.email && <span className="capture-field-error" id="register-email-error" role="alert">{errors.email}</span>}
+              </div>
+
+              {errors.form && (
+                <div className="register-form-error" role="alert">
+                  <WarningCircle size={18} weight="bold" aria-hidden="true" />
+                  <span>{errors.form}</span>
+                </div>
+              )}
+
+              <motion.button
+                type="submit"
+                className="capture-confirm-btn"
+                disabled={submitting}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <span>{submitting ? "REGISTERING..." : "GET MY CODE"}</span>
+                <ArrowRight weight="bold" size={20} />
+              </motion.button>
+            </form>
           ) : (
-            <>
-              {!result && (
-                <div className="reg-figure" aria-hidden="true">
-                  <motion.div initial={reduceMotion ? false : { opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}>
-                    <img src="/assets/characters/woman.webp" alt="" draggable={false} decoding="async" />
-                  </motion.div>
-                </div>
-              )}
-            <motion.div
-              className="capture-card register-card"
-              initial={{ scale: 0.95, opacity: 0, y: 16 }}
-              animate={{ scale: 1, opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-            >
-              {!result ? (
-                <form className="register-form" onSubmit={handleSubmit} noValidate>
-                  <h1 className="register-title">Register</h1>
-                  <p className="register-lead">Tell us who you are and we&apos;ll give you a code to start.</p>
+            <div className="register-success" role="status">
+              <button
+                type="button"
+                className="cp-sound-btn"
+                onClick={toggleSound}
+                aria-pressed={soundOn}
+                aria-label={soundOn ? "Mute sound" : "Turn sound on"}
+                title={soundOn ? "Mute sound" : "Turn sound on"}
+              >
+                {soundOn ? <SpeakerHigh size={20} weight="bold" /> : <SpeakerSlash size={20} weight="bold" />}
+              </button>
+              <motion.h1
+                className="register-title congrats-title"
+                initial={{ opacity: 0, y: 14, scale: 0.9 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                transition={{ delay: 0.15, type: "spring", stiffness: 220, damping: 16 }}
+              >
+                {result.returning ? "Welcome back" : "Congratulations"}, {result.name.split(" ")[0]}!
+              </motion.h1>
+              <motion.p
+                className="register-lead"
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.4 }}
+              >
+                {result.returning
+                  ? "This phone number is already registered, so here is your code again."
+                  : "You're registered! Here is your code. Keep it safe, you'll type it on the big screen."}
+              </motion.p>
 
-                  <div className="capture-name-block">
-                    <label htmlFor="register-name" className="capture-label">
-                      <span>YOUR NAME <span className="capture-required-mark" aria-hidden="true">*</span></span>
-                    </label>
-                    <input
-                      id="register-name"
-                      type="text"
-                      className="capture-name-input"
-                      placeholder="Enter your name"
-                      value={name}
-                      maxLength={40}
-                      autoComplete="name"
-                      aria-invalid={Boolean(errors.name)}
-                      aria-describedby={errors.name ? "register-name-error" : undefined}
-                      onChange={(event) => setName(event.target.value)}
-                    />
-                    {errors.name && <span className="capture-field-error" id="register-name-error" role="alert">{errors.name}</span>}
-                  </div>
+              <CoffeePour code={result.code} playSound={!reduceMotion} />
 
-                  <div className="capture-name-block">
-                    <label htmlFor="register-phone" className="capture-label">
-                      <span>PHONE NUMBER <span className="capture-required-mark" aria-hidden="true">*</span></span>
-                    </label>
-                    <input
-                      id="register-phone"
-                      type="tel"
-                      inputMode="tel"
-                      className="capture-name-input"
-                      placeholder="e.g. 01712 345678"
-                      value={phone}
-                      maxLength={20}
-                      autoComplete="tel"
-                      aria-invalid={Boolean(errors.phone)}
-                      aria-describedby={errors.phone ? "register-phone-error" : undefined}
-                      onChange={(event) => setPhone(event.target.value)}
-                    />
-                    {errors.phone && <span className="capture-field-error" id="register-phone-error" role="alert">{errors.phone}</span>}
-                  </div>
-
-                  <div className="capture-name-block">
-                    <label htmlFor="register-email" className="capture-label">
-                      <span>EMAIL <span className="register-optional">(optional)</span></span>
-                    </label>
-                    <input
-                      id="register-email"
-                      type="email"
-                      inputMode="email"
-                      className="capture-name-input"
-                      placeholder="you@example.com"
-                      value={email}
-                      maxLength={190}
-                      autoComplete="email"
-                      aria-invalid={Boolean(errors.email)}
-                      aria-describedby={errors.email ? "register-email-error" : undefined}
-                      onChange={(event) => setEmail(event.target.value)}
-                    />
-                    {errors.email && <span className="capture-field-error" id="register-email-error" role="alert">{errors.email}</span>}
-                  </div>
-
-                  {errors.form && (
-                    <div className="register-form-error" role="alert">
-                      <WarningCircle size={18} weight="bold" aria-hidden="true" />
-                      <span>{errors.form}</span>
-                    </div>
-                  )}
-
-                  <motion.button
-                    type="submit"
-                    className="capture-confirm-btn"
-                    disabled={submitting}
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                  >
-                    <span>{submitting ? "REGISTERING..." : "GET MY CODE"}</span>
-                    <ArrowRight weight="bold" size={20} />
-                  </motion.button>
-                </form>
-              ) : (
-                <div className="register-success" role="status">
-                  <button
-                    type="button"
-                    className="cp-sound-btn"
-                    onClick={toggleSound}
-                    aria-pressed={soundOn}
-                    aria-label={soundOn ? "Mute sound" : "Turn sound on"}
-                    title={soundOn ? "Mute sound" : "Turn sound on"}
-                  >
-                    {soundOn ? <SpeakerHigh size={20} weight="bold" /> : <SpeakerSlash size={20} weight="bold" />}
-                  </button>
-                  <motion.h1
-                    className="register-title congrats-title"
-                    initial={{ opacity: 0, y: 14, scale: 0.9 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    transition={{ delay: 0.15, type: "spring", stiffness: 220, damping: 16 }}
-                  >
-                    {result.returning ? "Welcome back" : "Congratulations"}, {result.name.split(" ")[0]}!
-                  </motion.h1>
-                  <motion.p
-                    className="register-lead"
-                    initial={{ opacity: 0, y: 8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.4 }}
-                  >
-                    {result.returning
-                      ? "This phone number is already registered, so here is your code again."
-                      : "You're registered! Here is your code. Keep it safe, you'll type it on the big screen."}
-                  </motion.p>
-
-                  <CoffeePour code={result.code} playSound={!reduceMotion} />
-
-                  <div className="code-display">
-                    <div className="code-digits" aria-label={`Your code is ${result.code.split("").join(" ")}`}>
-                      {result.code.split("").map((digit, index) => (
-                        <motion.span
-                          key={index}
-                          className="code-digit"
-                          aria-hidden="true"
-                          initial={{ opacity: 0, y: 22, scale: 0.5 }}
-                          animate={{ opacity: 1, y: 0, scale: 1 }}
-                          transition={{ delay: revealAt + index * 0.12, type: "spring", stiffness: 320, damping: 14 }}
-                        >
-                          {digit}
-                        </motion.span>
-                      ))}
-                    </div>
-                    <motion.button
-                      type="button"
-                      className={`code-copy-btn${copied ? " is-copied" : ""}`}
-                      onClick={handleCopy}
-                      aria-label={copied ? "Code copied" : "Copy code"}
-                      title={copied ? "Copied!" : "Copy code"}
-                      initial={{ opacity: 0, scale: 0.6 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ delay: revealAt + 0.5, type: "spring", stiffness: 300, damping: 16 }}
+              <div className="code-display">
+                <div className="code-digits" aria-label={`Your code is ${result.code.split("").join(" ")}`}>
+                  {result.code.split("").map((digit, index) => (
+                    <motion.span
+                      key={index}
+                      className="code-digit"
+                      aria-hidden="true"
+                      initial={{ opacity: 0, y: 22, scale: 0.5 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      transition={{ delay: revealAt + index * 0.12, type: "spring", stiffness: 320, damping: 14 }}
                     >
-                      {copied ? <Check size={22} weight="bold" /> : <Copy size={22} weight="bold" />}
-                    </motion.button>
-                  </div>
-                  <motion.span
-                    className="code-copy-note"
-                    aria-live="polite"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: revealAt + 0.6 }}
-                  >
-                    {copied ? "Copied to clipboard" : "Tap the icon to copy"}
-                  </motion.span>
-
-                  <motion.p
-                    className="register-next"
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: revealAt + 0.7 }}
-                  >
-                    Now go back to the big screen and type this code to start.
-                  </motion.p>
+                      {digit}
+                    </motion.span>
+                  ))}
                 </div>
-              )}
-            </motion.div>
-            </>
+                <motion.button
+                  type="button"
+                  className={`code-copy-btn${copied ? " is-copied" : ""}`}
+                  onClick={handleCopy}
+                  aria-label={copied ? "Code copied" : "Copy code"}
+                  title={copied ? "Copied!" : "Copy code"}
+                  initial={{ opacity: 0, scale: 0.6 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: revealAt + 0.5, type: "spring", stiffness: 300, damping: 16 }}
+                >
+                  {copied ? <Check size={22} weight="bold" /> : <Copy size={22} weight="bold" />}
+                </motion.button>
+              </div>
+              <motion.span
+                className="code-copy-note"
+                aria-live="polite"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: revealAt + 0.6 }}
+              >
+                {copied ? "Copied to clipboard" : "Tap the icon to copy"}
+              </motion.span>
+
+              <motion.p
+                className="register-next"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: revealAt + 0.7 }}
+              >
+                Now go back to the big screen and type this code to start.
+              </motion.p>
+            </div>
           )}
+        </motion.div>
         </div>
       </div>
     </motion.main>
