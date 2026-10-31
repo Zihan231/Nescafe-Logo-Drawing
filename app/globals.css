@@ -1328,3 +1328,6 @@ img,svg,canvas{-webkit-user-drag:none;user-drag:none}
   .reg-stage .register-lead{display:none}
   .reg-stage .capture-name-input{height:42px;font-size:16px}
 }
+
+/* the sound switch sits in the corner of the screen, outside the code card */
+.cp-sound-btn.cp-sound-corner{position:fixed;right:max(14px,env(safe-area-inset-right));bottom:max(14px,env(safe-area-inset-bottom));top:auto;left:auto;z-index:20;box-shadow:0 8px 20px rgba(60,0,8,.35)}

@@ -261,16 +261,6 @@ export default function RegisterPage() {
             </form>
           ) : (
             <div className="register-success" role="status">
-              <button
-                type="button"
-                className="cp-sound-btn"
-                onClick={toggleSound}
-                aria-pressed={soundOn}
-                aria-label={soundOn ? "Mute sound" : "Turn sound on"}
-                title={soundOn ? "Mute sound" : "Turn sound on"}
-              >
-                {soundOn ? <SpeakerHigh size={20} weight="bold" /> : <SpeakerSlash size={20} weight="bold" />}
-              </button>
               <motion.h1
                 className="register-title congrats-title"
                 initial={{ opacity: 0, y: 14, scale: 0.9 }}
@@ -347,6 +337,18 @@ export default function RegisterPage() {
         </motion.div>
         </div>
       </div>
+      {result && (
+        <button
+          type="button"
+          className="cp-sound-btn cp-sound-corner"
+          onClick={toggleSound}
+          aria-pressed={soundOn}
+          aria-label={soundOn ? "Mute sound" : "Turn sound on"}
+          title={soundOn ? "Mute sound" : "Turn sound on"}
+        >
+          {soundOn ? <SpeakerHigh size={20} weight="bold" /> : <SpeakerSlash size={20} weight="bold" />}
+        </button>
+      )}
     </motion.main>
   );
 }
