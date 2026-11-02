@@ -25,7 +25,7 @@ model User {
   name       String    @db.VarChar(40)
   phone      String    @unique @db.VarChar(20)
   email      String?   @db.VarChar(190)
-  code       String    @unique @db.Char(4)
+  code       String    @unique @db.Char(5)
   createdAt  DateTime  @default(now()) @map("created_at")
   verifiedAt DateTime? @map("verified_at")
 

@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { playCoffeeScene } from "@/lib/coffee-sounds";
 
-// A NESCAFÉ glass mug fills with coffee while the four code digits drop in with the pour.
+// A NESCAFÉ glass mug fills with coffee while the five code digits drop in with the pour.
 // Everything is timed from the same numbers below (seconds), so the landing height of each
 // digit matches the rising coffee level exactly. The CSS lives in app/globals.css (.cp-*).
 
@@ -14,10 +14,10 @@ const FILL_TIME = 2.6;
 const FIRST_DROP = 1.0;
 const DROP_GAP = 0.62;
 const FALL_TIME = 0.48;
-export const POUR_END = FIRST_DROP + 3 * DROP_GAP + FALL_TIME + 0.12; // when the stream stops
+export const POUR_END = FIRST_DROP + 4 * DROP_GAP + FALL_TIME + 0.12; // when the stream stops
 export const REVEAL_AT = POUR_END + 0.35; // when the finished code can appear
 
-const DIGIT_X = [120, 140, 160, 180];
+const DIGIT_X = [114, 132, 150, 168, 186];
 // Same curve as the CSS (ease-out cubic), so we can know where the surface is at any moment.
 const levelAt = (t) => {
   const p = Math.min(1, Math.max(0, (t - FILL_DELAY) / FILL_TIME));
@@ -77,12 +77,12 @@ export default function CoffeePour({ code, playSound = false }) {
     return playCoffeeScene({
       pourStart: 0.6,
       pourEnd: POUR_END,
-      landings: [0, 1, 2, 3].map((i) => FIRST_DROP + i * DROP_GAP + FALL_TIME),
+      landings: [0, 1, 2, 3, 4].map((i) => FIRST_DROP + i * DROP_GAP + FALL_TIME),
       chimeAt: REVEAL_AT + 0.15
     });
   }, [playSound]);
 
-  const digits = String(code).split("").slice(0, 4);
+  const digits = String(code).split("").slice(0, 5);
 
   return (
     <div className="cp-wrap" aria-hidden="true" style={{ "--pour-end": `${POUR_END}s`, "--reveal": `${REVEAL_AT}s`, "--fill-delay": `${FILL_DELAY}s`, "--fill-time": `${FILL_TIME}s` }}>

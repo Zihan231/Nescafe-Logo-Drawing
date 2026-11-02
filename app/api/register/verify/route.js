@@ -24,9 +24,9 @@ export async function POST(request) {
     return NextResponse.json({ error: "Invalid request" }, { status: 400, headers: noStore });
   }
 
-  const code = typeof body?.code === "string" ? body.code.trim().toLowerCase() : "";
-  if (!/^[0-9a-z]{4}$/.test(code)) {
-    return NextResponse.json({ error: "Enter the 4-character code." }, { status: 400, headers: noStore });
+  const code = typeof body?.code === "string" ? body.code.trim() : "";
+  if (!/^\d{5}$/.test(code)) {
+    return NextResponse.json({ error: "Enter the 5-digit code." }, { status: 400, headers: noStore });
   }
 
   try {
