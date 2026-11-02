@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { clientIp, isLimited, recordHit } from "@/lib/rate-limit";
-import { createUser, normalizePhone } from "@/lib/user-store";
+import { createUser, findUserByPhone, normalizePhone } from "@/lib/user-store";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -9,6 +9,7 @@ const REGISTER_WINDOW_MS = 60_000;
 const REGISTER_MAX = 30;
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 const noStore = { "Cache-Control": "no-store" };
+const sameName = (a, b) => String(a).trim().replace(/\s+/g, " ").toLowerCase() === String(b).trim().replace(/\s+/g, " ").toLowerCase();
 
 export async function POST(request) {
   const limitKey = `register:${clientIp(request)}`;
@@ -36,6 +37,15 @@ export async function POST(request) {
   }
 
   try {
+    // A registered number only gets its code back when the name matches too, so typing someone
+    // else's number is not enough to see (or change) their code.
+    const known = await findUserByPhone(phone);
+    if (known && !sameName(known.name, name)) {
+      return NextResponse.json(
+        { error: "This number is already registered. Enter the same name you used before to see your code.", field: "phone" },
+        { status: 409, headers: noStore }
+      );
+    }
     const { user, created } = await createUser({ name, phone, email: emailInput || null });
     return NextResponse.json(
       { code: user.code, name: user.name, returning: !created },
