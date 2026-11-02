@@ -41,7 +41,8 @@ export async function POST(request) {
     }
 
     const id = crypto.randomUUID();
-    const filename = `${id}.png`;
+    // The prefix marks it as a throwaway photo: the design upload deletes it once the design is sent.
+    const filename = `selfie-${id}.png`;
     const directory = uploadDirectory();
     await fs.mkdir(directory, { recursive: true });
     const filePath = path.join(directory, filename);

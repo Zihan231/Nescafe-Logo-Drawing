@@ -1565,6 +1565,9 @@ export default function EditPage() {
       } catch {
         // The design still goes out; only the take-home card is skipped.
       }
+      // The server deletes the captured photo once the design is saved; it is baked into the design now.
+      const selfieUrl = sessionStorage.getItem("nescafe_user_photo");
+      if (selfieUrl?.startsWith("/uploads/selfie-")) formData.append("selfie", selfieUrl);
       const response = await fetch("/api/designs", {
         method: "POST",
         body: formData

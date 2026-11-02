@@ -108,6 +108,13 @@ export async function POST(request) {
 
     const design = await createDesign({ id, imageUrl: `/uploads/${filename}`, width: dimensions.width, height: dimensions.height, fileSize: buffer.length, profession });
     publishDesign(design);
+
+    // The captured photo is part of the design now, so the original is not kept. Only files named
+    // selfie-<uuid>.png can be removed this way, never a design.
+    const selfie = formData.get("selfie");
+    const selfieName = typeof selfie === "string" ? selfie.match(/^\/uploads\/(selfie-[0-9a-f-]{36}\.png)$/i)?.[1] : null;
+    if (selfieName) await fs.unlink(path.join(directory, selfieName)).catch(() => {});
+
     return NextResponse.json(design, { status: 201, headers: { "Cache-Control": "no-store" } });
   } catch (error) {
     if (storedPath) await fs.unlink(storedPath).catch(() => {});
