@@ -102,7 +102,7 @@ export default function CodeGate({ checking, onVerified }) {
       </div>
       <h1 className="register-title">Enter Your MYW ID</h1>
       <p className="register-lead">
-        {checking ? "Checking your session..." : "Type the 5-digit code you got when you registered on your phone."}
+        {checking ? "Checking your session..." : "Type the 5-digit code you got while registration"}
       </p>
 
       <div className="code-boxes" role="group" aria-label="5-digit code" onPaste={handlePaste}>
