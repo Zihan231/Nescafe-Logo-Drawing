@@ -70,7 +70,7 @@ export default function ScanPage() {
       <header className="editor-head">
         <div className="editor-ribbon ribbon-centered">
 
-          <strong>LET&apos;S MAKE YOUR WORLD</strong>
+          <strong>MAKE YOUR WORLD</strong>
           <img src="/assets/nescafe-logo-trimmed.png" alt="NESCAFÉ — Make your world" />
         </div>
       </header>
