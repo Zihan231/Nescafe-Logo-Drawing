@@ -166,7 +166,7 @@ export default function RegisterPage() {
           {!result ? (
             <form className="register-form" onSubmit={handleSubmit} noValidate>
               <h1 className="register-title">Register</h1>
-              <p className="register-lead">Register and get your code</p>
+              <p className="register-lead">Register and get your code.</p>
 
               <div className="capture-name-block">
                 <label htmlFor="register-name" className="capture-label">
@@ -303,7 +303,7 @@ export default function RegisterPage() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.7 }}
               >
-                Remember this code and use it to the next activities
+                Remember this code and use it for the next activities.
               </motion.p>
 
               <motion.button
