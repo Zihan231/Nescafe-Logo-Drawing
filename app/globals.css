@@ -1088,6 +1088,8 @@ img,svg,canvas{-webkit-user-drag:none;user-drag:none}
 
 /* Doodles can sit under the drawing: a second sticker layer below the canvas (z-index 2) */
 .placed-stickers.placed-under{z-index:1}
+/* An earlier drawing kept as its own layer between doodles: stacked in list order, never touchable */
+.canvas-shell .placed-stickers canvas.drawing-layer{z-index:auto;pointer-events:none;touch-action:auto;-webkit-mask-image:none;mask-image:none}
 /* While a drawing tool is on, strokes go through doodles; the Select tool brings them back */
 .placed-stickers.is-drawing .placed-sticker{pointer-events:none}
 .sticker-controls-layer.is-drawing .sticker-controls{pointer-events:none}

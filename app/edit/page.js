@@ -62,6 +62,48 @@ function restoreSnapshot(canvas, snapshot) {
   ctx.drawImage(snapshot, 0, 0);
   ctx.restore();
 }
+
+// Whether anything is drawn on the canvas, checked on a small copy so it stays quick on a tablet.
+function hasInk(canvas) {
+  const probe = document.createElement("canvas");
+  probe.width = 190;
+  probe.height = 140;
+  const ctx = probe.getContext("2d", { willReadFrequently: true });
+  ctx.drawImage(canvas, 0, 0, probe.width, probe.height);
+  const { data } = ctx.getImageData(0, 0, probe.width, probe.height);
+  for (let i = 3; i < data.length; i += 4) if (data[i]) return true;
+  return false;
+}
+
+// An earlier drawing that now sits under a doodle: its own canvas, kept in step with item.src
+// (src changes on undo/redo; while erasing, the canvas is drawn on directly and src catches up afterwards).
+function DrawingLayer({ item, layers }) {
+  const ref = useRef(null);
+  useEffect(() => {
+    const canvas = ref.current;
+    const entry = layers.get(item.id) || {};
+    if (entry.pending) restoreSnapshot(canvas, entry.pending);
+    layers.set(item.id, { canvas, src: entry.pending ? item.src : null, token: 0 });
+    return () => {
+      if (layers.get(item.id)?.canvas === canvas) layers.delete(item.id);
+    };
+  }, [item.id, layers]);
+  useEffect(() => {
+    const entry = layers.get(item.id);
+    if (!entry || !item.src || entry.src === item.src) return;
+    entry.src = item.src;
+    const token = ++entry.token;
+    const img = new Image();
+    img.onload = () => {
+      if (entry.token !== token || !entry.canvas) return;
+      const ctx = context2d(entry.canvas);
+      ctx.clearRect(0, 0, W, H);
+      ctx.drawImage(img, 0, 0, W, H);
+    };
+    img.src = item.src;
+  }, [item.id, item.src, layers]);
+  return <canvas ref={ref} className="drawing-layer" width={W * RENDER_SCALE} height={H * RENDER_SCALE} aria-hidden="true" />;
+}
 const LEAF_X = (W - LEAF_SIZE) / 2;
 const INK_COLORS = ["#ed1c2e", "#ffca28", "#52d19b", "#72b7ff", "#ffffff", "#140508"];
 const LEAF_COLORS = ["#ffffff", "#f5ebdf", "#ebd5bf", "#fce2db", "#e2ece9", "#dae8f5", "#EB1C23", "#5b1317", "#241215", "#1e3a5f"];
@@ -252,11 +294,12 @@ const applyPoint = (m, pt) => ({
   y: m.cy + m.c * (pt.x - m.cx) + m.d * (pt.y - m.cy)
 });
 
-function DrawingCanvas({ canvasRef, color, tool, brush, size, shape, shapeFill, getCopies, onHistory, abortRef, onTap, onStrokeStart }) {
+function DrawingCanvas({ canvasRef, color, tool, brush, size, shape, shapeFill, getCopies, onHistory, abortRef, onTap, onStrokeStart, onStrokeAbort, getEraseLayers }) {
   const drawing = useRef(false);
   const strokeAnnounced = useRef(false);
   const downAt = useRef(null); // where and when the pointer went down, to tell a tap from a stroke
   const before = useRef(null); // canvas as it was when a touch stroke began, so a pinch can take it back
+  const eraseLayers = useRef([]); // earlier drawing layers the eraser also works on, with their snapshots
   const last = useRef(null);
   const origin = useRef(null);
   const path = useRef([]);
@@ -382,7 +425,25 @@ function DrawingCanvas({ canvasRef, color, tool, brush, size, shape, shapeFill, 
       drawWholePath(ctx, WHOLE_PATH_BRUSHES[activeBrush]);
       return;
     }
-    copies.current.forEach((m) => drawSegmentOnce(ctx, applyPoint(m, from), applyPoint(m, to), m));
+    const targets = [ctx, ...eraseLayers.current.map((layer) => context2d(layer.canvas))];
+    targets.forEach((target) => copies.current.forEach((m) => drawSegmentOnce(target, applyPoint(m, from), applyPoint(m, to), m)));
+  };
+
+  // Puts the earlier drawing layers back as they were when the eraser stroke began.
+  const restoreEraseLayers = () => {
+    eraseLayers.current.forEach((layer) => restoreSnapshot(layer.canvas, layer.before));
+    eraseLayers.current = [];
+  };
+
+  // Draws the stroke so far again, after the canvas under it was emptied.
+  const redrawStroke = () => {
+    if (tool === "shape") {
+      drawShape();
+      return;
+    }
+    const points = path.current;
+    drawSegment(points[0], points[0]);
+    if (!usesWholePath) for (let i = 1; i < points.length; i++) drawSegment(points[i - 1], points[i]);
   };
 
   // Shapes are previewed live: restore the canvas, then draw the shape (and its mirrors).
@@ -430,19 +491,25 @@ function DrawingCanvas({ canvasRef, color, tool, brush, size, shape, shapeFill, 
       if (!drawing.current) return;
       drawing.current = false;
       base.current = null;
+      if (strokeAnnounced.current) onStrokeAbort?.();
       if (before.current) restoreSnapshot(canvasRef.current, before.current);
       before.current = null;
+      restoreEraseLayers();
     };
   }
 
   const draw = (event) => {
     if (!drawing.current) return;
-    // The stroke has really started (not a tap): doodles under it go beneath the drawing, so it shows on top of them.
+    // The stroke has really started (not a tap): it goes on top of the doodles that are there. When the
+    // parent moved the earlier drawing to its own layer (the canvas is now empty), start the stroke again.
     if (!strokeAnnounced.current) {
       const down = downAt.current;
       if (down && Math.hypot(event.clientX - down.x, event.clientY - down.y) < 10) return drawStroke(event);
       strokeAnnounced.current = true;
-      onStrokeStart?.();
+      if (onStrokeStart?.(before.current)) {
+        if (base.current) base.current = snapshotCanvas(canvasRef.current);
+        redrawStroke();
+      }
     }
     drawStroke(event);
   };
@@ -474,6 +541,9 @@ function DrawingCanvas({ canvasRef, color, tool, brush, size, shape, shapeFill, 
         downAt.current = { x: e.clientX, y: e.clientY, time: performance.now() };
         drawing.current = true;
         copies.current = getCopies();
+        eraseLayers.current = tool === "eraser"
+          ? (getEraseLayers?.() || []).map((canvas) => ({ canvas, before: snapshotCanvas(canvas) }))
+          : [];
         const p = point(e);
         last.current = p;
         origin.current = p;
@@ -494,15 +564,23 @@ function DrawingCanvas({ canvasRef, color, tool, brush, size, shape, shapeFill, 
           if (isTap && before.current && onTap?.(e.clientX, e.clientY)) {
             restoreSnapshot(canvasRef.current, before.current);
             before.current = null;
+            restoreEraseLayers();
             return;
           }
           before.current = null;
-          onHistory();
+          const erased = eraseLayers.current.map((layer) => layer.canvas);
+          eraseLayers.current = [];
+          onHistory(erased);
         }
       }}
       onPointerCancel={() => {
         drawing.current = false;
         base.current = null;
+        if (eraseLayers.current.length) {
+          const erased = eraseLayers.current.map((layer) => layer.canvas);
+          eraseLayers.current = [];
+          onHistory(erased);
+        }
       }}
     />
   );
@@ -901,15 +979,43 @@ export default function EditPage() {
   stickersRef.current = placedStickers;
   leafColorRef.current = leafColor;
 
+  // Earlier drawings that sit under a doodle each get a layer of their own (kind "drawing" in the sticker
+  // list). drawingLayersRef holds their canvases by id; dirtyLayersRef lists the ones whose pixels changed
+  // (new, merged into or erased) and still have to be written back into item.src for undo and saving.
+  const drawingLayersRef = useRef(new Map());
+  const dirtyLayersRef = useRef(new Set());
+  const pushedUnderRef = useRef(false); // a sticker update that belongs to the stroke's own undo step
+
   // One history entry = drawing + doodles/text + leaf color. `canvasChanged` is true after a stroke or clear.
   const commit = useCallback((canvasChanged = false) => {
     clearTimeout(commitTimerRef.current);
     commitTimerRef.current = null;
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const stickers = stickersRef.current;
+    let stickers = stickersRef.current;
+    const dirty = dirtyLayersRef.current;
+    if (dirty.size) {
+      stickers = stickers.flatMap((item) => {
+        if (item.kind !== "drawing" || !dirty.has(item.id)) return [item];
+        const entry = drawingLayersRef.current.get(item.id);
+        const source = entry?.canvas || entry?.pending; // pending: the layer is not on screen yet
+        if (!source) return [item];
+        dirty.delete(item.id);
+        if (!hasInk(source)) return []; // erased away completely
+        const src = source.toDataURL();
+        if (entry.canvas) entry.src = src;
+        return [{ ...item, src }];
+      });
+      dirty.forEach((id) => { if (!stickers.some((item) => item.id === id)) dirty.delete(id); });
+      pushedUnderRef.current = true;
+      stickersRef.current = stickers;
+      setPlacedStickers(stickers);
+    }
     const leaf = leafColorRef.current;
-    const key = JSON.stringify([stickers, leaf]);
+    // Long image data is shortened in the key; the key only has to change when the content does.
+    const key = JSON.stringify([stickers, leaf], (name, value) => (
+      name === "src" && typeof value === "string" && value.length > 512 ? `${value.length}:${value.slice(-96)}` : value
+    ));
     const history = historyRef.current;
     const current = history.stack[history.index];
     if (current && current.key === key && !canvasChanged) return;
@@ -990,15 +1096,83 @@ export default function EditPage() {
 
   // Strokes land on top of the doodles and photos that are already there. Text stays above the drawing, and
   // anything the user deliberately brought forward past the drawing ("pinned") is left alone.
-  const pushedUnderRef = useRef(false);
-  const pushItemsUnderDrawing = () => {
+  // The doodles go under the drawing canvas; what was drawn before them (`drawnBefore`, the canvas when the
+  // stroke began) moves to a drawing layer of its own beneath them, so the order stays: earlier drawing,
+  // doodles, new drawing. Returns true when the canvas was emptied, so the stroke is drawn again on it.
+  const strokeUndoRef = useRef(null);
+  const MAX_DRAWING_LAYERS = 12; // each layer is a full-size canvas, so a tablet's memory sets a limit
+  const pushItemsUnderDrawing = (drawnBefore) => {
+    strokeUndoRef.current = null;
+    if (tool === "eraser") return false;
     const movable = (item) => item.kind !== "text" && !item.under && !item.pinned;
     const items = stickersRef.current;
-    if (!items.some(movable)) return;
-    const next = items.map((item) => (movable(item) ? { ...item, under: true } : item));
+    if (!items.some(movable)) return false;
+    const canvas = canvasRef.current;
+    const pushed = items.map((item) => (movable(item) ? { ...item, under: true } : item));
+    // What was already under the drawing stays lowest; the doodles going under now sit above it (and above
+    // the new drawing layer, if one is made), in their current order.
+    const reordered = (layer) => [...items.filter((item) => item.under), ...(layer ? [layer] : []), ...pushed.filter((_, i) => !items[i].under)];
+    let next = reordered(null);
+    let emptied = false;
+    const layerCount = items.filter((item) => item.kind === "drawing").length;
+    if (drawnBefore && layerCount < MAX_DRAWING_LAYERS && hasInk(drawnBefore)) {
+      const stack = layerStack(items);
+      const below = stack[stack.indexOf(null) - 1];
+      const belowEntry = below?.kind === "drawing" ? drawingLayersRef.current.get(below.id) : null;
+      if (belowEntry?.canvas) {
+        // nothing between it and the drawing: add to that layer instead of starting another
+        strokeUndoRef.current = { items, merged: below.id, before: snapshotCanvas(belowEntry.canvas) };
+        context2d(belowEntry.canvas).drawImage(drawnBefore, 0, 0, W, H);
+        dirtyLayersRef.current.add(below.id);
+      } else {
+        const id = `drawing-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+        strokeUndoRef.current = { items, created: id };
+        drawingLayersRef.current.set(id, { pending: drawnBefore });
+        dirtyLayersRef.current.add(id);
+        next = reordered({ id, kind: "drawing", label: "Drawing", src: null, x: W / 2, y: H / 2, w: W, h: H, rotation: 0, under: true });
+      }
+      context2d(canvas).clearRect(0, 0, W, H);
+      emptied = true;
+    } else {
+      strokeUndoRef.current = { items };
+    }
     pushedUnderRef.current = true; // part of the stroke's own undo step, not a separate one
     stickersRef.current = next;
     setPlacedStickers(next);
+    return emptied;
+  };
+
+  // A pinch took the stroke back: undo what its start did to the layers.
+  const undoStrokeStart = () => {
+    const undo = strokeUndoRef.current;
+    strokeUndoRef.current = null;
+    if (!undo) return;
+    if (undo.merged) {
+      const entry = drawingLayersRef.current.get(undo.merged);
+      if (entry?.canvas) restoreSnapshot(entry.canvas, undo.before);
+      dirtyLayersRef.current.delete(undo.merged);
+    } else if (undo.created) {
+      dirtyLayersRef.current.delete(undo.created);
+      if (!drawingLayersRef.current.get(undo.created)?.canvas) drawingLayersRef.current.delete(undo.created);
+    }
+    stickersRef.current = undo.items;
+    setPlacedStickers(undo.items);
+  };
+
+  // The eraser works on the earlier drawing layers too.
+  const getEraseLayers = () => stickersRef.current
+    .filter((item) => item.kind === "drawing")
+    .map((item) => drawingLayersRef.current.get(item.id)?.canvas)
+    .filter(Boolean);
+
+  const finishStroke = (erasedLayers = []) => {
+    if (erasedLayers.length) {
+      drawingLayersRef.current.forEach((entry, id) => {
+        if (erasedLayers.includes(entry.canvas)) dirtyLayersRef.current.add(id);
+      });
+    }
+    strokeUndoRef.current = null;
+    commit(true);
   };
 
   // Layers, bottom to top: doodles under the drawing, the drawing itself, doodles over the drawing.
@@ -1492,9 +1666,11 @@ export default function EditPage() {
     outputCtx.globalCompositeOperation = "destination-in";
     outputCtx.drawImage(mask, LEAF_X, 0, LEAF_SIZE, LEAF_SIZE);
     outputCtx.globalCompositeOperation = "source-over";
-    const stickerImages = await Promise.all(placedStickers.map((item) => (
-      item.kind === "text" ? document.fonts.load(fontSpec(item.font, item.fontSize), item.text) : loadStickerImage(item.src, item.alpha)
-    )));
+    const stickerImages = await Promise.all(placedStickers.map((item) => {
+      if (item.kind === "text") return document.fonts.load(fontSpec(item.font, item.fontSize), item.text);
+      if (item.kind === "drawing") return drawingLayersRef.current.get(item.id)?.canvas || loadStickerImage(item.src, true);
+      return loadStickerImage(item.src, item.alpha);
+    }));
     const drawItems = (wanted) => {
       placedStickers.forEach((item, index) => {
         if (Boolean(item.under) !== wanted) return;
@@ -1635,7 +1811,7 @@ export default function EditPage() {
     const rect = canvasRef.current.getBoundingClientRect();
     const x = ((clientX - rect.left) * W) / rect.width;
     const y = ((clientY - rect.top) * H) / rect.height;
-    const items = stickersRef.current;
+    const items = stickersRef.current.filter((item) => item.kind !== "drawing");
     const topDown = [...items.filter((item) => !item.under).reverse(), ...items.filter((item) => item.under).reverse()];
     const hit = topDown.find((item) => {
       const angle = ((item.rotation || 0) * Math.PI) / 180;
@@ -1651,7 +1827,9 @@ export default function EditPage() {
     return true;
   };
 
-  const renderPlacedSticker = (sticker) => (
+  const renderPlacedSticker = (sticker) => sticker.kind === "drawing" ? (
+                <DrawingLayer key={sticker.id} item={sticker} layers={drawingLayersRef.current} />
+              ) : (
                 <div
                   key={sticker.id}
                   className={`placed-sticker${selectedStickerId === sticker.id ? " selected" : ""}`}
@@ -1708,7 +1886,7 @@ export default function EditPage() {
           <div ref={canvasShellRef} className="canvas-shell" onPointerDownCapture={(event) => {if (!event.target.closest?.(".placed-sticker, .sticker-controls, button")) setSelectedStickerId(null)}}>
             <img ref={leafRef} className="leaf-mask-source" src="/assets/nescafe-leaf.png" alt="" />
             <div className="leaf-image" style={{ backgroundColor: leafColor }} role="img" aria-label="NESCAFÉ leaf drawing canvas" />
-            <DrawingCanvas canvasRef={canvasRef} color={color} tool={tool} brush={brush} size={size} shape={shape} shapeFill={shapeFill} getCopies={getCopies} onHistory={() => commit(true)} abortRef={abortStrokeRef} onTap={selectStickerAt} onStrokeStart={pushItemsUnderDrawing} />
+            <DrawingCanvas canvasRef={canvasRef} color={color} tool={tool} brush={brush} size={size} shape={shape} shapeFill={shapeFill} getCopies={getCopies} onHistory={finishStroke} abortRef={abortStrokeRef} onTap={selectStickerAt} onStrokeStart={pushItemsUnderDrawing} onStrokeAbort={undoStrokeStart} getEraseLayers={getEraseLayers} />
             <div className={`placed-stickers placed-under${tool === "none" ? "" : " is-drawing"}`} style={{ "--selection-color": transformColors.outline, "--selection-ink": transformColors.ink }}>
               {placedStickers.filter((sticker) => sticker.under).map(renderPlacedSticker)}
             </div>
@@ -2017,11 +2195,11 @@ export default function EditPage() {
           )}
           {toolTab === "layers" && (
             <div className="layer-panel">
-              <p className="tool-hint">Top of the list is in front. Strokes you draw live in the Drawing row.</p>
+              <p className="tool-hint">Top of the list is in front. Strokes you draw go in the top Drawing row; drawing over a doodle starts a new one.</p>
               <div className="layer-list" role="list">
                 {[...layerStack(placedStickers)].reverse().map((item, row, rows) => (
-                  item === null ? (
-                    <div key="drawing" className="layer-row layer-row-drawing" role="listitem">
+                  item === null || item.kind === "drawing" ? (
+                    <div key={item?.id || "drawing"} className="layer-row layer-row-drawing" role="listitem">
                       <span className="layer-thumb"><PaintBrush weight="bold" size={14} /></span>
                       <span className="layer-name">Drawing</span>
                     </div>
