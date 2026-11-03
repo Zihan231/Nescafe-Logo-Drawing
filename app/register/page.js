@@ -260,6 +260,15 @@ export default function RegisterPage() {
 
               {codeShown && (
               <>
+              <div className="code-block">
+              <motion.span
+                className="code-label"
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
+              >
+                Your MYW ID:
+              </motion.span>
               <div className="code-display">
                 <div className="code-digits" aria-label={`Your code is ${result.code.split("").join(" ")}`}>
                   {result.code.split("").map((digit, index) => (
@@ -275,6 +284,7 @@ export default function RegisterPage() {
                     </motion.span>
                   ))}
                 </div>
+              </div>
               </div>
 
               <motion.p
