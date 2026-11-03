@@ -17,11 +17,18 @@ export default function CodeGate({ checking, onVerified }) {
   const [busy, setBusy] = useState(false);
   const boxes = useRef([]);
   const activeRef = useRef(0); // the box the keypad types into
+  const restartRef = useRef(false); // a wrong code was entered: start again from the first box
   const code = digits.join("");
 
   useEffect(() => {
     if (!checking) boxes.current[0]?.focus();
   }, [checking]);
+
+  useEffect(() => {
+    if (busy || !restartRef.current) return;
+    restartRef.current = false;
+    boxes.current[0]?.focus();
+  }, [busy]);
 
   const fill = (text, startAt = 0) => {
     const incoming = text.replace(/\D/g, "").slice(0, LENGTH - startAt).split("");
@@ -103,7 +110,8 @@ export default function CodeGate({ checking, onVerified }) {
       }
       setError(data.error || "That code isn't right. Check it and try again.");
       setDigits(EMPTY);
-      boxes.current[0]?.focus();
+      activeRef.current = 0;
+      restartRef.current = true; // the boxes are disabled while checking: focus the first one once they're back
     } catch {
       setError("We couldn't reach the server. Please try again.");
     } finally {
