@@ -100,7 +100,7 @@ export default function CodeGate({ checking, onVerified }) {
       <div className="code-gate-icon" aria-hidden="true">
         {checking ? <ShieldCheck size={30} weight="duotone" /> : <LockKey size={30} weight="duotone" />}
       </div>
-      <h1 className="register-title">Enter your code</h1>
+      <h1 className="register-title">Enter Your MYW ID</h1>
       <p className="register-lead">
         {checking ? "Checking your session..." : "Type the 5-digit code you got when you registered on your phone."}
       </p>
