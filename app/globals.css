@@ -848,10 +848,6 @@
 .code-display{display:flex;align-items:center;justify-content:center;gap:14px;margin-top:4px}
 .code-digits{display:flex;gap:10px}
 .code-digit{width:clamp(48px,12.5vw,60px);height:clamp(62px,15vw,76px);display:grid;place-items:center;border-radius:16px;background:#fff7f7;border:1.5px solid rgba(162,31,37,.28);box-shadow:inset 0 2px 6px rgba(162,31,37,.05);font:700 clamp(30px,8vw,40px)/1 'Nescafe Sans',Arial,sans-serif;color:#a21f25}
-.code-copy-btn{width:46px;height:46px;display:grid;place-items:center;flex:none;border:1.5px solid rgba(162,31,37,.3);border-radius:14px;background:#fff0f0;color:#a21f25;cursor:pointer;transition:background .2s ease,border-color .2s ease,color .2s ease,transform .15s ease}
-.code-copy-btn:hover{background:#f9dddd;border-color:#a21f25;transform:translateY(-1px)}
-.code-copy-btn.is-copied{background:#e6f6ec;border-color:#2f9e5f;color:#1f7a47}
-.code-copy-note{min-height:16px;font:600 11px 'Myriad Pro',Arial,sans-serif;letter-spacing:.06em;color:#94676b}
 .code-gate-icon{width:58px;height:58px;display:grid;place-items:center;border-radius:50%;background:#fff0f0;color:#a21f25}
 .code-boxes{display:flex;gap:10px;justify-content:center;margin:4px 0 2px}
 .code-box{width:clamp(48px,12.5vw,60px);height:clamp(62px,15vw,76px);text-align:center;font:700 clamp(28px,7vw,36px) 'Nescafe Sans',Arial,sans-serif;color:#3b1014;background:#fff7f7;border:1.5px solid rgba(162,31,37,.28);border-radius:16px;outline:none;caret-color:#EB1C23;transition:border-color .2s ease,box-shadow .2s ease,background .2s ease}

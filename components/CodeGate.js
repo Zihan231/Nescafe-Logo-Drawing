@@ -2,13 +2,13 @@
 
 import { motion } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
-import { ClipboardText, LockKey, ShieldCheck } from "@phosphor-icons/react";
+import { LockKey, ShieldCheck } from "@phosphor-icons/react";
 
 const LENGTH = 5;
 const EMPTY = Array(LENGTH).fill("");
 
 // Five boxes for the registration code. Typing moves on by itself, and a pasted code
-// (from the Paste button or Ctrl+V in any box) fills all five boxes at once.
+// (Ctrl+V in any box) fills all five boxes at once.
 export default function CodeGate({ checking, onVerified }) {
   const [digits, setDigits] = useState(EMPTY);
   const [error, setError] = useState("");
@@ -63,21 +63,6 @@ export default function CodeGate({ checking, onVerified }) {
     const text = event.clipboardData.getData("text");
     setDigits(EMPTY);
     fill(text, 0);
-  };
-
-  const pasteFromClipboard = async () => {
-    try {
-      const text = await navigator.clipboard.readText();
-      if (!text.replace(/\D/g, "")) {
-        setError("There is no code on your clipboard yet.");
-        return;
-      }
-      setDigits(EMPTY);
-      fill(text, 0);
-    } catch {
-      setError("Your browser blocked clipboard access. Click a box and press Ctrl+V instead.");
-      boxes.current[0]?.focus();
-    }
   };
 
   const submit = async () => {
@@ -147,10 +132,6 @@ export default function CodeGate({ checking, onVerified }) {
       {error && <span className="capture-field-error code-gate-error" role="alert">{error}</span>}
 
       <div className="capture-btn-group">
-        <button type="button" className="capture-secondary-btn" onClick={pasteFromClipboard} disabled={checking || busy}>
-          <ClipboardText weight="bold" size={18} />
-          <span>PASTE</span>
-        </button>
         <motion.button
           type="button"
           className="capture-confirm-btn"

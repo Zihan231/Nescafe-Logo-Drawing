@@ -1,9 +1,9 @@
 "use client";
 
 import { motion, useReducedMotion } from "framer-motion";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowRight, Check, Copy, SpeakerHigh, SpeakerSlash, WarningCircle } from "@phosphor-icons/react";
+import { ArrowRight, SpeakerHigh, SpeakerSlash, WarningCircle } from "@phosphor-icons/react";
 import CoffeePour, { REVEAL_AT } from "@/components/CoffeePour";
 import { setMuted, unlockAudio } from "@/lib/coffee-sounds";
 
@@ -37,13 +37,11 @@ export default function RegisterPage() {
   const [errors, setErrors] = useState(EMPTY_ERRORS);
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState(null); // { code, name, returning }
-  const [copied, setCopied] = useState(false);
-  const copyTimer = useRef(null);
   const [confetti, setConfetti] = useState([]);
   const [soundOn, setSoundOn] = useState(true);
   const reduceMotion = useReducedMotion();
   const revealAt = reduceMotion ? 0 : REVEAL_AT; // when the pouring is done and the code shows
-  // The code, copy button and note only exist once the pour is done, so they take no (empty) room before that.
+  // The code and note only exist once the pour is done, so they take no (empty) room before that.
   const [codeShown, setCodeShown] = useState(false);
   useEffect(() => {
     if (!result) {
@@ -118,28 +116,6 @@ export default function RegisterPage() {
     } finally {
       setSubmitting(false);
     }
-  };
-
-  const handleCopy = async () => {
-    if (!result) return;
-    let ok = false;
-    try {
-      await navigator.clipboard.writeText(result.code);
-      ok = true;
-    } catch {
-      const area = document.createElement("textarea");
-      area.value = result.code;
-      area.style.position = "fixed";
-      area.style.opacity = "0";
-      document.body.appendChild(area);
-      area.select();
-      try { ok = document.execCommand("copy"); } catch {}
-      area.remove();
-    }
-    if (!ok) return;
-    setCopied(true);
-    clearTimeout(copyTimer.current);
-    copyTimer.current = setTimeout(() => setCopied(false), 1800);
   };
 
   return (
@@ -299,28 +275,7 @@ export default function RegisterPage() {
                     </motion.span>
                   ))}
                 </div>
-                <motion.button
-                  type="button"
-                  className={`code-copy-btn${copied ? " is-copied" : ""}`}
-                  onClick={handleCopy}
-                  aria-label={copied ? "Code copied" : "Copy code"}
-                  title={copied ? "Copied!" : "Copy code"}
-                  initial={{ opacity: 0, scale: 0.6 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: 0.5, type: "spring", stiffness: 300, damping: 16 }}
-                >
-                  {copied ? <Check size={22} weight="bold" /> : <Copy size={22} weight="bold" />}
-                </motion.button>
               </div>
-              <motion.span
-                className="code-copy-note"
-                aria-live="polite"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.6 }}
-              >
-                {copied ? "Copied to clipboard" : "Tap the icon to copy"}
-              </motion.span>
 
               <motion.p
                 className="register-next"
