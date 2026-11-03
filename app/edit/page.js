@@ -67,7 +67,7 @@ const INK_COLORS = ["#ed1c2e", "#ffca28", "#52d19b", "#72b7ff", "#ffffff", "#140
 const LEAF_COLORS = ["#ffffff", "#f5ebdf", "#ebd5bf", "#fce2db", "#e2ece9", "#dae8f5", "#EB1C23", "#5b1317", "#241215", "#1e3a5f"];
 const EDITOR_COLOR = "#EB1C23";
 const STICKER_ASPECT = 1.23;
-const MAX_TEXT_LENGTH = 20;
+const MAX_TEXT_LENGTH = 120;
 const TEXT_FONTS = [
   { id: "Better Times", label: "Handwritten", weight: 400 },
   { id: "Nescafe Sans", label: "NESCAFÉ Bold", weight: 700 },

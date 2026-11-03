@@ -178,7 +178,7 @@ export default function RegisterPage() {
                   className="capture-name-input"
                   placeholder="Enter your name"
                   value={name}
-                  maxLength={40}
+                  maxLength={80}
                   autoComplete="name"
                   aria-invalid={Boolean(errors.name)}
                   aria-describedby={errors.name ? "register-name-error" : undefined}
