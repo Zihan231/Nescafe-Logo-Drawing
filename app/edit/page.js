@@ -8,6 +8,7 @@ import {
   ArrowUp,
   ArrowLeft,
   ArrowClockwise,
+  ArrowsOutSimple,
   CaretDown,
   CaretUp,
   CheckCircle,
@@ -25,7 +26,7 @@ import {
   X
 } from "@phosphor-icons/react";
 import { LuEraser } from "react-icons/lu";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { Fragment, useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getProfessionDoodles } from "@/lib/profession-doodles";
 import { composeFrame, CONFETTI, FRAME_W, FRAME_H } from "@/lib/frame";
@@ -853,6 +854,86 @@ export default function EditPage() {
     return () => window.removeEventListener("resize", fit);
   }, []);
 
+  // The selected doodle's buttons (rotate, delete, mirror, layer order) sit in two upright toolbars that are
+  // moved to wherever they can be reached: not off screen and not under the header, the side cards or the
+  // send button. The main one tries above the doodle, then its sides, then below; the layer one the other
+  // way round. With no room around it they go on the doodle's visible part. Runs after every render and
+  // on zoom/pan. When a resize corner can't be reached either, a resize button joins the main toolbar.
+  // While the doodle is being dragged, resized or rotated they stay put (and hide while dragging or resizing); when the
+  // gesture ends they slide to their new place, keeping the side they were on if it still has room.
+  const controlsLayerRef = useRef(null);
+  const selectionBoxRef = useRef(null);
+  const actionsRef = useRef(null);
+  const layerActionsRef = useRef(null);
+  const resizeActionRef = useRef(null);
+  const controlSidesRef = useRef({ id: null, sides: [] }); // side each toolbar was put on, for the selected doodle
+  const placeControls = (animate = false) => {
+    const box = selectionBoxRef.current;
+    const shell = canvasShellRef.current;
+    const groups = [actionsRef.current, layerActionsRef.current];
+    if (!box || !shell || groups.some((group) => !group)) return;
+    const moving = controlsLayerRef.current?.classList.contains("is-moving") || stickerGestureRef.current.pointers.size >= 2;
+    if (transformHandleRef.current || moving) return;
+    if (controlSidesRef.current.id !== selectedStickerId) controlSidesRef.current = { id: selectedStickerId, sides: [] };
+    const shellRect = shell.getBoundingClientRect();
+    const b = box.getBoundingClientRect();
+    const obstacles = [...document.querySelectorAll(".editor-head, .send-btn, .toolbox, .doodle-card, .control-dock")]
+      .map((el) => el.getBoundingClientRect())
+      .filter((r) => r.width && r.height);
+    const view = { left: 6, top: 6, right: window.innerWidth - 6, bottom: window.innerHeight - 6 };
+    const overlaps = (r, o) => r.left < o.right && r.right > o.left && r.top < o.bottom && r.bottom > o.top;
+    const taken = [];
+    const free = (r) => r.left >= view.left && r.right <= view.right && r.top >= view.top && r.bottom <= view.bottom
+      && !obstacles.some((o) => overlaps(r, o)) && !taken.some((o) => overlaps(r, o));
+
+    const cornersReachable = [...box.querySelectorAll(".resize-handle")].every((handle) => free(handle.getBoundingClientRect()));
+    if (resizeActionRef.current) resizeActionRef.current.style.display = cornersReachable ? "none" : "";
+    // All measuring happens before anything is moved, so the browser lays the page out only once.
+    const sizes = groups.map((group) => group.getBoundingClientRect());
+
+    const gap = 16;
+    const cx = (b.left + b.right) / 2;
+    const cy = (b.top + b.bottom) / 2;
+    const clamp = (value, min, max) => (min > max ? (min + max) / 2 : Math.min(max, Math.max(min, value)));
+    // Positions along a side: its middle first, then spread out along the part that is on screen.
+    const along = (middle, from, to) => [middle, ...Array.from({ length: 7 }, (_, i) => from + ((to - from) * i) / 6)];
+    const place = (index, preferred) => {
+      const { width: w, height: h } = sizes[index];
+      const last = controlSidesRef.current.sides[index];
+      const order = last ? [last, ...preferred.filter((side) => side !== last)] : preferred;
+      const rectAt = ({ x, y }) => ({ left: x - w / 2, right: x + w / 2, top: y - h / 2, bottom: y + h / 2 });
+      const xs = along(clamp(cx, view.left + w / 2, view.right - w / 2), Math.max(b.left, view.left + w / 2), Math.min(b.right, view.right - w / 2));
+      const ys = along(clamp(cy, view.top + h / 2, view.bottom - h / 2), Math.max(b.top, view.top + h / 2), Math.min(b.bottom, view.bottom - h / 2));
+      const sides = {
+        above: xs.map((x) => ({ x, y: b.top - gap - h / 2 })),
+        below: xs.map((x) => ({ x, y: b.bottom + gap + h / 2 })),
+        left: ys.map((y) => ({ x: b.left - gap - w / 2, y })),
+        right: ys.map((y) => ({ x: b.right + gap + w / 2, y }))
+      };
+      const inside = (preferred[0] === "above" ? ys : [...ys].reverse()).flatMap((y) => xs.map((x) => ({ x, y, side: null })));
+      const candidates = [...order.flatMap((side) => sides[side].map((point) => ({ ...point, side }))), ...inside];
+      const spot = candidates.find((point) => free(rectAt(point)))
+        || { x: clamp(cx, view.left + w / 2, view.right - w / 2), y: clamp(cy, view.top + h / 2, view.bottom - h / 2), side: null };
+      controlSidesRef.current.sides[index] = spot.side;
+      taken.push(rectAt(spot));
+      return spot;
+    };
+    const spots = [place(0, ["above", "left", "right", "below"]), place(1, ["below", "right", "left", "above"])];
+    groups.forEach((group, index) => {
+      group.style.transition = animate ? "left .2s ease, top .2s ease, opacity .15s ease" : "opacity .15s ease";
+      group.style.left = `${((spots[index].x - shellRect.left) / shellRect.width) * 100}%`;
+      group.style.top = `${((spots[index].y - shellRect.top) / shellRect.height) * 100}%`;
+    });
+  };
+  const placeControlsRef = useRef(() => {});
+  placeControlsRef.current = placeControls;
+  useLayoutEffect(() => placeControlsRef.current());
+  useEffect(() => {
+    const onResize = () => placeControlsRef.current();
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
+
   // Two-finger zoom and pan of the drawing canvas for touch tablets. Pointer events are used so the
   // first finger's stroke can be cancelled the moment the second finger lands.
   const applyView = useCallback((animate = false) => {
@@ -862,6 +943,8 @@ export default function EditPage() {
     shell.style.transition = animate ? "transform .25s ease" : "none";
     shell.style.transform = scale === 1 && !x && !y ? "" : `translate(${x}px, ${y}px) scale(${scale})`;
     setZoomed(scale > 1.001);
+    placeControlsRef.current();
+    if (animate) setTimeout(() => placeControlsRef.current(), 280); // again once the zoom has settled
   }, []);
 
   const resetZoom = useCallback(() => {
@@ -893,7 +976,7 @@ export default function EditPage() {
 
     const onDown = (event) => {
       if (event.pointerType !== "touch") return;
-      touches.set(event.pointerId, { x: event.clientX, y: event.clientY, sticker: Boolean(event.target.closest?.(".placed-sticker, .sticker-controls")) });
+      touches.set(event.pointerId, { x: event.clientX, y: event.clientY, sticker: Boolean(event.target.closest?.(".placed-sticker, .sticker-controls, .sticker-actions")) });
       if (pinch) {
         event.stopPropagation();
         return;
@@ -1551,6 +1634,19 @@ export default function EditPage() {
     }
   };
 
+  // Pointers can report moves faster than the screen refreshes (pens and 120 Hz tablets), and every update
+  // re-renders the editor: moves are collected and applied together once per frame.
+  const pendingStickerUpdatesRef = useRef([]);
+  const updateStickersNextFrame = (update) => {
+    const queue = pendingStickerUpdatesRef.current;
+    queue.push(update);
+    if (queue.length > 1) return;
+    requestAnimationFrame(() => {
+      const updates = pendingStickerUpdatesRef.current.splice(0);
+      setPlacedStickers((items) => updates.reduce((current, apply) => apply(current), items));
+    });
+  };
+
   const movePlacedDrag = (event) => {
     const active = stickerGestureRef.current;
     const shell = canvasShellRef.current;
@@ -1558,16 +1654,18 @@ export default function EditPage() {
     active.pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
     const rect = shell.getBoundingClientRect();
     if (active.pointers.size >= 2) {
+      controlsLayerRef.current?.classList.add("is-moving"); // a two-finger pinch resizes: toolbars step aside
       const [a, b] = [...active.pointers.values()];
       const distance = Math.hypot(b.x - a.x, b.y - a.y);
       const ratio = distance / Math.max(1, active.startDistance);
-      setPlacedStickers((items) => items.map((item) => item.id === active.id ? resizedItem(item, ratio, active.start) : item));
+      updateStickersNextFrame((items) => items.map((item) => item.id === active.id ? resizedItem(item, ratio, active.start) : item));
     } else {
+      controlsLayerRef.current?.classList.add("is-moving"); // toolbars step aside while the doodle is dragged
       const dx = ((event.clientX - active.lastX) * W) / rect.width;
       const dy = ((event.clientY - active.lastY) * H) / rect.height;
       active.lastX = event.clientX;
       active.lastY = event.clientY;
-      setPlacedStickers((items) => items.map((item) => item.id === active.id ? {
+      updateStickersNextFrame((items) => items.map((item) => item.id === active.id ? {
         ...item,
         x: Math.max(LEAF_X, Math.min(W - LEAF_X, item.x + dx)),
         y: Math.max(0, Math.min(H, item.y + dy))
@@ -1584,8 +1682,15 @@ export default function EditPage() {
       gesture.lastY = remaining.y;
     } else if (gesture.pointers.size === 0) {
       gesture.id = null;
+      afterGesture();
     }
   };
+
+  // Once a drag, resize or rotate is over, the toolbars slide to their new place (after the last frame's update).
+  const afterGesture = () => requestAnimationFrame(() => requestAnimationFrame(() => {
+    controlsLayerRef.current?.classList.remove("is-moving");
+    placeControlsRef.current(true);
+  }));
 
   const stickerCenterOnScreen = (item) => {
     const rect = canvasShellRef.current.getBoundingClientRect();
@@ -1612,18 +1717,21 @@ export default function EditPage() {
     const active = transformHandleRef.current;
     if (!active) return;
     if (active.type === "resize") {
+      controlsLayerRef.current?.classList.add("is-moving"); // toolbars step aside while resizing too
       const distance = Math.hypot(event.clientX - active.center.x, event.clientY - active.center.y);
       const ratio = distance / active.startDistance;
-      setPlacedStickers((items) => items.map((item) => item.id === active.id ? resizedItem(item, ratio, active.start) : item));
+      updateStickersNextFrame((items) => items.map((item) => item.id === active.id ? resizedItem(item, ratio, active.start) : item));
     } else {
       const angle = Math.atan2(event.clientY - active.center.y, event.clientX - active.center.x);
       const rotation = active.startRotation + ((angle - active.startAngle) * 180) / Math.PI;
-      setPlacedStickers((items) => items.map((item) => item.id === active.id ? { ...item, rotation } : item));
+      updateStickersNextFrame((items) => items.map((item) => item.id === active.id ? { ...item, rotation } : item));
     }
   };
 
   const endTransformHandle = () => {
+    if (!transformHandleRef.current) return;
     transformHandleRef.current = null;
+    afterGesture();
   };
 
   const loadStickerImage = (src, keepWhite = false) => new Promise((resolve) => {
@@ -1883,7 +1991,7 @@ export default function EditPage() {
         <div className="toolbox-spacer" aria-hidden="true" />
 
         <div className="studio" ref={studioRef}>
-          <div ref={canvasShellRef} className="canvas-shell" onPointerDownCapture={(event) => {if (!event.target.closest?.(".placed-sticker, .sticker-controls, button")) setSelectedStickerId(null)}}>
+          <div ref={canvasShellRef} className="canvas-shell" onPointerDownCapture={(event) => {if (!event.target.closest?.(".placed-sticker, .sticker-controls, .sticker-actions, button")) setSelectedStickerId(null)}}>
             <img ref={leafRef} className="leaf-mask-source" src="/assets/nescafe-leaf.png" alt="" />
             <div className="leaf-image" style={{ backgroundColor: leafColor }} role="img" aria-label="NESCAFÉ leaf drawing canvas" />
             <DrawingCanvas canvasRef={canvasRef} color={color} tool={tool} brush={brush} size={size} shape={shape} shapeFill={shapeFill} getCopies={getCopies} onHistory={finishStroke} abortRef={abortStrokeRef} onTap={selectStickerAt} onStrokeStart={pushItemsUnderDrawing} onStrokeAbort={undoStrokeStart} getEraseLayers={getEraseLayers} />
@@ -1894,10 +2002,11 @@ export default function EditPage() {
               {placedStickers.filter((sticker) => !sticker.under).map(renderPlacedSticker)}
             </div>
             {/* Handles live outside the leaf-shaped mask so they stay visible when a doodle is moved past the edge */}
-            <div className={`sticker-controls-layer${tool === "none" ? "" : " is-drawing"}`} style={{ "--selection-color": transformColors.outline, "--selection-ink": transformColors.ink }}>
+            <div ref={controlsLayerRef} className={`sticker-controls-layer${tool === "none" ? "" : " is-drawing"}`} style={{ "--selection-color": transformColors.outline, "--selection-ink": transformColors.ink }}>
               {placedStickers.filter((sticker) => sticker.id === selectedStickerId).map((sticker) => (
+                <Fragment key={sticker.id}>
                 <div
-                  key={sticker.id}
+                  ref={selectionBoxRef}
                   className={`sticker-controls${sticker.kind === "text" ? " is-text" : ""}`}
                   onPointerDown={(event) => startPlacedDrag(sticker.id, event)}
                   onPointerMove={movePlacedDrag}
@@ -1906,8 +2015,22 @@ export default function EditPage() {
                   style={{ left: `${(sticker.x / W) * 100}%`, top: `${(sticker.y / H) * 100}%`, width: `${(sticker.w / W) * 100}%`, height: `${(sticker.h / H) * 100}%`, transform: `translate(-50%,-50%) rotate(${sticker.rotation}deg)` }}
                 >
                               {['nw','ne','sw','se'].map((corner) => <button key={corner} className={`transform-handle resize-handle ${corner}`} onPointerDown={(event)=>startResizeHandle(sticker,event)} onPointerMove={moveTransformHandle} onPointerUp={endTransformHandle} onPointerCancel={endTransformHandle} aria-label="Resize" />)}
-                              <span className="rotate-stem" />
-                              <span className="rotate-bridge" style={{ width: sticker.kind === "text" ? 36 : 72, left: "50%" }} />
+                </div>
+                {/* placed by placeControls() */}
+                <div ref={actionsRef} className="sticker-actions">
+                              <button
+                                ref={resizeActionRef}
+                                type="button"
+                                className="transform-handle action-resize"
+                                onPointerDown={(event) => startResizeHandle(sticker, event)}
+                                onPointerMove={moveTransformHandle}
+                                onPointerUp={endTransformHandle}
+                                onPointerCancel={endTransformHandle}
+                                aria-label="Resize doodle"
+                                title="Drag to resize"
+                              >
+                                <ArrowsOutSimple weight="bold" />
+                              </button>
                               <button
                                 type="button"
                                 className="transform-handle rotate-handle"
@@ -1948,7 +2071,8 @@ export default function EditPage() {
                           <FlipHorizontal weight="bold" />
                         </button>
                       )}
-                      <div className="layer-buttons">
+                </div>
+                      <div ref={layerActionsRef} className="sticker-actions">
                         <button
                           type="button"
                           className="layer-btn"
@@ -1978,7 +2102,7 @@ export default function EditPage() {
                           <ArrowUp weight="bold" />
                         </button>
                       </div>
-                                    </div>
+                </Fragment>
               ))}
             </div>
             <img ref={outlineRef} className="leaf-dotted-outline" src="/assets/leaf-outline.svg" alt="" aria-hidden="true" />

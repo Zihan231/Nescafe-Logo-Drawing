@@ -1074,7 +1074,6 @@ img,svg,canvas{-webkit-user-drag:none;user-drag:none}
 .flip-handle:active{transform:translate(-50%,-50%) scale(.95)}
 
 /* Send backward / bring forward, under the selected item */
-.layer-buttons{position:absolute;left:50%;top:calc(100% + 18px);z-index:6;transform:translateX(-50%);display:flex;gap:8px}
 .layer-btn{width:28px;height:28px;display:grid;place-items:center;padding:0;color:var(--selection-ink);background:var(--selection-color);border:2px solid var(--selection-ink);border-radius:50%;box-shadow:0 0 0 1px rgba(0,0,0,.38),0 2px 6px rgba(0,0,0,.55);cursor:pointer;touch-action:auto;transition:transform .15s ease,opacity .15s ease}
 .layer-btn svg{font-size:15px;pointer-events:none}
 .layer-btn:hover:not(:disabled){transform:scale(1.14)}
@@ -1093,6 +1092,16 @@ img,svg,canvas{-webkit-user-drag:none;user-drag:none}
 /* While a drawing tool is on, strokes go through doodles; the Select tool brings them back */
 .placed-stickers.is-drawing .placed-sticker{pointer-events:none}
 .sticker-controls-layer.is-drawing .sticker-controls{pointer-events:none}
+
+/* The selected doodle's buttons: upright toolbars that placeControls() moves to wherever they can be reached */
+.sticker-actions{position:absolute;z-index:6;left:50%;top:0;display:flex;align-items:center;gap:8px;padding:4px;transform:translate(-50%,-50%);pointer-events:auto;touch-action:none}
+.sticker-actions .transform-handle{position:relative;left:auto;top:auto;transform:none}
+.sticker-actions .transform-handle:hover{transform:scale(1.14)}
+.sticker-actions .transform-handle:active{transform:scale(.95)}
+.sticker-actions .action-resize{width:28px;height:28px;display:grid;place-items:center;color:var(--selection-ink);cursor:nwse-resize}
+.sticker-actions .action-resize svg{font-size:15px;pointer-events:none}
+.sticker-controls-layer.is-drawing .sticker-actions{pointer-events:none}
+.sticker-controls-layer.is-moving .sticker-actions{opacity:0;pointer-events:none}
 
 /* Layers tab in the tools card */
 @media(min-width:601px){.editor .toolbox .tool-tabs{grid-template-columns:repeat(4,1fr)}}
@@ -1119,8 +1128,6 @@ img,svg,canvas{-webkit-user-drag:none;user-drag:none}
 @media(min-width:601px){.editor .toolbox{max-height:calc((100svh - 118px - 292px * var(--ui-zoom)) / var(--ui-zoom))}}
 
 /* Text has only two buttons: rotate and delete sit evenly either side of the stem */
-.sticker-controls.is-text .rotate-handle{left:calc(50% - 18px)}
-.sticker-controls.is-text .delete-handle{left:calc(50% + 18px)}
 
 /* ===== QR page (/scan): the QR code is the hero, printed on a NESCAFÉ pack with two characters beside it ===== */
 .scan-layout{flex:1;min-height:0;display:grid;grid-template-columns:minmax(260px,34%) minmax(0,1fr);gap:clamp(12px,3vw,40px);align-items:center;padding:8px clamp(18px,4vw,56px) 22px;position:relative;z-index:2}
