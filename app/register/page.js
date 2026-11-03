@@ -166,7 +166,6 @@ export default function RegisterPage() {
           {!result ? (
             <form className="register-form" onSubmit={handleSubmit} noValidate>
               <h1 className="register-title">Register</h1>
-              <p className="register-lead">Tell us who you are and we&apos;ll give you a code to start.</p>
 
               <div className="capture-name-block">
                 <label htmlFor="register-name" className="capture-label">
