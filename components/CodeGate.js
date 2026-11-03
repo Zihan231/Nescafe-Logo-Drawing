@@ -140,7 +140,7 @@ export default function CodeGate({ checking, onVerified }) {
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
         >
-          <span>{busy ? "CHECKING..." : "VERIFY"}</span>
+          <span>{busy ? "CHECKING..." : "START"}</span>
         </motion.button>
       </div>
 
