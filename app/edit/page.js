@@ -2401,8 +2401,6 @@ export default function EditPage() {
                     </div>
                   )}
                   <div className="keepsake-side">
-                    <h3 className="modal-title-pacifico">{keepsake.qr ? "Flown to the World!" : "Sending to the world…"}</h3>
-                    <p className="modal-subtitle">{keepsake.qr ? "Your design is now orbiting the Earth. Take your card home with you." : "Hang on a moment while your design takes off and your card is made."}</p>
                     <div className="keepsake-qr">
                       {keepsake.qr ? (
                         <img src={keepsake.qr} alt="QR code to download your card" draggable={false} />
@@ -2411,7 +2409,6 @@ export default function EditPage() {
                       )}
                     </div>
                     <p className="keepsake-scan">SCAN TO DOWNLOAD</p>
-                    <p className="keepsake-note">Point your phone camera at the code to save your card.</p>
                     <button type="button" className="modal-btn-confirm" onClick={handleDismissSuccess} disabled={!keepsake.qr}>
                       <span>DONE</span>
                       <CheckCircle weight="bold" size={17} />
