@@ -1037,7 +1037,6 @@ img,svg,canvas{-webkit-user-drag:none;user-drag:none}
 .keepsake-card-skeleton{container-type:inline-size;position:relative;width:100%;aspect-ratio:5/4;box-sizing:border-box;border-radius:5.3cqw;border:.83cqw solid #EB1C23;background:radial-gradient(circle at 40% 50%,#2b0a0e,#0f0304 75%);box-shadow:0 18px 40px rgba(60,5,10,.38);overflow:hidden}
 .keepsake-card-skeleton .sk,.keepsake-card-skeleton .sk-leaf-outline{position:absolute}
 .sk-name{left:7%;top:9%;width:31.7%;height:5.8%;border-radius:1.2cqw}
-.sk-role{left:7.17%;top:17%;width:19.2%;height:2.9%;border-radius:.9cqw}
 .sk-leaf-outline{left:12.68%;top:21.46%;width:59.6%;height:66.98%;background:rgba(235,28,35,.55);-webkit-mask:url(/assets/leaf-shape.png) center/100% 100% no-repeat;mask:url(/assets/leaf-shape.png) center/100% 100% no-repeat}
 .sk-leaf{left:13.43%;top:22.4%;width:58.13%;height:65.1%;background-color:#3c2b2e;-webkit-mask:url(/assets/leaf-shape.png) center/100% 100% no-repeat;mask:url(/assets/leaf-shape.png) center/100% 100% no-repeat}
 .sk-word{left:60.83%;top:40%;width:56.67%;height:20%;transform:rotate(90deg);-webkit-mask:url(/assets/nescafe-wordmark.webp) center/100% 100% no-repeat;mask:url(/assets/nescafe-wordmark.webp) center/100% 100% no-repeat}

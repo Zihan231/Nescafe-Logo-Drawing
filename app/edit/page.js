@@ -1560,7 +1560,7 @@ export default function EditPage() {
       const personName = sessionStorage.getItem("nescafe_user_name") || "";
       let cardBlob = null;
       try {
-        cardBlob = await composeFrame({ design: designUrl, name: personName, profession: professionName });
+        cardBlob = await composeFrame({ design: designUrl, name: personName });
         formData.append("frame", cardBlob, `nescafe-card-${Date.now()}.png`);
       } catch {
         // The design still goes out; only the take-home card is skipped.
@@ -2378,7 +2378,7 @@ export default function EditPage() {
                   ) : (
                     <div className="keepsake-card-skeleton" role="status" aria-label="Preparing your card">
                       {/* same layout as the finished card: the logo shapes are drawn in skeleton grey,
-                          and the name, profession and your design are the parts being waited for */}
+                          and the name and your design are the parts being waited for */}
                       {CONFETTI.map(([key, x, y, width], index) => (
                         <span
                           key={index}
@@ -2394,7 +2394,6 @@ export default function EditPage() {
                         />
                       ))}
                       <span className="sk sk-name" />
-                      <span className="sk sk-role" />
                       <span className="sk-leaf-outline" />
                       <span className="sk sk-leaf" />
                       <span className="sk sk-word" />
