@@ -31,7 +31,7 @@ export async function POST(request) {
 
   if (!name) return NextResponse.json({ error: "Please enter your name.", field: "name" }, { status: 400, headers: noStore });
   if (name.length > 80) return NextResponse.json({ error: "Name is too long (80 characters max).", field: "name" }, { status: 400, headers: noStore });
-  if (!phone) return NextResponse.json({ error: "Enter a valid phone number (7 to 15 digits).", field: "phone" }, { status: 400, headers: noStore });
+  if (!phone) return NextResponse.json({ error: "Enter a valid Bangladeshi mobile number, e.g. 01712 345678.", field: "phone" }, { status: 400, headers: noStore });
   if (emailInput && (emailInput.length > 190 || !EMAIL_PATTERN.test(emailInput))) {
     return NextResponse.json({ error: "That email address doesn't look right.", field: "email" }, { status: 400, headers: noStore });
   }

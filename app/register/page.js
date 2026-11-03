@@ -86,9 +86,11 @@ export default function RegisterPage() {
   const validate = () => {
     const next = { ...EMPTY_ERRORS };
     if (!name.trim()) next.name = "Please enter your name.";
-    const digits = phone.replace(/\D/g, "");
+    // Same rule as the server: a Bangladeshi mobile number, with or without +880.
+    let digits = phone.replace(/\D/g, "").replace(/^(00)?880/, "");
+    if (!digits.startsWith("0")) digits = `0${digits}`;
     if (!phone.trim()) next.phone = "Please enter your phone number.";
-    else if (!/^\+?[\d\s\-().]+$/.test(phone.trim()) || digits.length < 7 || digits.length > 15) next.phone = "Enter a valid phone number (7 to 15 digits).";
+    else if (!/^\+?[\d\s\-().]+$/.test(phone.trim()) || !/^01[3-9]\d{8}$/.test(digits)) next.phone = "Enter a valid Bangladeshi mobile number, e.g. 01712 345678.";
     if (email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email.trim())) next.email = "That email address doesn't look right.";
     setErrors(next);
     return !next.name && !next.phone && !next.email;
