@@ -86,7 +86,7 @@ export default function CapturePage() {
       .then((data) => {
         if (!alive) return;
         if (data.verified) {
-          setUserName(String(data.name || "").trim().slice(0, 20));
+          setUserName(String(data.name || "").trim().slice(0, 80));
           setGate("open");
         } else {
           // The server normally never serves this page unverified (see proxy.js); this covers
