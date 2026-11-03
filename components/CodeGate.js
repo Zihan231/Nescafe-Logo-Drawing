@@ -2,18 +2,21 @@
 
 import { motion } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
-import { LockKey, ShieldCheck } from "@phosphor-icons/react";
+import { Backspace, LockKey, ShieldCheck } from "@phosphor-icons/react";
 
 const LENGTH = 5;
 const EMPTY = Array(LENGTH).fill("");
+const KEYPAD = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "clear", "0", "back"];
 
-// Five boxes for the registration code. Typing moves on by itself, and a pasted code
-// (Ctrl+V in any box) fills all five boxes at once.
+// Five boxes for the registration code, filled from the keypad below them. On a tablet the system
+// keyboard would cover most of the screen, so the boxes never open it (inputMode "none"); a physical
+// keyboard still types into them, moving on by itself, and a pasted code fills all five boxes at once.
 export default function CodeGate({ checking, onVerified }) {
   const [digits, setDigits] = useState(EMPTY);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const boxes = useRef([]);
+  const activeRef = useRef(0); // the box the keypad types into
   const code = digits.join("");
 
   useEffect(() => {
@@ -65,6 +68,24 @@ export default function CodeGate({ checking, onVerified }) {
     fill(text, 0);
   };
 
+  // Keypad: a digit goes into the selected box and moves on; backspace clears that box, or the one before
+  // it when it is already empty.
+  const pressKey = (key) => {
+    if (checking || busy) return;
+    const index = activeRef.current;
+    if (key === "clear") {
+      setError("");
+      setDigits(EMPTY);
+      boxes.current[0]?.focus();
+    } else if (key === "back") {
+      const target = digits[index] ? index : Math.max(0, index - 1);
+      setDigits((current) => current.map((digit, i) => (i === target ? "" : digit)));
+      boxes.current[target]?.focus();
+    } else {
+      fill(key, index);
+    }
+  };
+
   const submit = async () => {
     if (busy || code.length !== LENGTH) return;
     setBusy(true);
@@ -112,7 +133,7 @@ export default function CodeGate({ checking, onVerified }) {
             ref={(element) => { boxes.current[index] = element; }}
             className={`code-box${error ? " has-error" : ""}`}
             type="text"
-            inputMode="numeric"
+            inputMode="none"
             pattern="[0-9]*"
             autoCorrect="off"
             spellCheck={false}
@@ -124,12 +145,32 @@ export default function CodeGate({ checking, onVerified }) {
             aria-invalid={Boolean(error)}
             onChange={(event) => handleChange(index, event)}
             onKeyDown={(event) => handleKeyDown(index, event)}
-            onFocus={(event) => event.target.select()}
+            onFocus={(event) => {
+              activeRef.current = index;
+              event.target.select();
+            }}
           />
         ))}
       </div>
 
       {error && <span className="capture-field-error code-gate-error" role="alert">{error}</span>}
+
+      <div className="code-keypad" role="group" aria-label="Number keypad">
+        {KEYPAD.map((key) => (
+          <button
+            key={key}
+            type="button"
+            className={`code-key${key === "clear" || key === "back" ? " is-action" : ""}`}
+            disabled={checking || busy}
+            // keep the selected box focused, so the keypad keeps typing into it
+            onPointerDown={(event) => event.preventDefault()}
+            onClick={() => pressKey(key)}
+            aria-label={key === "back" ? "Delete digit" : key === "clear" ? "Clear code" : key}
+          >
+            {key === "back" ? <Backspace size={24} weight="bold" /> : key === "clear" ? "CLEAR" : key}
+          </button>
+        ))}
+      </div>
 
       <div className="capture-btn-group">
         <motion.button
