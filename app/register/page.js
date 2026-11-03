@@ -118,6 +118,16 @@ export default function RegisterPage() {
     }
   };
 
+  // Clears everything so the next visitor starts on an empty form.
+  const handleDone = () => {
+    setResult(null);
+    setConfetti([]);
+    setName("");
+    setPhone("");
+    setEmail("");
+    setErrors(EMPTY_ERRORS);
+  };
+
   return (
     <motion.main
       className="capture-screen screen register-screen"
@@ -295,6 +305,19 @@ export default function RegisterPage() {
               >
                 Remember this code and use it to draw on the tab.
               </motion.p>
+
+              <motion.button
+                type="button"
+                className="capture-confirm-btn"
+                onClick={handleDone}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.9 }}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <span>DONE</span>
+              </motion.button>
               </>
               )}
             </div>
