@@ -994,7 +994,7 @@ img,svg,canvas{-webkit-user-drag:none;user-drag:none}
   100%{opacity:1}
 }
 @media(max-width:600px){.featured-design{width:clamp(280px,80vw,380px)}}
-@media(prefers-reduced-motion:reduce){.featured-design{animation-duration:16s!important}}
+@media(prefers-reduced-motion:reduce){.featured-design{animation-duration:16s!important;animation-iteration-count:infinite!important}}
 
 /* ===== Capture: pick one of the ten NESCAFÉ characters ===== */
 .character-picker{width:100%;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px}
