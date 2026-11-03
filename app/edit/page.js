@@ -1041,6 +1041,19 @@ export default function EditPage() {
   const transformHandleRef = useRef(null);
   const textInputRef = useRef(null);
   const justAddedTextRef = useRef(null);
+
+  // While the on-screen keyboard is open (KeyboardFit marks <html> with "keyboard-open"), text is typed in a
+  // large panel at the top of the screen instead of the small box in the tools card.
+  const [keyboardOpen, setKeyboardOpen] = useState(false);
+  const composeRef = useRef(null);
+  useEffect(() => {
+    const root = document.documentElement;
+    const sync = () => setKeyboardOpen(root.classList.contains("keyboard-open"));
+    sync();
+    const observer = new MutationObserver(sync);
+    observer.observe(root, { attributes: true, attributeFilter: ["class"] });
+    return () => observer.disconnect();
+  }, []);
   const previousSelectionRef = useRef(null);
 
   useEffect(() => {
@@ -1963,6 +1976,22 @@ export default function EditPage() {
 
   const selectedSticker = placedStickers.find((item) => item.id === selectedStickerId);
   const transformColors = controlColors(leafColor);
+  const composingText = keyboardOpen && selectedSticker?.kind === "text";
+
+  // Typing moves into the big panel as soon as it opens; going from one field to another keeps the keyboard up.
+  useLayoutEffect(() => {
+    const field = composeRef.current;
+    if (!composingText || !field || document.activeElement === field) return;
+    const small = document.activeElement === textInputRef.current ? textInputRef.current : null;
+    const [start, end] = small ? [small.selectionStart, small.selectionEnd] : [field.value.length, field.value.length];
+    field.focus();
+    field.setSelectionRange(start, end); // a new text's "Your text" stays selected, ready to be typed over
+  }, [composingText]);
+
+  const finishComposing = () => {
+    composeRef.current?.blur();
+    setSelectedStickerId(null);
+  };
 
   // The server (proxy.js) already refuses to serve this page without a valid code. The page is
   // still mounted while the session is re-checked, so refs and start-up effects (profile,
@@ -2763,6 +2792,38 @@ export default function EditPage() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {composingText && (
+        <div className="text-compose-backdrop" onPointerDown={(event) => { if (event.target === event.currentTarget) finishComposing(); }}>
+          <div className="text-compose" role="dialog" aria-label="Type your text">
+            <div className="text-compose-head">
+              <span>YOUR TEXT</span>
+              <span className="text-compose-count">{selectedSticker.text.length}/{MAX_TEXT_LENGTH}</span>
+            </div>
+            {/* Enter starts a new line on the leaf; DONE (or Escape) finishes */}
+            <textarea
+              ref={composeRef}
+              className="text-compose-input"
+              rows={2}
+              value={selectedSticker.text}
+              maxLength={MAX_TEXT_LENGTH}
+              placeholder="Type here"
+              spellCheck={false}
+              // shown in the text's own font and colour on the leaf's colour, as it will look on the leaf
+              style={{ fontFamily: `"${selectedSticker.font}"`, fontWeight: TEXT_FONTS.find((f) => f.id === selectedSticker.font)?.weight ?? 400, color: selectedSticker.color, backgroundColor: leafColor }}
+              onChange={(event) => updateText({ text: event.target.value })}
+              onKeyDown={(event) => {
+                if (event.key === "Escape") finishComposing();
+              }}
+              aria-label="Text on the leaf"
+            />
+            <button type="button" className="text-compose-done" onPointerDown={(event) => event.preventDefault()} onClick={finishComposing}>
+              <span>DONE</span>
+              <CheckCircle weight="bold" size={18} />
+            </button>
+          </div>
+        </div>
+      )}
     </motion.main>
   );
 }

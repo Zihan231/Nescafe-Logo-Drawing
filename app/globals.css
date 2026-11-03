@@ -1356,5 +1356,13 @@ img,svg,canvas{-webkit-user-drag:none;user-drag:none}
 html.keyboard-open .capture-container{align-items:flex-start;padding-top:6px}
 html.keyboard-open .capture-screen .editor-head{display:none}
 html.keyboard-open .capture-screen{height:var(--app-h);max-height:var(--app-h)}
+/* editor: with the on-screen keyboard open, text is typed in a large panel across the top of the visible area */
+.text-compose-backdrop{position:fixed;inset:0;z-index:300;display:flex;justify-content:center;align-items:flex-start;padding:10px 12px;background:rgba(18,2,5,.55)}
+.text-compose{width:min(760px,100%);max-height:calc(var(--app-h,100dvh) - 20px);display:flex;flex-direction:column;gap:10px;padding:14px 16px 16px;border-radius:22px;background:#2a080c;border:1px solid rgba(255,255,255,.14);box-shadow:0 18px 44px rgba(0,0,0,.5)}
+.text-compose-head{display:flex;justify-content:space-between;align-items:center;color:rgba(255,255,255,.8);font:800 12px 'Nescafe Sans','Myriad Pro',Arial,sans-serif;letter-spacing:.16em}
+.text-compose-count{font:600 12px 'Myriad Pro',Arial,sans-serif;letter-spacing:.04em;color:rgba(255,255,255,.55)}
+.text-compose-input{flex:1 1 auto;min-height:72px;width:100%;padding:10px 14px;border:2px solid rgba(255,255,255,.35);border-radius:14px;font-size:clamp(22px,3.2vw,30px);line-height:1.25;text-align:center;resize:none;outline:none}
+.text-compose-input:focus{border-color:#fff}
+.text-compose-done{align-self:flex-end;display:inline-flex;align-items:center;gap:8px;padding:10px 22px;border:0;border-radius:999px;background:#EB1C23;color:#fff;font:800 13px 'Nescafe Sans','Myriad Pro',Arial,sans-serif;letter-spacing:.14em;cursor:pointer;box-shadow:0 8px 20px rgba(235,28,35,.4)}
 /* editor: while typing text, the tools card slides to the top of the visible area, above the keyboard */
 @media(min-width:601px){html.keyboard-open .editor .toolbox{top:calc(8px / var(--ui-zoom,1));max-height:calc((var(--app-h) - 16px) / var(--ui-zoom,1));overflow-y:auto;z-index:60}}
