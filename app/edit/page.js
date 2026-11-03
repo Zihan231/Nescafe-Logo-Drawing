@@ -76,12 +76,33 @@ const TEXT_FONTS = [
 
 const fontSpec = (font, size) => `${TEXT_FONTS.find((f) => f.id === font)?.weight ?? 400} ${size}px "${font}"`;
 
+const TEXT_LINE_HEIGHT = 1.15; // spacing between lines of text, as a multiple of the font size
+
 let measureContext;
 function measureText(text, font, fontSize) {
   measureContext = measureContext || document.createElement("canvas").getContext("2d");
   measureContext.font = fontSpec(font, fontSize);
-  const width = measureContext.measureText(text || " ").width;
-  return { w: Math.max(40, width + fontSize * 0.5), h: fontSize * 1.5 };
+  const lines = (text || " ").split("\n");
+  const width = Math.max(...lines.map((line) => measureContext.measureText(line || " ").width));
+  return { w: Math.max(40, width + fontSize * 0.5), h: fontSize * (1.5 + (lines.length - 1) * TEXT_LINE_HEIGHT) };
+}
+
+// Long names start on two lines, split at the space that makes the lines most even.
+function breakLongName(name) {
+  const words = name.split(" ");
+  if (words.length < 2 || name.length <= 16) return name;
+  let best = name;
+  let bestLength = Infinity;
+  for (let i = 1; i < words.length; i++) {
+    const first = words.slice(0, i).join(" ");
+    const second = words.slice(i).join(" ");
+    const length = Math.max(first.length, second.length);
+    if (length < bestLength) {
+      bestLength = length;
+      best = `${first}\n${second}`;
+    }
+  }
+  return best;
 }
 
 // Sticker images keep their aspect ratio; text scales its font size and is re-measured.
@@ -1150,7 +1171,7 @@ export default function EditPage() {
         });
       }
       if (savedName && savedName.trim()) {
-        const text = savedName.trim();
+        const text = breakLongName(savedName.trim().replace(/\s+/g, " "));
         const font = "Better Times";
         const fontSize = Math.min(28, 28 * (nameSpot.span * 0.75) / measureText(text, font, 28).w);
         const dims = measureText(text, font, fontSize);
@@ -1485,7 +1506,8 @@ export default function EditPage() {
           outputCtx.fillStyle = item.color;
           outputCtx.textAlign = "center";
           outputCtx.textBaseline = "middle";
-          outputCtx.fillText(item.text, 0, 0);
+          const lines = item.text.split("\n");
+          lines.forEach((line, i) => outputCtx.fillText(line, 0, (i - (lines.length - 1) / 2) * item.fontSize * TEXT_LINE_HEIGHT));
         } else {
           if (item.flipX) outputCtx.scale(-1, 1);
           outputCtx.drawImage(stickerImages[index], -item.w / 2, -item.h / 2, item.w, item.h);
@@ -1833,17 +1855,18 @@ export default function EditPage() {
 
           {selectedSticker?.kind === "text" && (
             <div className="text-section">
-              <input
+              {/* Enter starts a new line on the leaf; Escape finishes editing */}
+              <textarea
                 ref={textInputRef}
                 className="text-input"
-                type="text"
+                rows={2}
                 value={selectedSticker.text}
                 maxLength={MAX_TEXT_LENGTH}
                 placeholder="Type here"
                 spellCheck={false}
                 onChange={(event) => updateText({ text: event.target.value })}
                 onKeyDown={(event) => {
-                  if (event.key === "Enter") setSelectedStickerId(null);
+                  if (event.key === "Escape") setSelectedStickerId(null);
                 }}
                 aria-label="Text on the leaf"
               />
