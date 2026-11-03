@@ -2,11 +2,13 @@ import "./globals.css";
 import FullscreenButton from "@/components/FullscreenButton";
 import KeyboardFit from "@/components/KeyboardFit";
 
-// interactiveWidget: on Android the page itself shrinks when the keyboard opens, instead of the keyboard covering it.
+// interactiveWidget: the on-screen keyboard covers the page instead of shrinking it (as on iPads), so the
+// editor keeps its size while typing. KeyboardFit then fits form pages above the keyboard and brings the
+// field being typed in into view.
 export const viewport = {
   width: "device-width",
   initialScale: 1,
-  interactiveWidget: "resizes-content"
+  interactiveWidget: "resizes-visual"
 };
 
 export const metadata = {
