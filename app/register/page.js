@@ -303,7 +303,7 @@ export default function RegisterPage() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.7 }}
               >
-                Remember this code and use it to draw on the tab.
+                Remember this code and use it to the next activities
               </motion.p>
 
               <motion.button
