@@ -1,9 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 import { BsFullscreen, BsFullscreenExit } from "react-icons/bs";
 
 export default function FullscreenButton() {
+  const onAdminPage = usePathname()?.startsWith("/admin"); // the admin panel is a normal web page, not a kiosk screen
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [mounted, setMounted] = useState(false);
 
@@ -44,7 +46,7 @@ export default function FullscreenButton() {
     }
   };
 
-  if (!mounted) return null;
+  if (!mounted || onAdminPage) return null;
 
   return (
     <button

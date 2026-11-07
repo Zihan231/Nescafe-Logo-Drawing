@@ -273,8 +273,17 @@ export default function NescafePage() {
   }, [pickNextDesign]);
 
   const addToList = useCallback((design) => {
-    if (!listRef.current.some((d) => d.id === design.id)) listRef.current.push(design);
+    if (listRef.current.some((d) => d.id === design.id)) return;
+    listRef.current.push(design);
+    // A design an admin made visible again goes back to its place in time, not to the front as if it were new.
+    listRef.current.sort((a, b) => new Date(a.createdAt || 0) - new Date(b.createdAt || 0));
   }, []);
+
+  // The newest design no other featured slot is showing.
+  const freshFeaturedDesign = (others) => {
+    const shown = new Set(others.map((item) => item.design?.id));
+    return [...listRef.current].reverse().slice(0, FEATURED_COUNT).find((item) => !shown.has(item.id)) || null;
+  };
 
   const startIfNeeded = useCallback(() => {
     if (initializedRef.current || !listRef.current.length) return;
@@ -286,8 +295,10 @@ export default function NescafePage() {
   const syncFeatured = useCallback(() => {
     setFeatured((current) => {
       const target = Math.min(FEATURED_COUNT, listRef.current.length);
-      if (current.length >= target) return current;
-      const next = [...current];
+      // slots emptied by a removed design pick up a design again first
+      let next = current.map((item, index) => item.design ? item : { ...item, design: freshFeaturedDesign(current.filter((_, i) => i !== index)), burst: featuredBurst(item.k) });
+      if (next.length >= target) return next.some((item, index) => item !== current[index]) ? next : current;
+      next = [...next];
       while (next.length < target) {
         const shown = new Set(next.map((item) => item.design?.id));
         const design = [...listRef.current].reverse().slice(0, FEATURED_COUNT).find((item) => !shown.has(item.id));
@@ -307,6 +318,17 @@ export default function NescafePage() {
       return { ...item, design, burst: featuredBurst(k) };
     }));
   }, []);
+
+  // An admin hid or deleted a design: it leaves the screen straight away, wherever it is.
+  const removeDesign = useCallback((id) => {
+    listRef.current = listRef.current.filter((design) => design.id !== id);
+    priorityQueueRef.current = priorityQueueRef.current.filter((design) => design.id !== id);
+    seenRef.current.delete(id); // so it can come back if it is made visible again
+    setSlots((current) => current.map((slot) => (slot.design?.id === id ? { ...slot, design: pickNextDesign() } : slot)));
+    setFeatured((current) => current.map((item, index) => (
+      item.design?.id === id ? { ...item, design: freshFeaturedDesign(current.filter((_, i) => i !== index)) } : item
+    )));
+  }, [pickNextDesign]);
 
   const acceptDesign = useCallback(async (design) => {
     if (!design?.id || !design?.imageUrl || seenRef.current.has(design.id)) return;
@@ -361,9 +383,12 @@ export default function NescafePage() {
     source.addEventListener("design.created", (event) => {
       try { acceptDesign(JSON.parse(event.data)); } catch {}
     });
+    source.addEventListener("design.removed", (event) => {
+      try { removeDesign(JSON.parse(event.data).id); } catch {}
+    });
     source.onerror = () => reconcile();
     return () => source.close();
-  }, [acceptDesign, reconcile]);
+  }, [acceptDesign, reconcile, removeDesign]);
 
   // Featured designs start at the middle of the NESCAFÉ logo.
   useEffect(() => {

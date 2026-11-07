@@ -62,7 +62,8 @@ export async function GET(request) {
 }
 
 export async function POST(request) {
-  if (!readSession(request)) return NextResponse.json({ error: "Please register and verify your code first." }, { status: 401 });
+  const session = readSession(request);
+  if (!session) return NextResponse.json({ error: "Please register and verify your code first." }, { status: 401 });
   if (!withinRateLimit(request)) return NextResponse.json({ error: "Too many uploads. Please wait a moment." }, { status: 429 });
   if (!request.headers.get("content-type")?.toLowerCase().startsWith("multipart/form-data")) {
     return NextResponse.json({ error: "Upload must use multipart/form-data" }, { status: 415 });
@@ -106,7 +107,7 @@ export async function POST(request) {
       await fs.writeFile(framePath, frameBuffer);
     }
 
-    const design = await createDesign({ id, imageUrl: `/uploads/${filename}`, width: dimensions.width, height: dimensions.height, fileSize: buffer.length, profession });
+    const design = await createDesign({ id, imageUrl: `/uploads/${filename}`, width: dimensions.width, height: dimensions.height, fileSize: buffer.length, profession, userId: session.uid });
     publishDesign(design);
 
     // The captured photo is part of the design now, so the original is not kept. Only files named

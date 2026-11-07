@@ -1,5 +1,6 @@
 import { promises as fs } from "node:fs";
 import path from "node:path";
+import { isDesignPublic } from "@/lib/design-store";
 
 export const dynamic = "force-dynamic";
 export const metadata = {
@@ -11,6 +12,7 @@ const validId = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-
 
 async function hasCard(id) {
   if (!validId.test(id)) return false;
+  if (!(await isDesignPublic(id))) return false; // hidden or deleted by an admin
   const directory = process.env.UPLOAD_DIRECTORY || path.join(process.cwd(), "uploads");
   try {
     await fs.access(path.join(directory, `${id}-frame.png`));
@@ -43,8 +45,8 @@ export default async function DownloadPage({ params }) {
         </>
       ) : (
         <>
-          <h1 className="dl-title">Card not found</h1>
-          <p className="dl-hint">This link has expired or is not valid. Please ask the NESCAFÉ team for help.</p>
+          <h1 className="dl-title">This card isn&apos;t available</h1>
+          <p className="dl-hint">The link has expired, is not valid, or the card was removed. Please ask the NESCAFÉ team for help.</p>
         </>
       )}
     </main>

@@ -15,8 +15,16 @@ model Design {
   fileSize  Int      @map("file_size")
   profession String? @db.VarChar(80)
   createdAt DateTime @default(now()) @map("created_at")
+  // who sent it (empty for designs sent before this was recorded, or when the visitor was deleted)
+  userId    String?   @map("user_id") @db.VarChar(36)
+  user      User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
+  // hidden by an admin: off the live wall and not downloadable
+  hidden    Boolean   @default(false)
+  hiddenAt  DateTime? @map("hidden_at")
 
   @@index([createdAt])
+  @@index([userId])
+  @@index([hidden, createdAt])
   @@map("designs")
 }
 
@@ -28,6 +36,39 @@ model User {
   code       String    @unique @db.Char(5)
   createdAt  DateTime  @default(now()) @map("created_at")
   verifiedAt DateTime? @map("verified_at")
+  designs    Design[]
 
   @@map("users")
+}
+
+// Admin panel logins. role: "super" (exactly one, created from .env), "admin" or "client" (read-only).
+model Admin {
+  id                String    @id @default(uuid()) @db.VarChar(36)
+  username          String    @unique @db.VarChar(60)
+  passwordHash      String    @map("password_hash") @db.VarChar(255)
+  role              String    @db.VarChar(10)
+  disabled          Boolean   @default(false)
+  // sign-ins issued before this moment stop working (set on password change)
+  passwordChangedAt DateTime  @default(now()) @map("password_changed_at")
+  createdById       String?   @map("created_by_id") @db.VarChar(36)
+  createdAt         DateTime  @default(now()) @map("created_at")
+  lastLoginAt       DateTime? @map("last_login_at")
+
+  @@map("admins")
+}
+
+// What admins did, for the super admin's activity log. username is copied so entries survive account deletion.
+model AdminLog {
+  id         String   @id @default(uuid()) @db.VarChar(36)
+  adminId    String?  @map("admin_id") @db.VarChar(36)
+  username   String   @db.VarChar(60)
+  action     String   @db.VarChar(40)
+  targetType String?  @map("target_type") @db.VarChar(20)
+  targetId   String?  @map("target_id") @db.VarChar(36)
+  details    String?  @db.Text
+  ip         String?  @db.VarChar(64)
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@index([createdAt])
+  @@map("admin_logs")
 }
