@@ -4,6 +4,7 @@ import { logAction } from "@/lib/admin-log";
 import { PAGE_SIZE, dateParam, formatPhone, idList, pageOf, visitorSearch } from "@/lib/admin-query";
 import { deleteDesigns, setDesignsHidden } from "@/lib/design-store";
 import { publishDesign, publishDesignRemoved } from "@/lib/realtime";
+import { FORMER_PROFESSION_NAMES, PROFESSIONS } from "@/lib/professions";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -28,25 +29,25 @@ export async function GET(request) {
   const visibility = params.get("visibility");
   if (visibility === "visible") where.hidden = false;
   if (visibility === "hidden") where.hidden = true;
+  // one of the ten professions, including designs saved under its old name (Player also finds "Footballer")
   const profession = params.get("profession");
-  if (profession) where.profession = profession;
+  if (PROFESSIONS.includes(profession)) where.profession = { in: [profession, ...(FORMER_PROFESSION_NAMES[profession] || [])] };
   const from = dateParam(params.get("from"));
   const to = dateParam(params.get("to"));
   if (from || to) where.createdAt = { ...(from && { gte: from }), ...(to && { lte: to }) };
   const search = visitorSearch(params.get("q"));
   if (search) where.user = search;
 
-  const [designs, total, professions] = await Promise.all([
+  const [designs, total] = await Promise.all([
     prisma.design.findMany({ where, orderBy: SORTS[params.get("sort")] || SORTS.newest, skip, take, include: { user: { select: visitorFields } } }),
-    prisma.design.count({ where }),
-    prisma.design.findMany({ distinct: ["profession"], select: { profession: true }, orderBy: { profession: "asc" } })
+    prisma.design.count({ where })
   ]);
 
   return adminJson({
     page,
     pageSize: PAGE_SIZE,
     total,
-    professions: professions.map((item) => item.profession).filter(Boolean),
+    professions: PROFESSIONS,
     designs: designs.map((design) => ({
       ...design,
       cardUrl: `/uploads/${design.id}-frame.png`,

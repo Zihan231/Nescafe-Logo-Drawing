@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { adminJson, requireAdmin } from "@/lib/admin-auth";
+import { PROFESSIONS, currentProfession } from "@/lib/professions";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -31,7 +32,9 @@ export async function GET(request) {
   const days = Array.from({ length: DAYS }, (_, i) => localParts(new Date(Date.now() - (DAYS - 1 - i) * 86_400_000), zone).day);
   const perDay = Object.fromEntries(days.map((day) => [day, { day, designs: 0, registrations: 0 }]));
   const perHour = Array.from({ length: 24 }, (_, hour) => ({ hour, designs: 0, registrations: 0 }));
-  const professions = {};
+  // the ten current professions only, each listed even at zero; older names count toward their new one
+  const professions = Object.fromEntries(PROFESSIONS.map((name) => [name, 0]));
+  let oldProfessionDesigns = 0;
   const designers = new Set();
   let hidden = 0;
   let designsToday = 0;
@@ -43,8 +46,9 @@ export async function GET(request) {
     if (day === today) designsToday++;
     if (design.hidden) hidden++;
     if (design.userId) designers.add(design.userId);
-    const profession = design.profession || "Unknown";
-    professions[profession] = (professions[profession] || 0) + 1;
+    const profession = currentProfession(design.profession);
+    if (profession) professions[profession]++;
+    else oldProfessionDesigns++; // no profession, or one no longer offered
   }
   let verified = 0;
   let registrationsToday = 0;
@@ -77,6 +81,7 @@ export async function GET(request) {
     ],
     perDay: days.map((day) => perDay[day]),
     perHour,
-    professions: Object.entries(professions).map(([name, count]) => ({ name, count })).sort((a, b) => b.count - a.count)
+    professions: Object.entries(professions).map(([name, count]) => ({ name, count })).sort((a, b) => b.count - a.count),
+    oldProfessionDesigns
   });
 }

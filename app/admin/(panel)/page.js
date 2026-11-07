@@ -104,7 +104,12 @@ export default function AdminDashboard() {
 
           <section className="admin-card">
             <h2>Designs by profession</h2>
-            {stats.professions.length ? <BarList items={stats.professions.map((p) => ({ label: p.name, value: p.count }))} label="Designs" /> : <p className="admin-muted">No designs yet.</p>}
+            <BarList items={stats.professions.map((p) => ({ label: p.name, value: p.count }))} label="Designs" />
+            {stats.oldProfessionDesigns > 0 && (
+              <p className="admin-muted admin-small">
+                Not shown: {stats.oldProfessionDesigns} older design{stats.oldProfessionDesigns === 1 ? "" : "s"} with no profession or one that is no longer offered.
+              </p>
+            )}
           </section>
         </>
       )}
