@@ -65,9 +65,7 @@ export default function AdminDashboard() {
             <Stat label="Designs today" value={t.designsToday} />
             <Stat label="Visitors registered" value={t.visitors} note={`${t.registrationsToday} today`} />
             <Stat label="Entered their code" value={t.verifiedVisitors} note={`${percent(t.verifiedVisitors, t.visitors)} of registered`} />
-            <Stat label="Sent a design" value={t.visitorsWithDesigns} note={`${percent(t.visitorsWithDesigns, t.visitors)} of registered`} />
-            <Stat label="Designs per visitor" value={t.avgDesignsPerVisitor} note="among visitors who sent one" />
-          </section>
+            <Stat label="Sent a design" value={t.visitorsWithDesigns} note={`${percent(t.visitorsWithDesigns, t.visitors)} of registered`} />          </section>
           {t.unlinkedDesigns > 0 && (
             <p className="admin-muted admin-small">{t.unlinkedDesigns} older design{t.unlinkedDesigns === 1 ? " was" : "s were"} sent before designs were linked to visitors, so they count in the totals but not per visitor.</p>
           )}

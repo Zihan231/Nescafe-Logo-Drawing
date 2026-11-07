@@ -68,7 +68,6 @@ export async function GET(request) {
       verifiedVisitors: verified,
       registrationsToday,
       visitorsWithDesigns: designers.size,
-      avgDesignsPerVisitor: designers.size ? Number((linkedDesigns / designers.size).toFixed(2)) : 0,
       unlinkedDesigns: designs.length - linkedDesigns // sent before designs were linked to visitors
     },
     funnel: [
