@@ -14,7 +14,8 @@ import {
 import { CHARACTERS } from "@/lib/professions";
 import { DEFAULT_PHOTO_SHAPE, photoShape, shapedPhoto } from "@/lib/photo-shapes";
 
-export default function CapturePage() {
+// The capture step (name, character, photo). app/capture/page.js only shows it to visitors who entered a valid code.
+export default function CaptureScreen() {
   const router = useRouter();
   const [gate, setGate] = useState("checking"); // "checking" | "locked" | "open"
   const [userName, setUserName] = useState("");
@@ -89,7 +90,7 @@ export default function CapturePage() {
           setUserName(String(data.name || "").trim().slice(0, 80));
           setGate("open");
         } else {
-          // The server normally never serves this page unverified (see proxy.js); this covers
+          // The server normally never shows this screen unverified (see app/capture/page.js); this covers
           // a session that expired while the page was open. Refreshing in place (no page load, so
           // full screen mode stays on) shows the code screen.
           router.refresh();

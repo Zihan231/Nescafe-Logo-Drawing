@@ -5,8 +5,8 @@ import { useRouter } from "next/navigation";
 import { ArrowLeft } from "@phosphor-icons/react";
 import CodeGate from "@/components/CodeGate";
 
-// Shown at /capture (via proxy.js) until the visitor has entered a valid code.
-export default function VerifyPage() {
+// The code screen. app/capture/page.js shows it at /capture until the visitor has entered a valid code.
+export default function VerifyScreen() {
   const router = useRouter();
 
   return (

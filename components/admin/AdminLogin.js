@@ -3,7 +3,9 @@
 import { useState } from "react";
 import { LockKey } from "@phosphor-icons/react";
 
-export default function AdminLoginPage() {
+// The admin sign-in form. Served only at the secret address (app/[portal]/page.js), or at /admin/login when no
+// ADMIN_LOGIN_PATH is set (app/admin/login/page.js).
+export default function AdminLogin() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
