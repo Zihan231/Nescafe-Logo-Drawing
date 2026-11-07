@@ -27,6 +27,21 @@ function loginPath() {
 // Shows the normal 404 page (a path that matches no page), so nothing hints that an admin area exists.
 const notFound = (request) => NextResponse.rewrite(new URL("/__not-found", request.url));
 
+// Where a redirect sends the browser. Behind a reverse proxy (nginx -> 127.0.0.1:3001) the app may see its own
+// internal address in request.url, which a visitor's browser can't open. So the public address comes from the
+// proxy's X-Forwarded-Host / X-Forwarded-Proto headers, else NEXT_PUBLIC_SITE_URL, else the request itself.
+// (Rewrites stay on request.url: they happen inside the app, so its own address is the right one there.)
+function redirectTo(path, request) {
+  const forwardedHost = request.headers.get("x-forwarded-host")?.split(",")[0].trim();
+  if (forwardedHost) {
+    const proto = request.headers.get("x-forwarded-proto")?.split(",")[0].trim() || "https";
+    return NextResponse.redirect(new URL(path, `${proto}://${forwardedHost}`));
+  }
+  const site = process.env.NEXT_PUBLIC_SITE_URL?.trim();
+  if (site && /^https?:\/\//.test(site)) return NextResponse.redirect(new URL(path, site));
+  return NextResponse.redirect(new URL(path, request.url));
+}
+
 export async function proxy(request) {
   const { pathname } = request.nextUrl;
   const secretLogin = loginPath();
@@ -35,7 +50,7 @@ export async function proxy(request) {
   if (isSecretLogin || pathname === "/admin" || pathname.startsWith("/admin/")) {
     const signedIn = Boolean(await verifyAdminToken(request.cookies.get(ADMIN_COOKIE)?.value));
     if (isSecretLogin) {
-      if (signedIn) return NextResponse.redirect(new URL("/admin", request.url));
+      if (signedIn) return redirectTo("/admin", request);
       return secretLogin === "/admin/login" ? NextResponse.next() : NextResponse.rewrite(new URL("/admin/login", request.url));
     }
     if (pathname === "/admin/login" || !signedIn) return notFound(request);
@@ -48,10 +63,10 @@ export async function proxy(request) {
     return verified ? NextResponse.next() : NextResponse.rewrite(new URL("/verify", request.url));
   }
   if (pathname === "/edit") {
-    return verified ? NextResponse.next() : NextResponse.redirect(new URL("/capture", request.url));
+    return verified ? NextResponse.next() : redirectTo("/capture", request);
   }
   if (pathname === "/verify" && verified) {
-    return NextResponse.redirect(new URL("/capture", request.url));
+    return redirectTo("/capture", request);
   }
   return NextResponse.next();
 }
